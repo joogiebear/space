@@ -4,6 +4,13 @@
 
 **[Live demo: joogiebear.github.io/space](https://joogiebear.github.io/space/)**
 
+| | |
+| --- | --- |
+| ![The Milky Way](docs/screenshots/milky-way.jpg) | ![Star map with constellations](docs/screenshots/star-map.jpg) |
+| ![The solar system](docs/screenshots/solar-system.jpg) | ![Earth orbit with the ISS and its next pass](docs/screenshots/earth-orbit.jpg) |
+
+*Left to right, top to bottom: the Milky Way, 109,000 real stars with constellation figures, the solar system with asteroids and comets, and ~20,000 satellites around Earth with the ISS's next pass over a chosen location.*
+
 An animated WebGL atlas of the universe, from the local galaxy group down to the
 satellites and debris orbiting Earth. Real data, drawn on the GPU.
 
