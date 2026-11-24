@@ -1,5 +1,7 @@
 # Cosmos Atlas
 
+[![CI](https://github.com/joogiebear/space/actions/workflows/ci.yml/badge.svg)](https://github.com/joogiebear/space/actions/workflows/ci.yml)
+
 An animated WebGL atlas of the universe, from the local galaxy group down to the
 satellites and debris orbiting Earth. Real data, drawn on the GPU.
 
@@ -90,3 +92,19 @@ Satellite positions use mean elements and are accurate to a few km, not
 operational-grade. Galaxy positions and distances are schematic. Spacecraft
 follow Horizons ephemerides over a window around the fetch date. The project
 type-checks under TypeScript `strict`.
+
+## Data and credits
+
+Nothing below is bundled except the four planet textures; everything else is fetched by the
+server at run time and cached locally.
+
+- Satellite and debris orbital elements: [CelesTrak](https://celestrak.org) (Dr. T.S. Kelso)
+- Stars: the [HYG database](https://github.com/astronexus/HYG-Database) (David Nash), CC BY-SA 4.0
+- Exoplanets: [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu)
+- Asteroids, comets and spacecraft tracks: [JPL Small-Body Database and Horizons](https://ssd.jpl.nasa.gov)
+- Planet positions: JPL approximate Keplerian elements (1800-2050)
+- Constellation figures: Stellarium's "modern" sky culture
+- Satellite propagation: [satellite.js](https://github.com/shashwatak/satellite-js); rendering: [three.js](https://threejs.org)
+- Planet textures in `public/assets/tex/` come from the three.js examples; see that repository for their terms.
+
+The data sources have their own terms of use. This project is not affiliated with any of them.
