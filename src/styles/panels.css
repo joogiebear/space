@@ -218,3 +218,16 @@
   font-weight: 600;
   cursor: pointer;
 }
+#tours {
+  background: rgba(10, 16, 40, 0.9);
+  border: 1px solid var(--line);
+  color: var(--dim);
+  border-radius: 7px;
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+#tours:hover {
+  border-color: var(--acc);
+}

@@ -9,6 +9,9 @@ vi.mock('@/engine/sceneManager', () => ({
   parentOf: () => null,
   isBusy: () => false,
   sceneTitle: (id: string) => id,
+  goScene: vi.fn(),
+  chain: (id: string) => [id],
+  sceneEntered: { on() {}, emit() {} },
 }));
 
 import { openScene, goUp } from '@/engine/sceneManager';

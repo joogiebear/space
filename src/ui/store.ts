@@ -32,6 +32,8 @@ export const ui = reactive({
   dateText: '',
   tip: { visible: false, text: '', x: 0, y: 0 },
   toast: { visible: false, msg: '', sub: '' },
+  /** The running guided tour, if any. */
+  tour: { active: false, id: '', tourTitle: '', index: 0, count: 0, title: '', text: '', auto: true },
   /** Phones show one panel at a time as a sheet above the bottom bar; desktop ignores this. */
   sheet: 'none' as Sheet,
   /** Text for the screen-reader live region (see announce()). */

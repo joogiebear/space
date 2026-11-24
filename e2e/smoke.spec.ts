@@ -145,3 +145,50 @@ test.describe('share links', () => {
     await expect(page.locator('#dateTxt')).toContainText('2000-01-01');
   });
 });
+
+test.describe('guided tours', () => {
+  test('a tour shows captions, steps with Next and Back, and Escape ends it', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'the tour menu lives in the desktop top bar');
+    const errors = await boot(page);
+    await page.goto('./#solar');
+    await expect(page.locator('#tours')).toBeVisible();
+    await page.locator('#tours').selectOption({ label: 'The solar system, one world at a time' });
+    const card = page.locator('#tour');
+    await expect(card).toBeVisible();
+    await expect(card.locator('h2')).toHaveText('The Sun');
+    await card.getByRole('button', { name: 'Next' }).click();
+    await expect(card.locator('h2')).toHaveText('Mercury');
+    await expect(page.locator('#iT')).toHaveText(/Mercury/i, { timeout: 20_000 });
+    await card.getByRole('button', { name: 'Back' }).click();
+    await expect(card.locator('h2')).toHaveText('The Sun');
+    await page.keyboard.press('Escape');
+    await expect(card).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('a tour that crosses scenes follows the steps and ends cleanly', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'the tour menu lives in the desktop top bar');
+    const errors = await boot(page);
+    await page.locator('#tours').selectOption({ label: 'Our place in the universe' });
+    const card = page.locator('#tour');
+    await expect(card.locator('h2')).toHaveText('Earth orbit');
+    for (const title of ['The solar system', 'Our stellar neighbourhood', 'The Milky Way', 'The galaxies around us']) {
+      await card.getByRole('button', { name: 'Next' }).click();
+      await expect(card.locator('h2')).toHaveText(title);
+      await expect(page.locator('#crumbs .cur')).toBeVisible();
+    }
+    await card.getByRole('button', { name: 'Finish' }).click();
+    await expect(card).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('using a tab while a tour runs ends the tour', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'the tour menu lives in the desktop top bar');
+    await boot(page);
+    await page.locator('#tours').selectOption({ label: 'Our place in the universe' });
+    await expect(page.locator('#tour')).toBeVisible();
+    await expect(page.locator('#tabs .tab.on')).toHaveText('Earth Orbit', { timeout: 15_000 }); // the first step has landed
+    await page.locator('#tabs').getByRole('button', { name: 'Star Map' }).click();
+    await expect(page.locator('#tour')).toHaveCount(0, { timeout: 15_000 });
+  });
+});

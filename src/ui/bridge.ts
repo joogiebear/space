@@ -3,6 +3,7 @@ import { dragStarted, hoverChanged } from '@/engine/input';
 import { slowTick } from '@/engine/loop';
 import { sceneEntered } from '@/engine/sceneManager';
 import { selectionChanged } from '@/engine/selection';
+import { tourChanged } from '@/engine/tour';
 import { App, scene, sim } from '@/engine/state';
 import { clamp, fmtDate } from '@/lib';
 import type { Body, Info } from '@/types';
@@ -29,6 +30,11 @@ const refreshDate = () => {
 
 /** Copy engine events into the reactive store. Call once before mounting the app. */
 export function initBridge() {
+  tourChanged.on(t => {
+    if (t) Object.assign(ui.tour, t, { active: true });
+    else ui.tour.active = false;
+    if (t) announce(t.title + '. ' + t.text);
+  });
   selectionChanged.on((b, quiet) => {
     refreshInfo(b);
     // on a phone: show the details of what was just picked; tapping empty space dismisses them

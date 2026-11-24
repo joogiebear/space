@@ -64,6 +64,17 @@ after 60 days without repository activity; re-enable it from the Actions tab if 
 
 To host it elsewhere, run the two commands above with a different `VITE_BASE`, or deploy the Python server.
 
+## Share links and tours
+
+The address bar always carries the scene and the selected object (`#solar?sel=mars`). **Share** in the Time panel
+copies a fuller link that also holds the simulated date, speed, pause state and camera, for example
+`#solar?sel=mars&t=1969-07-20T20:17:00.000Z&r=1&pz=1&y=0.6&p=0.5&z=0.8`. Opening a link restores all of it; anything
+unknown is ignored. The format is in `src/lib/view.ts`.
+
+**Guided tours** (top bar, "Guided tours…") step through captions, moving the camera, the selection and the clock for
+you: Next/Back, Pause/Play, Esc to leave. Tours are plain data in `src/scenes/tours.ts`, written in the same view format
+as share links, so adding one means adding an entry to that list. The engine is `src/engine/tour.ts`.
+
 ## Tests
 
 ```

@@ -43,7 +43,8 @@ export function shareUrl(): string {
 }
 
 /** Apply the clock, selection and camera from a link to the scene that is now open. Unknown parts are skipped. */
-export function applyView(v: ViewState) {
+/** `glide` keeps the camera moving smoothly to the new distance (tours); otherwise it jumps (opening a link). */
+export function applyView(v: ViewState, { glide = false } = {}) {
   const sc = scene();
   if (v.t) {
     jumpTo(isoToJD(v.t), v.r ?? sc.rate ?? 1);
@@ -59,7 +60,7 @@ export function applyView(v: ViewState) {
   if (v.p !== undefined) cam.pitch = v.p;
   if (v.z !== undefined) {
     cam.want = clamp(v.z * sc.initD, sc.minD, sc.maxD);
-    cam.dist = cam.want;
+    if (!glide) cam.dist = cam.want;
   }
 }
 

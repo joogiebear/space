@@ -2,6 +2,7 @@ import { togglePause } from '@/engine/clock';
 import { orbitBy, zoomBy } from '@/engine/input';
 import { goUp, openScene } from '@/engine/sceneManager';
 import { deselect } from '@/engine/selection';
+import { stopTour, tourActive } from '@/engine/tour';
 import { App } from '@/engine/state';
 import { focusSearch } from './searchFocus';
 import { toast } from './toast';
@@ -23,7 +24,8 @@ export function handleKey(e: KeyboardEvent): boolean {
   const stop = () => e.preventDefault();
 
   if (e.key === 'Escape') {
-    if (App.sel) deselect();
+    if (tourActive()) stopTour();
+    else if (App.sel) deselect();
     else goUp();
     return true;
   }

@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { TABS, chain, goScene, sceneTitle } from '@/engine/sceneManager';
+import { startTour } from '@/engine/tour';
+import { TOURS } from '@/scenes/tours';
 import { ui } from '../store';
 
 /** Breadcrumb trail (click to go up) and the direct-jump tab bar. */
 const goUpTo = (id: string, i: number) => {
   if (i < ui.path.length - 1) goScene(id, { deeper: false });
 };
+function onTour(e: Event) {
+  const sel = e.target as HTMLSelectElement,
+    t = TOURS.find(x => x.id === sel.value);
+  sel.value = '';
+  sel.blur();
+  if (t) startTour(t);
+}
 const jumpTo = (id: string) => goScene(id, { deeper: chain(id).length > ui.path.length });
 </script>
 
@@ -39,6 +48,10 @@ const jumpTo = (id: string) => goScene(id, { deeper: chain(id).length > ui.path.
       >
         {{ label }}
       </button>
+      <select id="tours" aria-label="Guided tours" @change="onTour">
+        <option value="">Guided tours…</option>
+        <option v-for="t in TOURS" :key="t.id" :value="t.id" :title="t.blurb">{{ t.title }}</option>
+      </select>
     </nav>
   </header>
 </template>
