@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { $ } from '@/ui/dom';
 import { emitter } from './events';
 import { App } from './state';
+import { createViewportSync } from './viewport';
 
 // Raw colours should show exactly as written (no sRGB conversion).
 THREE.ColorManagement.enabled = false;
@@ -30,20 +31,39 @@ export const skyCam = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
 /** Uniforms shared by every custom shader: device pixel ratio and focal length in px. */
 export const U = { uPx: { value: 1 }, uF: { value: 800 }, uRef: 20 };
 
-function resize() {
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  App.W = innerWidth;
-  App.H = innerHeight;
-  renderer.setPixelRatio(dpr);
-  renderer.setSize(App.W, App.H);
-  camera.aspect = skyCam.aspect = App.W / App.H;
-  U.uPx.value = dpr;
-  U.uF.value = (App.H * 0.5) / Math.tan((camera.fov * Math.PI) / 360);
-  camera.updateProjectionMatrix();
-  skyCam.updateProjectionMatrix();
-}
-addEventListener('resize', resize);
-resize();
+/**
+ * Keep the drawing buffer the same size as the on-screen canvas. CSS (position: fixed; inset: 0) decides how big the
+ * canvas is, so setSize() must not write pixel sizes onto it (that pinned it at a stale size and left a hard black edge
+ * on phones). When to resize is decided in viewport.ts; events are only extra triggers, the render loop calls syncSize().
+ */
+const host = $('#gl');
+const viewport = createViewportSync(
+  () => ({
+    innerW: innerWidth,
+    innerH: innerHeight,
+    rawDpr: devicePixelRatio,
+    hostW: host.clientWidth,
+    hostH: host.clientHeight,
+  }),
+  ({ w, h, dpr }) => {
+    App.W = w;
+    App.H = h;
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(w, h, false); // false: leave the canvas's CSS size alone
+    camera.aspect = skyCam.aspect = w / h;
+    U.uPx.value = dpr;
+    U.uF.value = (h * 0.5) / Math.tan((camera.fov * Math.PI) / 360);
+    camera.updateProjectionMatrix();
+    skyCam.updateProjectionMatrix();
+  },
+);
+/** Called every frame by the render loop. */
+export const syncSize = viewport.sync;
+new ResizeObserver(viewport.resize).observe(host);
+addEventListener('resize', viewport.resize);
+visualViewport?.addEventListener('resize', viewport.resize);
+addEventListener('orientationchange', () => setTimeout(viewport.resize, 250));
+viewport.resize();
 
 /* ---- background star sky ---- */
 const SKY_N = 2500,

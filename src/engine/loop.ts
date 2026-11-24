@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { clamp } from '@/lib';
 import { tickClock } from './clock';
 import { emitter } from './events';
-import { U, camera, renderer, skyCam, skyPts, skyScene, world } from './gl';
+import { U, camera, renderer, skyCam, skyPts, skyScene, syncSize, world } from './gl';
 import { emitLabel, labelsBegin, labelsEnd } from './labels';
 import { isBusy } from './sceneManager';
 import { App, cam, opts } from './state';
@@ -22,6 +22,7 @@ function frame(now: number) {
   last = now;
   const sc = App.scene;
   if (!sc || (isBusy() && !sc.group.parent)) return;
+  syncSize();
   tickClock(dt);
   sc.update(dt);
 

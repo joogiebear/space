@@ -4,6 +4,7 @@ import * as THREE from 'three';
  *  vi.mock('@/engine/gl', async () => (await import('@/test/glMock')).glMock()) */
 export function glMock() {
   return {
+    syncSize() {},
     contextLost: { on() {}, emit() {} },
     contextRestored: { on() {}, emit() {} },
     renderer: {
