@@ -16,7 +16,7 @@ function starmap() {
   const group = new THREE.Group(), tmp = new THREE.Vector3();
   let N = 0, pos, hip, names = [], namedIdx = new Map(), starPts = null, mat = null, absm = null;
   const exoHosts = [], exoMat = new THREE.ShaderMaterial({ uniforms: { uPx: U.uPx }, vertexShader: EVS, fragmentShader: EFS, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
-  let exoPts = null, exoCount = 0, hostByPick = null;
+  let exoPts = null, exoCount = 0, hostByPick = null, conLines = null, conLabels = [];
   const sol = { id: 'sol', label: 'Sol (the Sun)', enter: 'solar', enterLabel: 'Enter the solar system', focusD: 4, minD: .05, getPos: v => v.set(0, 0, 0),
     info: { sub: 'Our star · G2V yellow dwarf', text: 'The centre of the map. Double-click to fly into the solar system.', rows: [['Distance', '0']] } };
   const solMk = new Markers(1); group.add(solMk.points); solMk.set(0, 0, 0, 0, [1, .9, .6], 30);
@@ -26,7 +26,7 @@ function starmap() {
   for (const r of ringR) { const pts = []; for (let i = 0; i <= 128; i++) pts.push(new THREE.Vector3(Math.cos(i / 128 * TAU) * r, 0, Math.sin(i / 128 * TAU) * r));
     rings.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x5a78d8, transparent: true, opacity: .22, depthWrite: false }))) }
   group.add(rings);
-  const layerSt = { rings: true, stars: true, exo: false }, methodOn = {};
+  const layerSt = { rings: true, stars: true, exo: false, con: true }, methodOn = {};
   METHOD_LIST.forEach(m => methodOn[m[0]] = true);
 
   const starBody = (i) => ({ id: 'hyg' + i, label: starLabel(i), idx: i, minD: .02, focusD: 6, live: false,
@@ -74,7 +74,7 @@ function starmap() {
     layers: [],
     async load(status) {
       status('downloading star catalogue (first run can take a minute)…');
-      const [bin, nm, ex] = await Promise.all([fetch('/api/stars.bin').then(r => r.arrayBuffer()), fetch('/api/stars.json').then(r => r.json()), fetch('/api/exo').then(r => r.json()).catch(() => [])]);
+      const [bin, nm, ex, cons] = await Promise.all([fetch('/api/stars.bin').then(r => r.arrayBuffer()), fetch('/api/stars.json').then(r => r.json()), fetch('/api/exo').then(r => r.json()).catch(() => []), fetch('/api/constellations').then(r => r.json()).catch(() => [])]);
       const dv = new DataView(bin); N = dv.getUint32(0, true); const f = new Float32Array(bin, 4, N * 5); hip = new Int32Array(bin.slice(4 + N * 20, 4 + N * 24));
       pos = new Float32Array(N * 3); absm = new Float32Array(N); ciArr = new Float32Array(N); const col = new Float32Array(N * 3);
       for (let i = 0; i < N; i++) { eqToThree(f[i * 5], f[i * 5 + 1], f[i * 5 + 2], tmp); pos[i * 3] = tmp.x; pos[i * 3 + 1] = tmp.y; pos[i * 3 + 2] = tmp.z; absm[i] = f[i * 5 + 3]; ciArr[i] = f[i * 5 + 4]; bvColor(f[i * 5 + 4], col, i * 3) }
@@ -82,6 +82,17 @@ function starmap() {
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aAbs', new THREE.BufferAttribute(absm, 1)); g.setAttribute('aCol', new THREE.BufferAttribute(col, 3));
       mat = new THREE.ShaderMaterial({ uniforms: { uPx: U.uPx, uRef: { value: 20 }, uGain: { value: 0 } }, vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
       starPts = new THREE.Points(g, mat); starPts.frustumCulled = false; group.add(starPts);
+      // constellation figures: Hipparcos id pairs -> line segments between real 3D star positions
+      const byHip = new Map(); for (let i = 0; i < N; i++) if (hip[i] > 0 && !byHip.has(hip[i])) byHip.set(hip[i], i);
+      const seg = []; conLabels = [];
+      for (const [abbr, name, eng, lines] of cons) {
+        const used = new Set();
+        for (const ln of lines) for (let k = 0; k + 1 < ln.length; k++) { const a = byHip.get(ln[k]), b = byHip.get(ln[k + 1]); if (a == null || b == null) continue;
+          seg.push(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2]); used.add(a); used.add(b) }
+        if (used.size) { let x = 0, y = 0, z = 0; for (const i of used) { x += pos[i * 3]; y += pos[i * 3 + 1]; z += pos[i * 3 + 2] } conLabels.push({ name, v: new THREE.Vector3(x / used.size, y / used.size, z / used.size) }) }
+      }
+      conLines = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(seg), 3)),
+        new THREE.LineBasicMaterial({ color: 0x6f95e8, transparent: true, opacity: .4, depthWrite: false, depthTest: false })); conLines.frustumCulled = false; group.add(conLines);
       // exoplanets grouped by host
       status('placing exoplanets…');
       const byHost = new Map();
@@ -94,6 +105,7 @@ function starmap() {
       const self = this;
       this.layers = [
         { id: 'stars', label: 'Stars (HYG)', color: '#cfe0ff', count: N, on: true, apply: o => { layerSt.stars = o; starPts.visible = o } },
+        { id: 'con', label: 'Constellations', color: '#6f95e8', count: conLabels.length, on: true, apply: o => { layerSt.con = o; conLines.visible = o } },
         { id: 'exo', label: 'Exoplanet systems', color: '#4cd9ff', count: exoHosts.length, on: false, apply: o => { layerSt.exo = o; exoPts.visible = o } },
         ...METHOD_LIST.map(([m, c]) => ({ id: 'm' + m, label: '  ' + m, color: c, count: cnt[m] || 0, on: true, apply: o => { methodOn[m] = o; const a = self.exoColAttr; exoHosts.forEach((h, i) => { const k = h.mkey === m ? (o ? 1 : 0) : null; if (k !== null) a.setXYZ(i, self.exoCols[i * 3] * k, self.exoCols[i * 3 + 1] * k, self.exoCols[i * 3 + 2] * k) }); a.needsUpdate = true } })),
         { id: 'rings', label: 'Distance rings', on: true, apply: o => { layerSt.rings = o; rings.visible = o } },
@@ -112,6 +124,7 @@ function starmap() {
           const d = Math.min(Math.max(labTmp.distanceTo(cp), .02), Math.max(cam.dist * .5, 15)), m = absm[i] + 5 * Math.log10(d / 10); if (m < 6.2 + (cam.dist < 8 ? 1.5 : 0)) arr.push([m, i, n[1]]) }
         arr.sort((a, b) => a[0] - b[0]); labCache = arr.slice(0, 45) }
       for (const [, i, name] of labCache) { labTmp.set(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]); if (!App.sel || App.sel.idx !== i) emit(name, labTmp, 'dim', 8) }
+      if (layerSt.con && cam.dist < 60) for (const c of conLabels) emit(c.name, c.v, 'dim', 4);
       if (layerSt.rings) for (const r of ringR) { labTmp.set(r, 0, 0); emit(fmtNum(r * PC_LY, 0) + ' ly', labTmp, 'dim', 3) }
       emit('Sol', labTmp.set(0, 0, 0), '', 12);
     },

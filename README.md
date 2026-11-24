@@ -6,9 +6,9 @@ satellites and debris orbiting Earth. Real data, drawn on the GPU.
 | View | What it shows | Data |
 | --- | --- | --- |
 | Local Universe / Galaxies | Famous galaxies; fly inside the Milky Way | Procedural, schematic |
-| Star map | ~109k real stars, optional exoplanet host layer | HYG v4.0, NASA Exoplanet Archive |
+| Star map | ~109k real stars, 88 constellation figures, optional exoplanet host layer | HYG v4.0, Stellarium, NASA Exoplanet Archive |
 | Solar system | Planets at their real positions, moons, ~96k asteroids, comets, spacecraft | JPL elements, SBDB, Horizons |
-| Earth orbit | ~20k tracked satellites, stations, debris, rocket bodies | CelesTrak (SGP4 / Kepler + J2 on the GPU) |
+| Earth orbit | ~20k tracked satellites, stations, debris, rocket bodies; ISS follow and ground track for any selected satellite | CelesTrak (SGP4 / Kepler + J2 on the GPU) |
 
 ## Run
 

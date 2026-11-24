@@ -273,7 +273,19 @@ def build_craft():
     return json.dumps({'when': time.strftime('%Y-%m-%d %H:%M', time.gmtime(now)) + ' UTC', 'craft': out}, separators=(',', ':')).encode()
 
 
+# ---------------------------------------------------------- constellations
+def build_constellations():
+    d = json.loads(fetch('https://raw.githubusercontent.com/Stellarium/stellarium/master/skycultures/modern/index.json', 60))
+    out = []
+    for c in d['constellations']:
+        cn = c.get('common_name', {})
+        out.append([c['id'].split()[-1], cn.get('native') or c['id'].split()[-1], cn.get('english') or '', c['lines']])
+    log('constellations', len(out))
+    return json.dumps(out, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+
+
 API = {
+    '/api/constellations': ('constellations.json', 90 * 24 * HOUR, build_constellations, 'application/json'),
     '/api/sats': ('sats.json', 3 * HOUR, build_sats, 'application/json'),
     '/api/stars.bin': ('stars.bin', 90 * 24 * HOUR, build_stars, 'application/octet-stream'),
     '/api/exo': ('exo.json', 3 * 24 * HOUR, build_exo, 'application/json'),
@@ -332,7 +344,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def prewarm():
-    for p in ('/api/craft', '/api/sbdb', '/api/exo', '/api/stars.bin', '/api/sats'):
+    for p in ('/api/craft', '/api/sbdb', '/api/exo', '/api/stars.bin', '/api/sats', '/api/constellations'):
         name, ttl, builder, _ = API[p]
         try:
             cached(name, ttl, builder)
