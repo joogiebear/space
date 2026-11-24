@@ -2,7 +2,7 @@ import * as satellite from 'satellite.js';
 import * as THREE from 'three';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { D2R } from '@/lib';
-import { PassPredictor, findPass, type Pass } from './passes';
+import { PassPredictor, findPass, inSunlight, passTrack, satLook, type Pass } from './passes';
 
 // A real ISS TLE (epoch 2020-07-12 21:16 UTC). Orbit: 51.6 deg inclination, ~420 km, 92.9 min period.
 const TLE1 = '1 25544U 98067A   20194.88612269 -.00002218  00000-0 -31515-4 0  9992';
@@ -190,5 +190,72 @@ describe('PassPredictor', () => {
     pp.rows(0, rec, pole, EPOCH_JD, SUN);
     await run();
     expect(pp.rows(0, rec, pole, EPOCH_JD, SUN)).toEqual([['Next pass over you', 'none in the next 7 days']]);
+  });
+});
+
+describe('satLook and passTrack', () => {
+  const high = firstHighPass(30);
+
+  it('satLook agrees with satellite.js look angles', () => {
+    const jd = (high.rise + high.set) / 2,
+      look = satLook(rec, jd, LONDON, SUN)!;
+    expect(look.el).toBeCloseTo(elevation(jd), 6);
+    expect(look.az).toBeGreaterThanOrEqual(0);
+    expect(look.az).toBeLessThan(360);
+    expect(look.range).toBeGreaterThan(400);
+    expect(look.range).toBeLessThan(3000);
+  });
+
+  it('satLook is null for elements that no longer propagate', () => {
+    const dead = satellite.twoline2satrec(
+      TLE1,
+      '2 25544  51.6461 221.2784 0001413  89.1723 280.4612 99.00000000236008',
+    );
+    expect(satLook(dead, EPOCH_JD, LONDON, SUN)).toBeNull();
+  });
+
+  it('a pass track runs from the rise to the set, peaking where the pass search says', () => {
+    const track = passTrack(rec, high, LONDON, SUN, 10);
+    expect(track.length).toBeGreaterThan(10);
+    expect(track[0].jd).toBeCloseTo(high.rise, 9);
+    expect(track.at(-1)!.jd).toBeCloseTo(high.set, 9);
+    expect(track[0].el).toBeLessThan(6);
+    expect(track.at(-1)!.el).toBeLessThan(6);
+    const peak = Math.max(...track.map(t => t.el));
+    expect(peak).toBeGreaterThan(high.maxEl - 3);
+    expect(peak).toBeLessThanOrEqual(high.maxEl + 3);
+    for (let i = 1; i < track.length; i++) expect(track[i].jd).toBeGreaterThan(track[i - 1].jd);
+  });
+
+  it('the arc is continuous: azimuth never jumps by more than a few degrees per step except near the zenith', () => {
+    const track = passTrack(rec, high, LONDON, SUN, 5).filter(t => t.el < 70);
+    for (let i = 1; i < track.length; i++) {
+      const d = Math.abs(((track[i].az - track[i - 1].az + 540) % 360) - 180);
+      expect(d).toBeLessThan(8);
+    }
+  });
+});
+
+describe('inSunlight', () => {
+  const sun = new THREE.Vector3(1, 0, 0);
+  it('is lit on the day side, dark directly behind Earth, and lit again once clear of the shadow', () => {
+    expect(inSunlight({ x: 7000, y: 0, z: 0 }, sun)).toBe(true);
+    expect(inSunlight({ x: -7000, y: 0, z: 0 }, sun)).toBe(false);
+    expect(inSunlight({ x: -7000, y: 0, z: 7000 }, sun)).toBe(true); // far to the side, outside the cylinder
+  });
+});
+
+describe('PassPredictor.result', () => {
+  it('exposes the pass once found, and nothing while pending or for another place', async () => {
+    vi.useFakeTimers();
+    const pp = new PassPredictor();
+    expect(pp.result(0, LONDON)).toBeUndefined();
+    pp.rows(0, rec, LONDON, EPOCH_JD, SUN);
+    expect(pp.result(0, LONDON)).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(pp.result(0, LONDON)?.maxEl).toBeGreaterThan(0);
+    expect(pp.result(0, { lat: 1, lon: 1 })).toBeUndefined();
+    expect(pp.result(1, LONDON)).toBeUndefined();
+    vi.useRealTimers();
   });
 });

@@ -252,6 +252,39 @@ test.describe('Sky Tonight', () => {
     expect(errors).toEqual([]);
   });
 
+  test('a satellite can be found, selected and shown with its next pass', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', e => errors.push(e.message));
+    // orbital elements are only valid for weeks, so freeze "now" at the epoch of a real ISS element set
+    await page.clock.setFixedTime(new Date('2020-07-12T21:20:00Z'));
+    await page.route('**/data/**', r => r.fulfill({ status: 404, body: 'not found' }));
+    await page.route('**/data/sats.json', r =>
+      r.fulfill({
+        json: {
+          cats: ['Space stations', 'Active satellites'],
+          fetched: '2020-07-12 21:16:00 UTC',
+          sats: [
+            [
+              'ISS (ZARYA)',
+              '1 25544U 98067A   20194.88612269 -.00002218  00000-0 -31515-4 0  9992',
+              '2 25544  51.6461 221.2784 0001413  89.1723 280.4612 15.49507896236008',
+              0,
+            ],
+          ],
+        },
+      }),
+    );
+    await page.goto('./#sky');
+    await expect(page.locator('#rows')).toContainText('ISS next pass', { timeout: 20_000 });
+    await page.locator('#q').fill('zarya');
+    await page.locator('#results button').first().click();
+    await expect(page.locator('#iT')).toHaveText('ISS (ZARYA)');
+    await expect(page.locator('#rows')).toContainText('Space stations');
+    await expect(page.locator('#rows')).toContainText('Altitude');
+    await expect(page.locator('#rows')).toContainText(/Pass\s*max \d+°/, { timeout: 20_000 });
+    expect(errors).toEqual([]);
+  });
+
   test('Escape from the sky goes back up to Earth orbit', async ({ page }) => {
     await boot(page);
     await page.goto('./#sky');

@@ -16,6 +16,61 @@ export interface Pass {
   visible: boolean;
 }
 
+/** Is a satellite at this ECI position (km, scene axes of `sunDir`) outside Earth's shadow? */
+export function inSunlight(pos: { x: number; y: number; z: number }, sunDir: THREE.Vector3): boolean {
+  const x = pos.x,
+    y = pos.z,
+    z = -pos.y,
+    d = x * sunDir.x + y * sunDir.y + z * sunDir.z;
+  return !(d < 0 && Math.hypot(x - d * sunDir.x, y - d * sunDir.y, z - d * sunDir.z) < RE_KM);
+}
+
+export interface Look {
+  /** degrees from north through east */
+  az: number;
+  /** degrees above the horizon */
+  el: number;
+  /** km from the observer */
+  range: number;
+  /** outside Earth's shadow */
+  sunlit: boolean;
+}
+
+/** Where a satellite is in an observer's sky at a Julian date, or null when its elements fail to propagate. */
+export function satLook(rec: satellite.SatRec, jd: number, loc: Loc, sunDir: THREE.Vector3): Look | null {
+  const date = new Date((jd - 2440587.5) * 864e5),
+    pv = satellite.propagate(rec, date);
+  if (!pv) return null;
+  const la = satellite.ecfToLookAngles(
+    { latitude: loc.lat * D2R, longitude: loc.lon * D2R, height: 0 },
+    satellite.eciToEcf(pv.position, satellite.gstime(date)),
+  );
+  return {
+    az: (((la.azimuth / D2R) % 360) + 360) % 360,
+    el: la.elevation / D2R,
+    range: la.rangeSat,
+    sunlit: inSunlight(pv.position, sunDir),
+  };
+}
+
+/** Samples along a pass, every `stepSec`, from rise to set: the arc the satellite draws across the sky. */
+export function passTrack(
+  rec: satellite.SatRec,
+  pass: Pass,
+  loc: Loc,
+  sunDir: THREE.Vector3,
+  stepSec = 10,
+): (Look & { jd: number })[] {
+  const out: (Look & { jd: number })[] = [],
+    n = Math.max(1, Math.ceil(((pass.set - pass.rise) * 86400) / stepSec));
+  for (let k = 0; k <= n; k++) {
+    const jd = Math.min(pass.set, pass.rise + (k * stepSec) / 86400),
+      look = satLook(rec, jd, loc, sunDir);
+    if (look) out.push({ ...look, jd });
+  }
+  return out;
+}
+
 const COMP = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
 const compass = (a: number) => COMP[Math.round(a / 22.5) % 16];
 const upV = new THREE.Vector3();
@@ -50,12 +105,7 @@ export function findPass(rec: satellite.SatRec, jd0: number, loc: Loc, sunDir: T
         upV.set(cl * Math.cos(th), Math.sin(lat), -cl * Math.sin(th));
         if (Math.asin(upV.dot(sunDir)) / D2R < -6) {
           // observer in darkness (sun below -6 deg)
-          const x = pv.position.x,
-            y = pv.position.z,
-            z = -pv.position.y,
-            d = x * sunDir.x + y * sunDir.y + z * sunDir.z;
-          const shadowed = d < 0 && Math.hypot(x - d * sunDir.x, y - d * sunDir.y, z - d * sunDir.z) < RE_KM;
-          if (!shadowed) p.visible = true;
+          if (inSunlight(pv.position, sunDir)) p.visible = true;
         }
       }
     } else if (p) return p;
@@ -118,6 +168,12 @@ export class PassPredictor {
 
   reset() {
     this.cache = null;
+  }
+
+  /** The finished search for this object and location: a pass, null for none, or undefined while pending or unasked. */
+  result(idx: number, loc: Loc | null): Pass | null | undefined {
+    const c = this.cache;
+    return loc && c && !c.pending && c.key === idx + '|' + loc.lat + '|' + loc.lon ? c.res : undefined;
   }
 
   rows(idx: number, rec: satellite.SatRec | null, loc: Loc | null, jdNow: number, sunDir: THREE.Vector3): InfoRows {

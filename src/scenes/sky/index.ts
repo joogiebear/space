@@ -24,6 +24,7 @@ import {
 import { loadStarSky, type StarSky } from '@/data/stars';
 import { askLocation, loadLocation, saveLocation, type Loc } from '../earth/location';
 import type { Body, EmitLabel, Info, InfoRows, Layer, Scene, SearchResult } from '@/types';
+import { createSkySatellites } from './satellites';
 import { DOME_FS, DOME_VS, GROUND_FS, MOON_FS, MOON_VS, STAR_FS, STAR_VS } from './shaders';
 
 /** Radius of the celestial sphere in scene units. The camera sits at its centre (within about a unit of it). */
@@ -86,7 +87,7 @@ const PLANETS: { id: string; label: string; color: [number, number, number]; nak
 ];
 
 interface SkyBody extends Body {
-  /** Unit direction in J2000 equatorial coordinates at the current simulation time. */
+  /** Unit direction in J2000 equatorial coordinates at the current simulation time (not for satellites). */
   eq(): Vec3;
   /** Altitude in degrees above the horizon threshold used for rise and set. */
   riseAlt: number;
@@ -101,7 +102,7 @@ function sky(): Scene {
   let loc: Loc = loadLocation() ?? GREENWICH,
     located = loadLocation() !== null;
   let stars: StarSky | null = null;
-  const layers = { con: true, conNames: true, starNames: true, horizon: true, grid: false };
+  const layers = { con: true, conNames: true, starNames: true, horizon: true, grid: false, sats: true };
   /** 0 in daylight, 1 in full darkness: star labels follow the stars. */
   let starVis = 1;
 
@@ -296,6 +297,27 @@ function sky(): Scene {
     return p;
   };
 
+  const sunScene = new THREE.Vector3();
+  const sats = createSkySatellites({
+    R,
+    loc: () => loc,
+    jd: () => sim.jd,
+    // the Earth scene's axes are the equatorial ones turned so that y is the pole: (x, z, -y)
+    sunDir: () => {
+      const s = ephemeris().sun.dir;
+      return sunScene.set(s[0], s[2], -s[1]);
+    },
+    sunAlt: () => altAzNow(ephemeris().sun.dir).alt,
+    enabled: () => layers.sats,
+    fmt: jd => jdToDate(jd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  });
+  group.add(sats.group);
+  /** Altitude and azimuth of anything in the sky: a catalogue body from its direction, a satellite from its look angles. */
+  const skyPos = (b: Body) =>
+    (b as { altAz?: () => { alt: number; az: number } }).altAz?.() ?? altAzNow((b as SkyBody).eq());
+  const hasSkyPos = (b: Body | null) =>
+    !!b && (typeof (b as SkyBody).eq === 'function' || typeof (b as { altAz?: unknown }).altAz === 'function');
+
   const fmtTime = (jd: number) =>
     jdToDate(jd).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
   const events = new Map<string, { at: number; rows: InfoRows }>();
@@ -424,6 +446,7 @@ function sky(): Scene {
       located = true;
       saveLocation(nl);
       events.clear();
+      sats.reset();
       aimAtStart();
     }
   }
@@ -514,6 +537,69 @@ function sky(): Scene {
       }
   }
 
+  async function loadStars(status: (message: string) => void) {
+    status('loading the star catalogue…');
+    stars = await loadStarSky();
+    const s = stars,
+      n = s.n,
+      pos = new Float32Array(n * 3),
+      size = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      pos[i * 3] = s.dir[i * 3] * R;
+      pos[i * 3 + 1] = s.dir[i * 3 + 1] * R;
+      pos[i * 3 + 2] = s.dir[i * 3 + 2] * R;
+      size[i] = starSizePx(s.mag[i]);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setAttribute('aCol', new THREE.BufferAttribute(s.color, 3));
+    g.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+    const pts = new THREE.Points(g, starMat);
+    pts.frustumCulled = false;
+    pts.renderOrder = 1;
+    celestial.add(pts);
+
+    const seg: number[] = [];
+    conLabels = [];
+    for (const [, name, , lines] of s.constellations) {
+      const used = new Set<number>();
+      for (const ln of lines)
+        for (let k = 0; k + 1 < ln.length; k++) {
+          const a = s.byHip.get(ln[k]),
+            b = s.byHip.get(ln[k + 1]);
+          if (a === undefined || b === undefined) continue;
+          seg.push(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2]);
+          used.add(a);
+          used.add(b);
+        }
+      if (used.size) {
+        let x = 0,
+          y = 0,
+          z = 0;
+        for (const i of used) {
+          x += s.dir[i * 3];
+          y += s.dir[i * 3 + 1];
+          z += s.dir[i * 3 + 2];
+        }
+        const l = Math.hypot(x, y, z);
+        conLabels.push({ name, eq: [x / l, y / l, z / l] });
+      }
+    }
+    conLines = new THREE.LineSegments(
+      new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(seg), 3)),
+      conMat,
+    );
+    conLines.frustumCulled = false;
+    conLines.renderOrder = 2;
+    celestial.add(conLines);
+
+    // the brightest stars are listed in Objects; every named star is reachable by search
+    const bright: number[] = [];
+    for (let i = 0; i < n; i++) if (s.named.has(i) && s.mag[i] <= 2.0) bright.push(i);
+    bright.sort((a, b) => s.mag[a] - s.mag[b]);
+    for (const i of bright) bodies.push(starBody(i));
+  }
+
   /* ---- scene object ---- */
   const bodies: Body[] = [you, sun, moon, ...planetBodies];
   const sc: Scene = {
@@ -556,6 +642,7 @@ function sky(): Scene {
           'Planets up',
           up.length ? up.join(', ') + (sunAlt > -6 ? ' · lost in the daylight' : '') : 'none above the horizon',
         ],
+        ...sats.summary(),
         ['Stars', stars ? `${stars.n.toLocaleString()} in the catalogue` : '…'],
       ];
     },
@@ -563,75 +650,24 @@ function sky(): Scene {
       { id: 'con', label: 'Constellation lines', color: '#6f95e8', on: true, apply: on => (layers.con = on) },
       { id: 'conNames', label: 'Constellation names', on: true, apply: on => (layers.conNames = on) },
       { id: 'starNames', label: 'Star names', on: true, apply: on => (layers.starNames = on) },
+      { id: 'sats', label: 'Satellites', color: '#ffeb8c', on: true, apply: on => (layers.sats = on) },
       { id: 'horizon', label: 'Horizon and compass', on: true, apply: on => (layers.horizon = on) },
       { id: 'grid', label: 'Altitude and azimuth grid', color: '#5a78d8', on: false, apply: on => (layers.grid = on) },
     ] as Layer[],
     async load(status) {
-      status('loading the star catalogue…');
-      stars = await loadStarSky();
-      const s = stars,
-        n = s.n,
-        pos = new Float32Array(n * 3),
-        size = new Float32Array(n);
-      for (let i = 0; i < n; i++) {
-        pos[i * 3] = s.dir[i * 3] * R;
-        pos[i * 3 + 1] = s.dir[i * 3 + 1] * R;
-        pos[i * 3 + 2] = s.dir[i * 3 + 2] * R;
-        size[i] = starSizePx(s.mag[i]);
+      // the satellites do not depend on the stars: a missing star catalogue must not take them down
+      const satsDone = sats.load().then(() => void bodies.push(...sats.stationBodies()));
+      try {
+        await loadStars(status);
+      } finally {
+        await satsDone;
       }
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      g.setAttribute('aCol', new THREE.BufferAttribute(s.color, 3));
-      g.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
-      const pts = new THREE.Points(g, starMat);
-      pts.frustumCulled = false;
-      pts.renderOrder = 1;
-      celestial.add(pts);
-
-      const seg: number[] = [];
-      conLabels = [];
-      for (const [, name, , lines] of s.constellations) {
-        const used = new Set<number>();
-        for (const ln of lines)
-          for (let k = 0; k + 1 < ln.length; k++) {
-            const a = s.byHip.get(ln[k]),
-              b = s.byHip.get(ln[k + 1]);
-            if (a === undefined || b === undefined) continue;
-            seg.push(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2]);
-            used.add(a);
-            used.add(b);
-          }
-        if (used.size) {
-          let x = 0,
-            y = 0,
-            z = 0;
-          for (const i of used) {
-            x += s.dir[i * 3];
-            y += s.dir[i * 3 + 1];
-            z += s.dir[i * 3 + 2];
-          }
-          const l = Math.hypot(x, y, z);
-          conLabels.push({ name, eq: [x / l, y / l, z / l] });
-        }
-      }
-      conLines = new THREE.LineSegments(
-        new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(seg), 3)),
-        conMat,
-      );
-      conLines.frustumCulled = false;
-      conLines.renderOrder = 2;
-      celestial.add(conLines);
-
-      // the brightest stars are listed in Objects; every named star is reachable by search
-      const bright: number[] = [];
-      for (let i = 0; i < n; i++) if (s.named.has(i) && s.mag[i] <= 2.0) bright.push(i);
-      bright.sort((a, b) => s.mag[a] - s.mag[b]);
-      for (const i of bright) bodies.push(starBody(i));
     },
     enter() {
       loc = loadLocation() ?? loc;
       located = loadLocation() !== null;
       events.clear();
+      sats.reset();
       aimAtStart();
       turn = null;
     },
@@ -639,14 +675,14 @@ function sky(): Scene {
       setFov(50);
       turn = null;
     },
-    isHidden: b => b.id !== 'you' && altAzNow((b as SkyBody).eq()).alt < -1,
+    isHidden: b => b.id !== 'you' && skyPos(b).alt < -1,
     onSelect(b) {
       if (!b) {
         selMk.hide(0);
         return;
       }
-      if ((b as SkyBody).eq) {
-        const a = altAzNow((b as SkyBody).eq());
+      if (hasSkyPos(b)) {
+        const a = skyPos(b);
         lookAt(a.alt, a.az);
       } else lookAt(90, 0);
     },
@@ -704,12 +740,16 @@ function sky(): Scene {
         cam.pitch += (turn.pitch - cam.pitch) * k;
         if (Math.abs(turn.yaw - cam.yaw) < 0.002 && Math.abs(turn.pitch - cam.pitch) < 0.002) turn = null;
       }
-      if (App.sel && (App.sel as SkyBody).eq) {
+      if (App.sel && hasSkyPos(App.sel)) {
         App.sel.getPos(tmp);
         selMk.set(0, tmp.x, tmp.y, tmp.z, [1, 1, 1], 30);
       } else selMk.hide(0);
+      sats.update(App.sel);
     },
-    extraLabels,
+    extraLabels(emit) {
+      extraLabels(emit);
+      sats.extraLabels(emit);
+    },
     pickCustom(mx, my) {
       if (!stars) return null;
       const s = stars,
@@ -750,6 +790,7 @@ function sky(): Scene {
           if (k !== undefined) out.push({ label: 'HIP ' + hipQ[1], sub: 'Star', make: () => starBody(k) });
         }
       }
+      out.push(...sats.search(q));
       return out;
     },
   };
