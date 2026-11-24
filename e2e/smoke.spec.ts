@@ -1,7 +1,7 @@
 import { expect, test, type CDPSession, type Page } from '@playwright/test';
 
 /** Messages that are noise rather than faults: the static build has no live data, so fetches may 404. */
-const IGNORED = /Failed to load resource|favicon|\/data\//i;
+const IGNORED = /Failed to load resource|favicon|\/data\/|data is not available/i;
 
 async function boot(page: Page) {
   const errors: string[] = [];
