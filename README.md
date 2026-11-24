@@ -93,11 +93,27 @@ The one big formatting commit is listed in `.git-blame-ignore-revs`; GitHub hono
 
 ## Controls
 
-Drag to orbit, wheel to zoom, click to select. Zoom in on a galaxy, the Sun, or Earth and keep going to fly inside
-(or double-click it).
-`Esc` / `Backspace` goes up a level, `Space` pauses, `/` searches. The slider
-at the bottom changes simulation speed (1x to 100,000,000x). The "Jump to a
+| | Mouse | Touch | Keyboard |
+| --- | --- | --- | --- |
+| Look around | drag | drag | arrow keys |
+| Zoom | wheel | pinch | `+` / `-` |
+| Select | click | tap | Tab to the Objects list, or `/` to search |
+| Go inside | zoom in on it, or double-click | zoom in on it, or tap "Enter" | `Enter` |
+| Go back out | zoom out, or `Esc` | zoom out | `Esc` / `Backspace` |
+| Pause time | Space | Time sheet | `Space` |
+
+`?` shows the keys in the app. The time slider changes simulation speed (1x to 100,000,000x), and the "Jump to a
 moment in time" menu (solar system and Earth views) jumps to historic events.
+
+## Phones, accessibility and older browsers
+
+- **Phones:** below 820 px wide (or 520 px tall) the panels become sheets above a bottom bar (Info, Layers, Time, Search),
+  one open at a time.
+- **Keyboard and screen readers:** the map is a focusable region, every control is reachable and labelled, view changes and
+  messages are announced, the location dialog traps focus and returns it, and `axe-core` reports no violations. Text
+  contrast meets WCAG AA. `prefers-reduced-motion` turns off auto-orbit and the dive transition.
+- **No WebGL 2:** the app needs WebGL 2. Without it (or with graphics acceleration off) you get an explanation and a link
+  to `/atlas2d.html`, a simplified 2D version with no WebGL and no network requests. A GPU reset reloads the page.
 
 ## Project layout
 
