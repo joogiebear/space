@@ -131,11 +131,14 @@ server at run time and cached locally.
 - Planet positions: JPL approximate Keplerian elements (1800-2050)
 - Constellation figures: Stellarium's "modern" sky culture
 - Satellite propagation: [satellite.js](https://github.com/shashwatak/satellite-js); rendering: [three.js](https://threejs.org)
-- Planet textures in `public/assets/tex/` come from the three.js examples; see that repository for their terms.
+- The four Earth and Moon textures in `public/assets/tex/` were copied from the [three.js examples](https://github.com/mrdoob/three.js/tree/r160/examples/textures/planets).
+  three.js licenses its code under MIT but records no licence or source for these images, so their terms are
+  **unverified** and not covered by this repository's MIT licence. They are placeholders: if you are the rights
+  holder and want one removed, open an issue. The plan is to replace them with NASA public-domain or CC BY imagery.
 
 The data sources have their own terms of use. This project is not affiliated with any of them.
 
 ## License
 
 The code is [MIT](LICENSE) licensed. That covers this repository's source only: the data fetched at
-run time and the planet textures keep their own terms (see above).
+run time and the four placeholder textures keep their own, separate terms (see above).
