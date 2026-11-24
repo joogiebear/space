@@ -38,7 +38,8 @@ is rate-limited.
 
 ## Controls
 
-Drag to orbit, wheel to zoom, click to select, double-click to enter a body.
+Drag to orbit, wheel to zoom, click to select. Zoom in on a galaxy, the Sun, or Earth and keep going to fly inside
+(or double-click it).
 `Esc` / `Backspace` goes up a level, `Space` pauses, `/` searches. The slider
 at the bottom changes simulation speed (1x to 100,000,000x). The "Jump to a
 moment in time" menu (solar system and Earth views) jumps to historic events.

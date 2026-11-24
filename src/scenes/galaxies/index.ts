@@ -27,7 +27,7 @@ function cosmos(): Scene {
       getPos(v) { return v.set(...g.pos) }, info: { sub: g.sub, text: g.text } });
   }
   return { title: 'Local Universe', group, bodies, minD: 10, maxD: 700, initD: 190, sky: false, rate: 1, extent: 1000,
-    intro: 'A map of famous galaxies near the Milky Way. Positions are schematic and distances heavily compressed. Click a galaxy to focus, double-click to fly inside.',
+    intro: 'A map of famous galaxies near the Milky Way. Positions are schematic and distances heavily compressed. Click a galaxy to focus it, or just keep zooming in on one to fly inside.',
     center(v) { return v.set(0, 0, 0) }, update() { for (const m of mats) m.uniforms.uTime.value = spinTime() },
     search(q) { return bodies.filter(b => b.label.toLowerCase().includes(q)).map(b => ({ label: b.label, sub: b.g.sub.split(' · ')[0], make: () => b })) } };
 }
