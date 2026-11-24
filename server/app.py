@@ -14,7 +14,9 @@ DIST = os.path.join(ROOT, 'dist')
 
 API = {
     '/api/constellations': ('constellations.json', 90 * 24 * HOUR, build_constellations, 'application/json'),
-    '/api/sats': ('sats.json', 3 * HOUR, build_sats, 'application/json'),
+    # CelesTrak republishes every 2 h. Keep this below the 3 h refresh schedule: at exactly 3 h a run can land a few
+    # minutes inside the TTL and reuse the old file, leaving the live data up to ~6 h old.
+    '/api/sats': ('sats.json', 2 * HOUR, build_sats, 'application/json'),
     '/api/stars.bin': ('stars.bin', 90 * 24 * HOUR, build_stars, 'application/octet-stream'),
     '/api/exo': ('exo.json', 3 * 24 * HOUR, build_exo, 'application/json'),
     '/api/sbdb': ('sbdb.json', 3 * 24 * HOUR, build_sbdb, 'application/json'),
