@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      # one PR for the routine bumps; majors still arrive on their own
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # vue-tsc cannot run on TypeScript 7 yet, so type-checking is held at 5.9 until it can.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      # Pinned on purpose: a lockfile made on Windows omits these, which breaks `npm ci` on Linux
+      # (see the "pin @emnapi packages" commit). Revisit when npm or the bundler fixes it.
+      - dependency-name: '@emnapi/*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']
