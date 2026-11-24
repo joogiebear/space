@@ -1,0 +1,15 @@
+# generated or vendored
+dist/
+cache/
+node_modules/
+package-lock.json
+# binary and legacy
+public/
+docs/
+# prose and CI config keep their hand-written layout
+*.md
+*.yml
+*.yaml
+# Python is not handled by Prettier
+server/
+tools/
