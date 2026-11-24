@@ -21,7 +21,7 @@ export function findPass(rec: satellite.SatRec, jd0: number, loc: Loc, sunDir: T
   let p: Pass | null = null;
   for (let k = 0; k < 7 * 4320; k++) {
     const date = new Date(base + k * 20000), pv = satellite.propagate(rec, date);
-    if (!pv.position || typeof pv.position === 'boolean') continue; // decayed
+    if (!pv) continue; // propagation failed (decayed or bad elements): satellite.js 7 returns null
     const gm = satellite.gstime(date), la = satellite.ecfToLookAngles(obs, satellite.eciToEcf(pv.position, gm));
     const el = la.elevation / D2R, az = la.azimuth / D2R, jd = jd0 + k * 20 / 86400;
     if (el > 0) {

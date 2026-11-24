@@ -16,7 +16,7 @@ const SUN = new THREE.Vector3(1, 0, 0); // direction only matters to the "visibl
 /** Elevation (deg) of the satellite over an observer at a Julian date, straight from satellite.js. */
 function elevation(jd: number, loc = LONDON) {
   const date = jdToDate(jd), pv = satellite.propagate(rec, date);
-  if (!pv.position || typeof pv.position === 'boolean') throw new Error('propagation failed');
+  if (!pv) throw new Error('propagation failed');
   const look = satellite.ecfToLookAngles({ latitude: loc.lat * D2R, longitude: loc.lon * D2R, height: 0 },
     satellite.eciToEcf(pv.position, satellite.gstime(date)));
   return look.elevation / D2R;

@@ -9,6 +9,8 @@ export default defineConfig({
   plugins: [vue()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: { host: true, proxy: { '/api': 'http://localhost:8080' } },
+  // satellite.js 7 ships a WebAssembly bulk-propagation worker that uses top-level await, which needs the ES worker format.
+  worker: { format: 'es' },
   build: { outDir: 'dist', chunkSizeWarningLimit: 1200 },
   test: { environment: 'jsdom', include: ['src/**/*.test.ts'], setupFiles: ['src/test/setup.ts'] },
 });

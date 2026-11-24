@@ -73,7 +73,7 @@ function earth(): Scene {
       getPos: (v: THREE.Vector3) => { satPos(i, sim.jd - J2000, sb); return v.set(sb[0], sb[1], sb[2]) },
       getInfo() {
         const n = e2[i * 4 + 1], per = TAU / n, a = Math.cbrt(MU / ((n / 60) ** 2)), e = e1[i * 4 + 2], rows: string[][] = [['Category', cats[s[3]]], ['NORAD ID', s[1].slice(2, 7).trim()], ['Int\'l designator', s[1].slice(9, 17).trim() || '—']];
-        if (rec) { const pv = satellite.propagate(rec, jdToDate(sim.jd)); if (pv.position) { const gd = satellite.eciToGeodetic(pv.position as satellite.EciVec3<number>, satellite.gstime(jdToDate(sim.jd))), v = pv.velocity as satellite.EciVec3<number>;
+        if (rec) { const pv = satellite.propagate(rec, jdToDate(sim.jd)); if (pv) { const gd = satellite.eciToGeodetic(pv.position, satellite.gstime(jdToDate(sim.jd))), v = pv.velocity;
           rows.push(['Altitude', fmtNum(gd.height, 0) + ' km'], ['Position', `${(gd.latitude / D2R).toFixed(1)}°, ${(gd.longitude / D2R).toFixed(1)}°`], ['Speed', Math.hypot(v.x, v.y, v.z).toFixed(2) + ' km/s']) } else rows.push(['Status', 'orbit decayed or out of TLE validity']) }
         rows.push(['Orbit', `${fmtNum(a * (1 - e) - REQ, 0)} × ${fmtNum(a * (1 + e) - REQ, 0)} km`], ['Inclination', (e1[i * 4] / D2R).toFixed(2) + '°'], ['Period', per.toFixed(1) + ' min'], ['TLE epoch', s[1].slice(18, 32).trim()]);
         rows.push(...predictor.rows(i, rec, loc, sim.jd, sunDir));
