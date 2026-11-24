@@ -25,7 +25,7 @@ export const EARTH_PRESETS: Preset[] = [
   },
   {
     label: 'December solstice (2026-12-21)',
-    date: '2026-12-21T14:50Z',
+    date: '2026-12-21T20:50Z',
     focus: 'earth',
     rate: 60,
     note: 'The northern hemisphere is tilted farthest from the Sun: watch the terminator.',

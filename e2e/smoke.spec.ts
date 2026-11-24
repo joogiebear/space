@@ -294,3 +294,55 @@ test.describe('Sky Tonight', () => {
     await expect(page.locator('#tabs .tab.on')).toHaveText('Earth Orbit', { timeout: 20_000 });
   });
 });
+
+test.describe('astronomy calendar', () => {
+  test.skip(({ isMobile }) => isMobile, 'covered on desktop');
+
+  test('lists upcoming events, and opening one shows it in the atlas', async ({ page }) => {
+    const errors = await boot(page);
+    // pin "today" so the Perseids of August 2026 are the next big shower
+    await page.clock.setFixedTime(new Date('2026-08-01T12:00:00Z'));
+    await page.goto('./#cosmos');
+    await page.locator('#events-btn').click();
+    const panel = page.locator('#events');
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('li').first()).toBeVisible({ timeout: 20_000 });
+    await expect(panel).toContainText('Launch times are not available'); // no launch feed in the test build
+    await expect(panel).toContainText('Total solar eclipse');
+    await panel.getByRole('button', { name: /Perseids peak/ }).click();
+    await expect(panel).toHaveCount(0);
+    await expect(page.locator('#tabs .tab.on')).toHaveText('Sky Tonight', { timeout: 20_000 });
+    await expect(page.locator('#dateTxt')).toContainText(/2026-08-1[23]/);
+    expect(errors).toEqual([]);
+  });
+
+  test('kinds can be turned off and on, and Escape closes the calendar', async ({ page }) => {
+    await boot(page);
+    await page.clock.setFixedTime(new Date('2026-08-01T12:00:00Z'));
+    await page.goto('./#cosmos');
+    await page.locator('#events-btn').click();
+    const panel = page.locator('#events');
+    await expect(panel.getByRole('button', { name: /Perseids peak/ })).toBeVisible({ timeout: 20_000 });
+    await panel.getByLabel(/Meteor showers/).uncheck();
+    await expect(panel.getByRole('button', { name: /Perseids peak/ })).toHaveCount(0);
+    await panel.getByLabel(/Meteor showers/).check();
+    await expect(panel.getByRole('button', { name: /Perseids peak/ })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+  });
+
+  test('an eclipse opens Earth orbit at the moment of the eclipse', async ({ page }) => {
+    await boot(page);
+    await page.clock.setFixedTime(new Date('2026-08-01T12:00:00Z'));
+    await page.goto('./#cosmos');
+    await page.locator('#events-btn').click();
+    await page
+      .locator('#events')
+      .getByRole('button', { name: /Total solar eclipse/ })
+      .first()
+      .click();
+    await expect(page.locator('#tabs .tab.on')).toHaveText('Earth Orbit', { timeout: 20_000 });
+    await expect(page.locator('#iT')).toHaveText(/Moon/);
+    await expect(page.locator('#dateTxt')).toContainText('2026-08-12');
+  });
+});

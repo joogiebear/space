@@ -112,7 +112,7 @@ export const TOURS: Tour[] = [
         text: 'Around 18:17 UTC the Moon’s shadow swept across Mexico, the United States and Canada. The Moon lines up exactly between the Sun and Earth.',
       },
       {
-        view: { scene: 'earth', sel: 'earth', t: '2026-12-21T14:50:00.000Z', r: 60 },
+        view: { scene: 'earth', sel: 'earth', t: '2026-12-21T20:50:00.000Z', r: 60 },
         title: 'December solstice',
         text: 'The northern hemisphere is tilted as far from the Sun as it gets. Watch the day-night line: the far north stays in darkness all day.',
       },

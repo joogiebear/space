@@ -10,6 +10,7 @@ export const STATIC_FILES: Record<string, string> = {
   '/api/sats': 'sats.json',
   '/api/sbdb': 'sbdb.json',
   '/api/craft': 'craft.json',
+  '/api/launches': 'launches.json',
   '/api/exo': 'exo.json',
   '/api/constellations': 'constellations.json',
   '/api/stars.bin': 'stars.bin',
@@ -86,6 +87,15 @@ export const fetchSatellites = () =>
       'Satellite data is not available yet (CelesTrak limits downloads to one per group every 2 hours, so a refresh can lag). Try again in a few minutes.',
     );
   });
+/** [net (UTC ISO), rocket and payload, provider, site, status] */
+export type LaunchRow = [string, string, string, string, string];
+export interface LaunchList {
+  fetched: string;
+  launches: LaunchRow[];
+}
+/** Optional: the calendar works without launches. */
+export const fetchLaunches = () =>
+  json<LaunchList>('/api/launches').catch((): LaunchList => ({ fetched: '', launches: [] }));
 export const fetchSmallBodies = () => json<SmallBodies>('/api/sbdb');
 /** Optional: the solar system still works without spacecraft. */
 export const fetchSpacecraft = () => json<CraftData>('/api/craft').catch((): CraftData => ({ when: '', craft: [] }));

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EventsPanel from './components/EventsPanel.vue';
 import HoverTip from './components/HoverTip.vue';
 import InfoPanel from './components/InfoPanel.vue';
 import LocationDialog from './components/LocationDialog.vue';
@@ -20,6 +21,7 @@ import { ui } from './store';
   <TimePanel />
   <MobileBar />
   <HoverTip />
+  <EventsPanel />
   <TourPanel />
   <ToastMessage />
   <LocationDialog />

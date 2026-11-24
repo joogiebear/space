@@ -4,6 +4,7 @@ import { goUp, openScene } from '@/engine/sceneManager';
 import { deselect } from '@/engine/selection';
 import { stopTour, tourActive } from '@/engine/tour';
 import { App } from '@/engine/state';
+import { closeEvents, eventsUi } from './eventsStore';
 import { focusSearch } from './searchFocus';
 import { toast } from './toast';
 
@@ -24,7 +25,8 @@ export function handleKey(e: KeyboardEvent): boolean {
   const stop = () => e.preventDefault();
 
   if (e.key === 'Escape') {
-    if (tourActive()) stopTour();
+    if (eventsUi.open) closeEvents();
+    else if (tourActive()) stopTour();
     else if (App.sel) deselect();
     else goUp();
     return true;

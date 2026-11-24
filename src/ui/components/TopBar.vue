@@ -2,6 +2,7 @@
 import { TABS, chain, goScene, sceneTitle } from '@/engine/sceneManager';
 import { startTour } from '@/engine/tour';
 import { TOURS } from '@/scenes/tours';
+import { eventsUi, toggleEvents } from '../eventsStore';
 import { ui } from '../store';
 
 /** Breadcrumb trail (click to go up) and the direct-jump tab bar. */
@@ -47,6 +48,16 @@ const jumpTo = (id: string) => goScene(id, { deeper: chain(id).length > ui.path.
         @click="jumpTo(id)"
       >
         {{ label }}
+      </button>
+      <button
+        id="events-btn"
+        class="tab"
+        aria-haspopup="dialog"
+        :aria-expanded="eventsUi.open"
+        title="Eclipses, meteor showers, moon phases, planets and launches"
+        @click="toggleEvents"
+      >
+        Events
       </button>
       <select id="tours" aria-label="Guided tours" @change="onTour">
         <option value="">Guided tours…</option>

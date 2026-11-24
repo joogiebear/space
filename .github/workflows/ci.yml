@@ -55,6 +55,8 @@ jobs:
         run: python -m compileall -q server
       - name: Import the app (catches missing names between modules)
         run: python -c "import server.app; print('routes:', sorted(server.app.API))"
+      - name: Python unit tests
+        run: python -m unittest discover -s server -p "test_*.py" -t .
 
   e2e:
     name: Browser smoke test (desktop and phone)

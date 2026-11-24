@@ -27,6 +27,7 @@ describe('endpoint', () => {
       'constellations.json',
       'craft.json',
       'exo.json',
+      'launches.json',
       'sats.json',
       'sbdb.json',
       'stars.bin',

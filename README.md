@@ -80,6 +80,20 @@ precession, the Sun and planets from the JPL elements the solar system already u
 about 0.3 degrees. Planet brightness is approximate (distance only, no phase terms). Your location is stored only in
 your browser (set it from **Your location** in the Objects list); until then the sky is shown from Greenwich.
 
+## Astronomy calendar
+
+**Events** in the top bar lists what is coming up in the next 3 months, year or 3 years: eclipses, moon phases,
+equinoxes and solstices, meteor shower peaks (with how much moonlight there will be), planet oppositions, greatest
+elongations and close pairings, and rocket launches. Moon-and-planet pairings are off until you tick them. Opening an
+event takes you to it: eclipses to Earth orbit at the moment of the eclipse, sky events to Sky Tonight from your
+location at the best time that night.
+
+Everything but launches is computed in the browser (`src/lib/events.ts`, tested against almanac dates). Eclipses
+come from NASA's published tables (`src/data/eclipses.ts`, 2025 to 2034); predicting one from a simplified lunar theory
+could miss a marginal one. Moon phase times are good to about half an hour. Launches come from The Space Devs'
+[Launch Library 2](https://thespacedevs.com/llapi) (free tier, refreshed every few hours by the site's data job) and are
+optional: the calendar works without them.
+
 ## Share links and tours
 
 The address bar always carries the scene and the selected object (`#solar?sel=mars`). **Share** in the Time panel
@@ -199,6 +213,8 @@ server at run time and cached locally.
 - Exoplanets: [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu)
 - Asteroids, comets and spacecraft tracks: [JPL Small-Body Database and Horizons](https://ssd.jpl.nasa.gov)
 - Planet positions: JPL approximate Keplerian elements (1800-2050)
+- Eclipse dates and times 2025 to 2034: [NASA GSFC Eclipse Web Site](https://eclipse.gsfc.nasa.gov) (Fred Espenak)
+- Rocket launch schedule: [The Space Devs, Launch Library 2](https://thespacedevs.com/llapi) (free tier)
 - Constellation figures: Stellarium's "modern" sky culture
 - Satellite propagation: [satellite.js](https://github.com/shashwatak/satellite-js); rendering: [three.js](https://threejs.org)
 - Earth and Moon textures (`public/assets/tex/`) are processed NASA imagery: Blue Marble Next Generation and Black Marble

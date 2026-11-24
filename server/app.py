@@ -7,6 +7,7 @@ from .sources.celestrak import build_sats
 from .sources.constellations import build_constellations
 from .sources.exoplanets import build_exo
 from .sources.horizons import build_craft
+from .sources.launches import build_launches
 from .sources.smallbodies import build_sbdb
 from .sources.stars import build_stars
 
@@ -21,6 +22,8 @@ API = {
     '/api/exo': ('exo.json', 3 * 24 * HOUR, build_exo, 'application/json'),
     '/api/sbdb': ('sbdb.json', 3 * 24 * HOUR, build_sbdb, 'application/json'),
     '/api/craft': ('craft.json', 12 * HOUR, build_craft, 'application/json'),
+    # the free tier allows 15 requests an hour; a launch date can move, so refresh it often enough to be useful
+    '/api/launches': ('launches.json', 2 * HOUR, build_launches, 'application/json'),
 }
 
 
@@ -76,7 +79,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def prewarm():
-    for p in ('/api/craft', '/api/sbdb', '/api/exo', '/api/stars.bin', '/api/sats', '/api/constellations'):
+    for p in ('/api/craft', '/api/launches', '/api/sbdb', '/api/exo', '/api/stars.bin', '/api/sats', '/api/constellations'):
         name, ttl, builder, _ = API[p]
         try:
             cached(name, ttl, builder)
