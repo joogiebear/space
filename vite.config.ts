@@ -3,7 +3,9 @@ import { defineConfig } from 'vitest/config';
 import { fileURLToPath, URL } from 'node:url';
 
 // `npm run dev` serves the front end on :5173 and forwards /api to the Python data server (`npm run api`, :8080).
+// VITE_BASE sets the public path for hosting under a sub-folder, e.g. /space/ on GitHub Pages.
 export default defineConfig({
+  base: process.env.VITE_BASE ?? '/',
   plugins: [vue()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: { host: true, proxy: { '/api': 'http://localhost:8080' } },

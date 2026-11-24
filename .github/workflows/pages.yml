@@ -1,0 +1,67 @@
+name: Deploy site
+
+# Publishes the app to GitHub Pages. Pages cannot run the Python server, so this job runs it once instead:
+# it builds the front end in static mode, exports every API payload to dist/data, and deploys both together.
+# The schedule re-runs it so the satellite data (CelesTrak updates every 2 hours) never goes far out of date.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never overlap deployments, and never cancel one that is mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Keep the last good data between runs: upstreams rate-limit (CelesTrak allows one download per group
+      # per 2 hours per IP), and the exporter falls back to the cached copy when a source refuses.
+      - name: Restore data cache
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: site-data-${{ github.run_id }}
+          restore-keys: site-data-
+
+      - name: Build the site (static data mode)
+        env:
+          VITE_STATIC_DATA: '1'
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: npx vite build
+
+      - name: Fetch and export the data
+        run: python -m server.export dist/data
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

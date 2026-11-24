@@ -1,4 +1,28 @@
-/** Client for the Python data server (`/api/*`). Every response shape is described here, once. */
+/** Client for the data API. Every response shape is described here, once.
+ *
+ *  Two ways to serve it: the Python server answers `/api/*` live, or (static hosting, VITE_STATIC_DATA=1) the same
+ *  payloads are pre-built into `data/*.json` files next to the site by `python -m server.export`. */
+
+const STATIC_DATA = import.meta.env.VITE_STATIC_DATA === '1';
+
+/** API route -> exported file name (matches server/export.py). */
+export const STATIC_FILES: Record<string, string> = {
+  '/api/sats': 'sats.json',
+  '/api/sbdb': 'sbdb.json',
+  '/api/craft': 'craft.json',
+  '/api/exo': 'exo.json',
+  '/api/constellations': 'constellations.json',
+  '/api/stars.bin': 'stars.bin',
+  '/api/stars.json': 'stars_names.json',
+};
+
+/** Where to fetch an API route from, given the hosting mode and the site's base path. */
+export function endpoint(route: string, staticData = STATIC_DATA, base = import.meta.env.BASE_URL): string {
+  if (!staticData) return route;
+  const file = STATIC_FILES[route];
+  if (!file) throw new Error('Unknown data route ' + route);
+  return `${base}data/${file}`;
+}
 
 /** [name, TLE line 1, TLE line 2, category index] */
 export type SatRecord = [string, string, string, number];
@@ -22,14 +46,14 @@ export interface CraftTrack { name: string; id: string; track: number[][] }
 export interface CraftData { when: string; craft: CraftTrack[] }
 
 async function get(path: string): Promise<Response> {
-  const r = await fetch(path);
-  if (!r.ok) throw new Error(`${path}: ${r.status} ${r.statusText}`);
+  const url = endpoint(path), r = await fetch(url);
+  if (!r.ok) throw new Error(`${url}: ${r.status} ${r.statusText}`);
   return r;
 }
 const json = async <T>(path: string) => (await get(path)).json() as Promise<T>;
 
 export const fetchSatellites = () => json<SatCatalogue>('/api/sats').catch(() => {
-  throw new Error('Satellite data is not available yet (CelesTrak limits downloads to one per group every 2 hours). Try again in a few minutes.');
+  throw new Error('Satellite data is not available yet (CelesTrak limits downloads to one per group every 2 hours, so a refresh can lag). Try again in a few minutes.');
 });
 export const fetchSmallBodies = () => json<SmallBodies>('/api/sbdb');
 /** Optional: the solar system still works without spacecraft. */
