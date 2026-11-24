@@ -2,14 +2,16 @@ import { contextLost, contextRestored } from '@/engine/gl';
 import { startLoop } from '@/engine/loop';
 import { initInput } from '@/engine/input';
 import { goScene, isSceneId } from '@/engine/sceneManager';
+import { applyView, initShare, viewFromHash } from '@/engine/share';
+import { App } from '@/engine/state';
 import { initUI } from '@/ui';
 import { toast } from '@/ui/toast';
 import '@/scenes';
 
-/** Scene from the URL hash (#cosmos, #starmap, #solar, #earth, #gal:andromeda...), or null. */
+/** The view in the URL hash (#solar, or #solar?sel=mars&t=... from a share link), if it names a real scene. */
 const fromHash = () => {
-  const h = decodeURIComponent(location.hash.slice(1));
-  return h && isSceneId(h) ? h : null;
+  const v = viewFromHash();
+  return v && isSceneId(v.scene) ? v : null;
 };
 
 initUI();
@@ -21,9 +23,13 @@ startLoop();
 contextLost.on(() => toast('Graphics paused', 'The browser reset the graphics card. Restoring…'));
 contextRestored.on(() => location.reload());
 
-goScene(fromHash() || 'cosmos', { instant: true });
+initShare();
+const start = fromHash();
+goScene(start?.scene || 'cosmos', { instant: true }).then(() => start && applyView(start));
 // back/forward and manual hash edits switch scenes; the app's own hash writes use replaceState, which does not fire this
 addEventListener('hashchange', () => {
-  const h = fromHash();
-  if (h) goScene(h);
+  const v = fromHash();
+  if (!v) return;
+  if (App.scene?.id === v.scene) applyView(v);
+  else goScene(v.scene).then(() => App.scene?.id === v.scene && applyView(v));
 });

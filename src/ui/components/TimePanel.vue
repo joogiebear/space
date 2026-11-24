@@ -5,6 +5,9 @@ import { select } from '@/engine/selection';
 import { opts, scene, sim } from '@/engine/state';
 import { fmtDate, isoToJD } from '@/lib';
 import { scenePresets, ui } from '../store';
+import { shareUrl } from '@/engine/share';
+import { copyText } from '../clipboard';
+import { announce } from '../announce';
 import { toast } from '../toast';
 
 /** Speed slider (log scale, 1x to 1e8x), pause/live, label and auto-orbit toggles, and the jump-to-moment menu. */
@@ -22,6 +25,14 @@ function onSlide(e: Event) {
   ui.sliderPos = v;
   sim.live = false;
   setRate(Math.pow(10, (v / 100) * 8), true);
+}
+
+async function share() {
+  const url = shareUrl();
+  if (await copyText(url)) {
+    toast('Link copied', 'It opens this view, selection, date and camera.', 3500);
+    announce('Link copied to the clipboard');
+  } else toast('Could not copy', url, 9000);
 }
 
 function onJump(e: Event) {
@@ -63,6 +74,7 @@ function onJump(e: Event) {
     <div class="row">
       <button id="pause" @click="togglePause">{{ ui.paused ? 'Play' : 'Pause' }}</button>
       <button id="live" @click="goLive">Live</button>
+      <button id="share" title="Copy a link to this exact view" @click="share">Share</button>
       <label><input v-model="opts.labels" type="checkbox" /> Labels</label>
       <label><input v-model="opts.autoOrbit" type="checkbox" /> Auto-orbit</label>
     </div>

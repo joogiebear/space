@@ -7,6 +7,8 @@ async function boot(page: Page) {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => m.type() === 'error' && !IGNORED.test(m.text()) && errors.push(m.text()));
+  // The tests never depend on live data: report every data file as missing, the way a real server would.
+  await page.route('**/data/**', route => route.fulfill({ status: 404, body: 'not found' }));
   await page.goto('./#cosmos');
   await expect(page.locator('#gl canvas')).toBeVisible();
   return errors;
@@ -103,5 +105,43 @@ test.describe('touch', () => {
     await touch(page, 'touchEnd', []);
     await page.waitForTimeout(400);
     await expect(page.locator('#info.open')).toHaveCount(0);
+  });
+});
+
+test.describe('share links', () => {
+  test('a link restores the scene, the selected object and the date', async ({ page }) => {
+    const errors = await boot(page);
+    await page.goto('./#solar?sel=mars&t=1969-07-20T20:17:00.000Z&r=1&pz=1');
+    await expect(page.locator('#iT')).toHaveText(/Mars/i, { timeout: 20_000 });
+    await expect(page.locator('#dateTxt')).toContainText('1969-07-20');
+    // the address bar keeps the scene and selection, so a plain copy of the URL still works
+    await expect.poll(() => page.evaluate(() => location.hash)).toContain('sel=mars');
+    expect(errors).toEqual([]);
+  });
+
+  test('an unknown scene or object in a link is ignored, not fatal', async ({ page }) => {
+    const errors = await boot(page);
+    await page.goto('./#solar?sel=does-not-exist&t=garbage');
+    await expect(page.locator('#gl canvas')).toBeVisible();
+    await page.waitForTimeout(1500);
+    await page.goto('./#nowhere');
+    await expect(page.locator('#gl canvas')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('Share copies a link that opens the same view', async ({ page, context, isMobile }) => {
+    test.skip(isMobile, 'clipboard permissions are desktop-only in the test browser');
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await boot(page);
+    await page.goto('./#solar?sel=jupiter&t=2000-01-01T00:00:00.000Z&r=1&pz=1');
+    await expect(page.locator('#iT')).toHaveText(/Jupiter/i, { timeout: 20_000 });
+    await page.locator('#share').click();
+    const link = await page.evaluate(() => navigator.clipboard.readText());
+    expect(link).toMatch(/#solar\?.*sel=jupiter/);
+    expect(link).toContain('t=2000-01-01');
+    expect(link).toMatch(/[?&]z=/); // the camera is included
+    await page.goto(link);
+    await expect(page.locator('#iT')).toHaveText(/Jupiter/i, { timeout: 20_000 });
+    await expect(page.locator('#dateTxt')).toContainText('2000-01-01');
   });
 });
