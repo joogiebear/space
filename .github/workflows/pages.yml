@@ -26,22 +26,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - run: npm ci
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
       # Keep the last good data between runs: upstreams rate-limit (CelesTrak allows one download per group
       # per 2 hours per IP), and the exporter falls back to the cached copy when a source refuses.
       - name: Restore data cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: cache
           key: site-data-${{ github.run_id }}
@@ -56,8 +56,8 @@ jobs:
       - name: Fetch and export the data
         run: python -m server.export dist/data
 
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -73,7 +73,7 @@ jobs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # Fails (and so emails you) when the live site is up but its data is missing or stale: for example when
   # CelesTrak keeps refusing the runner and the last good copy ages past the limit.
@@ -84,7 +84,7 @@ jobs:
     permissions:
       actions: write
     steps:
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Check the live data
