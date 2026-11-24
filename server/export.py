@@ -15,7 +15,7 @@ from .app import API
 from .common import CACHE, cached, log
 
 # cache file written by each builder; (file in the output folder is the same name)
-OPTIONAL = {'sats.json', 'launches.json'}
+OPTIONAL = {'sats.json', 'launches.json', 'comets.json'}
 EXTRA = ['stars_names.json']  # written as a side effect of the stars builder
 
 

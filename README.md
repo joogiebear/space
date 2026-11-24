@@ -87,16 +87,22 @@ your browser (set it from **Your location** in the Objects list); until then the
 ## Astronomy calendar
 
 **Events** in the top bar lists what is coming up in the next 3 months, year or 3 years: eclipses, moon phases,
-equinoxes and solstices, meteor shower peaks (with how much moonlight there will be), planet oppositions, greatest
-elongations and close pairings, and rocket launches. Moon-and-planet pairings are off until you tick them. Opening an
+equinoxes and solstices, meteor shower peaks (with how much moonlight there will be), comets at perihelion, planet oppositions,
+greatest elongations and close pairings, and rocket launches. Moon-and-planet pairings are off until you tick them. Opening an
 event takes you to it: eclipses to Earth orbit at the moment of the eclipse, sky events to Sky Tonight from your
 location at the best time that night.
 
-Everything but launches is computed in the browser (`src/lib/events.ts`, tested against almanac dates). Eclipses
+Everything but launches and comets is computed in the browser (`src/lib/events.ts`, tested against almanac dates). Eclipses
 come from NASA's published tables (`src/data/eclipses.ts`, 2025 to 2034); predicting one from a simplified lunar theory
 could miss a marginal one. Moon phase times are good to about half an hour. Launches come from The Space Devs'
 [Launch Library 2](https://thespacedevs.com/llapi) (free tier, refreshed every few hours by the site's data job) and are
 optional: the calendar works without them.
+
+Comets come from the JPL Small-Body Database (orbit, perihelion time and total magnitude, refreshed daily). The calendar
+lists comets reaching perihelion within three years whose expected brightness is magnitude 10 or better, worked out
+with the standard formula from the comet's distance from the Sun and from Earth. Comet brightness is notoriously hard
+to predict and estimates run high, so the entry says "about". Only closed (elliptical) orbits are covered, and often
+there is nothing to list: most comets are too faint. Also optional.
 
 ## Share links and tours
 
@@ -218,6 +224,7 @@ server at run time and cached locally.
 - Asteroids, comets and spacecraft tracks: [JPL Small-Body Database and Horizons](https://ssd.jpl.nasa.gov)
 - Planet positions: JPL approximate Keplerian elements (1800-2050)
 - Eclipse dates and times 2025 to 2034: [NASA GSFC Eclipse Web Site](https://eclipse.gsfc.nasa.gov) (Fred Espenak)
+- Comet orbits and magnitudes: [JPL Small-Body Database](https://ssd-api.jpl.nasa.gov/doc/sbdb_query.html)
 - Rocket launch schedule: [The Space Devs, Launch Library 2](https://thespacedevs.com/llapi) (free tier)
 - Constellation figures: Stellarium's "modern" sky culture
 - Satellite propagation: [satellite.js](https://github.com/shashwatak/satellite-js); rendering: [three.js](https://threejs.org)

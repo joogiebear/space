@@ -1,13 +1,13 @@
 /**
- * The astronomy calendar: moon phases, equinoxes and solstices, meteor showers, planet events, eclipses and launches.
+ * The astronomy calendar: moon phases, equinoxes and solstices, meteor showers, comets, planet events, eclipses and launches.
  * Pure functions on top of lib/sky.ts, so every date can be tested against published almanac values.
  *
  * Accuracy: moon phase times are good to about half an hour (abridged lunar theory); seasons, shower peaks and planet
  * events come from the Sun and the JPL planet elements, good to well under an hour. Eclipses are NASA's published times.
  */
 import { LUNAR_ECLIPSES, SOLAR_ECLIPSES, eclipseUt } from '@/data/eclipses';
-import type { LaunchRow } from '@/data/api';
-import { planetEcl } from './astro';
+import type { CometRow, LaunchRow } from '@/data/api';
+import { orbitPos, planetEcl } from './astro';
 import { TAU } from './math';
 import {
   EPS_J2000,
@@ -25,7 +25,7 @@ import {
 import { isoToJD } from './time';
 import type { ViewState } from './view';
 
-export type EventKind = 'eclipse' | 'moon' | 'season' | 'meteor' | 'planet' | 'moonplanet' | 'launch';
+export type EventKind = 'eclipse' | 'moon' | 'season' | 'meteor' | 'comet' | 'planet' | 'moonplanet' | 'launch';
 
 export interface AstroEvent {
   id: string;
@@ -47,6 +47,7 @@ export const KIND_LABEL: Record<EventKind, string> = {
   moon: 'Moon phases',
   season: 'Seasons',
   meteor: 'Meteor showers',
+  comet: 'Comets',
   planet: 'Planets',
   moonplanet: 'Moon and planets',
   launch: 'Launches',
@@ -201,7 +202,9 @@ export const SHOWERS: { name: string; lon: number; zhr: number; radiant: string 
   { name: 'Perseids', lon: 140, zhr: 100, radiant: 'Perseus' },
   { name: 'Draconids', lon: 195.4, zhr: 10, radiant: 'Draco' },
   { name: 'Orionids', lon: 208, zhr: 20, radiant: 'Orion' },
+  { name: 'Alpha Capricornids', lon: 127, zhr: 5, radiant: 'Capricornus' },
   { name: 'Southern Taurids', lon: 223, zhr: 5, radiant: 'Taurus' },
+  { name: 'Northern Taurids', lon: 230, zhr: 5, radiant: 'Taurus' },
   { name: 'Leonids', lon: 236, zhr: 15, radiant: 'Leo' },
   { name: 'Geminids', lon: 262.2, zhr: 150, radiant: 'Gemini' },
   { name: 'Ursids', lon: 270.7, zhr: 10, radiant: 'Ursa Minor' },
@@ -363,6 +366,60 @@ export function launchEvents(rows: LaunchRow[], jd0: number, jd1: number): Astro
       jd,
       title: name,
       detail: [provider, site, status && `status: ${status}`].filter(Boolean).join(' · '),
+    });
+  }
+  return out;
+}
+
+const unit = (v: Vec3): Vec3 => {
+  const n = Math.hypot(...v) || 1;
+  return [v[0] / n, v[1] / n, v[2] / n];
+};
+
+/** Faintest total magnitude worth listing: a modest telescope; binoculars reach about 9. */
+export const COMET_LIMIT = 10;
+
+/**
+ * How bright a comet should be at its closest to the Sun: m = M1 + 5 log10(distance from Earth) + K1 log10(distance
+ * from the Sun), the standard total-magnitude formula. Comets are unpredictable and these estimates run optimistic,
+ * so the calendar says "about" and sets a limit with some margin.
+ */
+export function cometPerihelion(row: CometRow) {
+  const [, q, e, i, om, w, tp, m1, k1] = row,
+    a = q / (1 - e),
+    pos = [0, 0, 0],
+    earth = [0, 0, 0],
+    D = Math.PI / 180;
+  orbitPos(a, e, i * D, om * D, w * D, 0, pos);
+  planetEcl('earth', tp, earth);
+  const toComet: Vec3 = [pos[0] - earth[0], pos[1] - earth[1], pos[2] - earth[2]],
+    toSun: Vec3 = [-earth[0], -earth[1], -earth[2]],
+    delta = Math.hypot(...toComet);
+  return {
+    jd: tp,
+    delta,
+    mag: m1 + 5 * Math.log10(delta) + k1 * Math.log10(q),
+    /** angle between the comet and the Sun as seen from Earth, degrees: small means lost in the glare */
+    elongation: separationDeg(unit(toComet), unit(toSun)),
+  };
+}
+
+/** Comets at perihelion that should be bright enough to look for. */
+export function cometEvents(rows: CometRow[], jd0: number, jd1: number): AstroEvent[] {
+  const out: AstroEvent[] = [];
+  for (const row of rows) {
+    if (row[6] < jd0 || row[6] > jd1) continue;
+    const c = cometPerihelion(row);
+    if (!(c.mag <= COMET_LIMIT)) continue;
+    const glare = c.elongation < 25;
+    out.push({
+      id: `comet-${row[0]}`,
+      kind: 'comet',
+      jd: c.jd,
+      title: `Comet ${row[0]} at perihelion`,
+      detail: `Closest to the Sun, ${row[1].toFixed(2)} AU, and ${c.delta.toFixed(2)} AU from Earth. Expected about magnitude ${c.mag.toFixed(1)}${c.mag <= 6 ? ': visible to the naked eye under dark skies' : c.mag <= 8.5 ? ': a binocular object' : ': a telescope object'}${glare ? `, but only ${c.elongation.toFixed(0)}° from the Sun, so hard to see` : ''}. Comet brightness is hard to predict, and estimates often run high.`,
+      // the solar scene draws only the orbits it can solve (e < 0.995), so only those can be selected by name
+      view: { scene: 'solar', t: iso(c.jd), ...(row[2] < 0.995 ? { q: row[0] } : {}) },
     });
   }
   return out;

@@ -11,6 +11,7 @@ export const STATIC_FILES: Record<string, string> = {
   '/api/sbdb': 'sbdb.json',
   '/api/craft': 'craft.json',
   '/api/launches': 'launches.json',
+  '/api/comets': 'comets.json',
   '/api/exo': 'exo.json',
   '/api/constellations': 'constellations.json',
   '/api/stars.bin': 'stars.bin',
@@ -96,6 +97,11 @@ export interface LaunchList {
 /** Optional: the calendar works without launches. */
 export const fetchLaunches = () =>
   json<LaunchList>('/api/launches').catch((): LaunchList => ({ fetched: '', launches: [] }));
+/** [name, q (AU), e, i, node, argPeri (degrees), perihelion JD, total magnitude M1, slope K1] */
+export type CometRow = [string, number, number, number, number, number, number, number, number];
+/** Optional: the calendar works without comets. */
+export const fetchComets = () =>
+  json<{ comets: CometRow[] }>('/api/comets').catch((): { comets: CometRow[] } => ({ comets: [] }));
 export const fetchSmallBodies = () => json<SmallBodies>('/api/sbdb');
 /** Optional: the solar system still works without spacecraft. */
 export const fetchSpacecraft = () => json<CraftData>('/api/craft').catch((): CraftData => ({ when: '', craft: [] }));

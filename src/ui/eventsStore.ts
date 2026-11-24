@@ -1,9 +1,10 @@
 import { reactive } from 'vue';
-import { fetchLaunches, type LaunchRow } from '@/data/api';
+import { fetchComets, fetchLaunches, type CometRow, type LaunchRow } from '@/data/api';
 import { showView } from '@/engine/navigate';
 import {
   KIND_LABEL,
   bestViewingMoment,
+  cometEvents,
   computeEvents,
   launchEvents,
   type AstroEvent,
@@ -21,6 +22,7 @@ export const DEFAULT_KINDS: Record<EventKind, boolean> = {
   moon: true,
   season: true,
   meteor: true,
+  comet: true,
   planet: true,
   moonplanet: false,
   launch: true,
@@ -41,6 +43,7 @@ export const eventsUi = reactive({
 
 const cache = new Map<string, AstroEvent[]>();
 let launches: { at: number; rows: LaunchRow[]; ok: boolean } | null = null,
+  comets: CometRow[] | null = null,
   token = 0;
 const LAUNCH_TTL_MS = 30 * 60 * 1000;
 const idle = () => new Promise<void>(r => setTimeout(r, 0));
@@ -68,6 +71,10 @@ export async function refreshEvents() {
       if (mine !== token) return;
       eventsUi.launchNote = launches.ok ? '' : 'Launch times are not available right now.';
       list = launchEvents(launches.rows, from, to);
+    } else if (kind === 'comet') {
+      comets ??= (await fetchComets()).comets;
+      if (mine !== token) return;
+      list = cometEvents(comets, from, to);
     } else {
       const key = `${kind}|${eventsUi.months}`;
       if (!cache.has(key)) {
@@ -126,6 +133,7 @@ export async function showEvent(ev: AstroEvent) {
 export function resetEventsForTests() {
   cache.clear();
   launches = null;
+  comets = null;
   token++;
   eventsUi.open = false;
   eventsUi.months = 12;

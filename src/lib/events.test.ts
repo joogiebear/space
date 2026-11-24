@@ -4,6 +4,8 @@ import {
   KIND_LABEL,
   SHOWERS,
   bestViewingMoment,
+  cometEvents,
+  cometPerihelion,
   computeEvents,
   crossings,
   extrema,
@@ -234,5 +236,60 @@ describe('labels', () => {
   it('has a label for every kind of event', () => {
     for (const k of ['eclipse', 'moon', 'season', 'meteor', 'planet', 'moonplanet', 'launch'] as const)
       expect(KIND_LABEL[k]).toBeTruthy();
+  });
+});
+
+describe('comets', () => {
+  // Halley at its 1986 perihelion: q 0.587 AU, e 0.967, retrograde; JPL elements
+  const halley: [string, number, number, number, number, number, number, number, number] = [
+    '1P/Halley',
+    0.5871,
+    0.96714,
+    162.26,
+    58.42,
+    111.33,
+    isoToJD('1986-02-09T11:00:00Z'),
+    5.5,
+    8,
+  ];
+
+  it('places a comet at its perihelion distance from the Sun, and works out a sensible distance from Earth', () => {
+    const c = cometPerihelion(halley);
+    expect(c.jd).toBe(halley[6]);
+    // on the far side of the Sun from Earth in February 1986: well over an AU away, not near it
+    expect(c.delta).toBeGreaterThan(1.0);
+    expect(c.delta).toBeLessThan(2.2);
+    expect(c.elongation).toBeGreaterThan(0);
+    expect(c.elongation).toBeLessThan(180);
+  });
+
+  it('uses the standard total-magnitude formula', () => {
+    const c = cometPerihelion(halley);
+    expect(c.mag).toBeCloseTo(5.5 + 5 * Math.log10(c.delta) + 8 * Math.log10(0.5871), 10);
+  });
+
+  it('lists comets in the window that are bright enough, and nothing else', () => {
+    const faint: typeof halley = ['faint', 1, 0.5, 10, 20, 30, halley[6], 19, 10];
+    const got = cometEvents([halley, faint], halley[6] - 5, halley[6] + 5);
+    expect(got.map(e => e.title)).toEqual(['Comet 1P/Halley at perihelion']);
+    expect(got[0].view).toMatchObject({ scene: 'solar', q: '1P/Halley' });
+    const eccentric: typeof halley = [...halley];
+    eccentric[2] = 0.9999;
+    expect(cometEvents([eccentric], halley[6] - 5, halley[6] + 5)[0].view?.q).toBeUndefined(); // too eccentric for the solar scene to draw
+    expect(got[0].detail).toMatch(/Expected about magnitude -?\d/);
+    expect(cometEvents([halley], halley[6] + 1, halley[6] + 9)).toHaveLength(0); // outside the window
+  });
+
+  it('warns when the comet is lost in the Sun�s glare', () => {
+    const near: typeof halley = ['near sun', 0.3, 0.9, 5, 0, 0, isoToJD('2026-06-01T00:00:00Z'), 3, 10];
+    const c = cometPerihelion(near);
+    const got = cometEvents([near], near[6] - 1, near[6] + 1);
+    if (c.elongation < 25) expect(got[0].detail).toContain('hard to see');
+    else expect(got[0].detail).not.toContain('hard to see');
+  });
+
+  it('has a label and is not part of a normal calendar run unless asked for', () => {
+    expect(KIND_LABEL.comet).toBe('Comets');
+    expect(run('2026-01-01', '2026-12-31', ['comet'])).toHaveLength(0); // comets come from the network
   });
 });

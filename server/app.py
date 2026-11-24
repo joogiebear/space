@@ -4,6 +4,7 @@ from http.server import SimpleHTTPRequestHandler
 
 from .common import CACHE, HOUR, ROOT, cached, log, status
 from .sources.celestrak import build_sats
+from .sources.comets import build_comets
 from .sources.constellations import build_constellations
 from .sources.exoplanets import build_exo
 from .sources.horizons import build_craft
@@ -24,6 +25,7 @@ API = {
     '/api/craft': ('craft.json', 12 * HOUR, build_craft, 'application/json'),
     # the free tier allows 15 requests an hour; a launch date can move, so refresh it often enough to be useful
     '/api/launches': ('launches.json', 2 * HOUR, build_launches, 'application/json'),
+    '/api/comets': ('comets.json', 24 * HOUR, build_comets, 'application/json'),
 }
 
 
@@ -79,7 +81,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def prewarm():
-    for p in ('/api/craft', '/api/launches', '/api/sbdb', '/api/exo', '/api/stars.bin', '/api/sats', '/api/constellations'):
+    for p in ('/api/craft', '/api/launches', '/api/comets', '/api/sbdb', '/api/exo', '/api/stars.bin', '/api/sats', '/api/constellations'):
         name, ttl, builder, _ = API[p]
         try:
             cached(name, ttl, builder)

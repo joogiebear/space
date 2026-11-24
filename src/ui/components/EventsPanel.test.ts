@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isoToJD } from '@/lib';
 import type { AstroEvent } from '@/lib/events';
 
-vi.mock('@/data/api', () => ({ fetchLaunches: async () => ({ fetched: '', launches: [] }) }));
+vi.mock('@/data/api', () => ({
+  fetchLaunches: async () => ({ fetched: '', launches: [] }),
+  fetchComets: async () => ({ comets: [] }),
+}));
 const showView = vi.fn(async (_v: unknown) => true);
 vi.mock('@/engine/navigate', () => ({ showView: (v: unknown) => showView(v) }));
 
@@ -71,8 +74,8 @@ describe('EventsPanel', () => {
   it('every kind has a checkbox, and unticking one changes the setting', async () => {
     await open([]);
     const boxes = [...host.querySelectorAll<HTMLInputElement>('.chips input')];
-    expect(boxes).toHaveLength(7);
-    expect(boxes.filter(b => b.checked)).toHaveLength(6); // moon and planet pairings start off
+    expect(boxes).toHaveLength(8);
+    expect(boxes.filter(b => b.checked)).toHaveLength(7); // moon and planet pairings start off
     boxes[0].checked = false;
     boxes[0].dispatchEvent(new Event('change'));
     expect(eventsUi.kinds.eclipse).toBe(false);

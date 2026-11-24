@@ -150,6 +150,9 @@
 #events .meteor {
   border-left-color: #ffe27a;
 }
+#events .comet {
+  border-left-color: #7fe8e8;
+}
 #events .planet {
   border-left-color: #8fb4ff;
 }
