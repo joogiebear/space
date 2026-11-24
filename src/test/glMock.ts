@@ -4,7 +4,10 @@ import * as THREE from 'three';
  *  vi.mock('@/engine/gl', async () => (await import('@/test/glMock')).glMock()) */
 export function glMock() {
   return {
+    contextLost: { on() {}, emit() {} },
+    contextRestored: { on() {}, emit() {} },
     renderer: {
+      getContext: () => ({ isContextLost: () => false }),
       domElement: document.createElement('canvas'),
       clear() {},
       clearDepth() {},

@@ -1,0 +1,48 @@
+/* Shown instead of the app when WebGL is unavailable (see fallback.ts) */
+.fatal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(560px, calc(100% - 32px));
+  height: fit-content;
+  max-height: calc(100% - 32px);
+  overflow: auto;
+  padding: 24px 26px;
+  user-select: text;
+}
+.fatal h1 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+.fatal p,
+.fatal li {
+  color: #c3ccee;
+  font-size: 14px;
+}
+.fatal ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+.fatal-btn {
+  display: inline-block;
+  background: var(--acc);
+  color: #07102a;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.fatal-link {
+  margin-left: 16px;
+  color: var(--acc);
+}
+.fatal details {
+  margin-top: 16px;
+  color: var(--dim);
+  font-size: 12px;
+}
+.fatal pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

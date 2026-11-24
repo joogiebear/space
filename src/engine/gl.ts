@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { $ } from '@/ui/dom';
+import { emitter } from './events';
 import { App } from './state';
 
 // Raw colours should show exactly as written (no sRGB conversion).
@@ -10,6 +11,15 @@ renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 renderer.autoClear = false;
 renderer.setClearColor(0x010208, 1);
 $('#gl').appendChild(renderer.domElement);
+
+/** The GPU context was taken away / given back. preventDefault() on "lost" is what allows a restore. */
+export const contextLost = emitter();
+export const contextRestored = emitter();
+renderer.domElement.addEventListener('webglcontextlost', e => {
+  e.preventDefault();
+  contextLost.emit();
+});
+renderer.domElement.addEventListener('webglcontextrestored', () => contextRestored.emit());
 
 export const camera = new THREE.PerspectiveCamera(50, 1, 0.0001, 1e5);
 /** The active scene's group is added to / removed from `world`. */

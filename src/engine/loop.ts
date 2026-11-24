@@ -76,6 +76,7 @@ function frame(now: number) {
     infoT = now;
     slowTick.emit();
   }
+  if (renderer.getContext().isContextLost()) return;
   renderer.clear();
   if (skyPts.visible) renderer.render(skyScene, skyCam);
   renderer.clearDepth();
