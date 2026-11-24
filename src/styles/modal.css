@@ -1,0 +1,9 @@
+/* In-page dialogs */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal .box{position:static;width:min(390px,calc(100% - 28px));padding:16px 18px;user-select:text}
+.modal h3{margin:0 0 6px;font-size:16px}.modal p{margin:0 0 10px;color:#c3ccee;font-size:13px}
+.modal input{width:100%;box-sizing:border-box;background:rgba(5,8,22,.9);border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:7px 10px;font:inherit}
+.modal input:focus{border-color:var(--acc);outline:none}.modal .err{color:#ff8f8f;font-size:12.5px;min-height:18px;margin-top:4px}
+.modal .btns{display:flex;gap:8px;align-items:center}.modal .btns span{flex:1}
+.modal button{background:none;border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:5px 12px;font:inherit;cursor:pointer}
+.modal button:hover{border-color:var(--acc)}.modal button.pri{background:var(--acc);color:#07102a;border:0;font-weight:600}

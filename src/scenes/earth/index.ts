@@ -1,25 +1,18 @@
-import { THREE, U, sim, App, cam, camera, Markers, register } from '../core.js';
-import { TAU, D2R, J2000, RE_KM, nowJD, planetEcl, jdToDate, fmtNum } from '../util.js';
+import * as THREE from 'three';
+import * as satellite from 'satellite.js';
+import { App, Markers, U, camera, register, sim } from '@/engine';
+import { D2R, J2000, RE_KM, TAU, fmtNum, jdToDate, nowJD, planetEcl } from '@/lib';
+import { CAT_COL, CAT_HEX, EPS, J2, MU, REQ, eclToEqThree, gmst } from './constants';
+import { fetchSatellites } from '@/data/api';
+import { askLocation, loadLocation, saveLocation } from './location';
+import { PassPredictor } from './passes';
+import { EARTH_PRESETS } from './presets';
+import type { Scene } from '@/types';
+import { SFS, SVS } from './shaders';
 
 const TEX = 'assets/tex/';
-const EPS = 23.4393 * D2R, MU = 398600.4418, J2 = 1.08262668e-3, REQ = 6378.137;
-const CAT_COL = [[1, .9, .3], [.5, .85, 1], [.62, .7, 1], [.55, 1, .65], [1, .62, .28], [1, .33, .3], [.9, .5, 1]];
-const CAT_HEX = c => '#' + c.map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
-const eclToEqThree = (x, y, z, o) => { const ye = y * Math.cos(EPS) - z * Math.sin(EPS), ze = y * Math.sin(EPS) + z * Math.cos(EPS); return o.set(x, ze, -ye) };
-const gmst = jd => (((280.46061837 + 360.98564736629 * (jd - J2000)) % 360) + 360) % 360 * D2R;
 
-const SVS = `attribute vec4 aE1;attribute vec4 aE2;attribute vec3 aCol;attribute float aSize;uniform float uDays,uPx;uniform float uVis[8];varying vec3 vC;varying float vF;
-void main(){float cat=aE2.w;if(uVis[int(cat+.5)]<.5){gl_Position=vec4(2.,2.,2.,1.);gl_PointSize=0.;return;}
-float inc=aE1.x,e=aE1.z;float n=aE2.y/60.;float a=pow(398600.4418/(n*n),1./3.);float dt=(uDays-aE2.z)*86400.;
-float p=a*(1.-e*e);float k=1.5*.00108262668*pow(6378.137/p,2.);float ci=cos(inc);
-float Om=aE1.y-k*n*ci*dt;float w=aE1.w+.5*k*n*(5.*ci*ci-1.)*dt;float M=mod(aE2.x+n*(1.+.5*k*sqrt(1.-e*e)*(3.*ci*ci-1.))*dt,6.2831853);
-float E=e>.8?3.14159265:M;for(int i=0;i<7;i++){E-=(E-e*sin(E)-M)/(1.-e*cos(E));}
-float xv=a*(cos(E)-e),yv=a*sqrt(1.-e*e)*sin(E);float cw=cos(w),sw=sin(w),cO=cos(Om),sO=sin(Om),sI=sin(inc);
-vec3 r=vec3((cw*cO-sw*sO*ci)*xv+(-sw*cO-cw*sO*ci)*yv,(cw*sO+sw*cO*ci)*xv+(-sw*sO+cw*cO*ci)*yv,sw*sI*xv+cw*sI*yv)/6371.;
-gl_Position=projectionMatrix*modelViewMatrix*vec4(r.x,r.z,-r.y,1.);gl_PointSize=aSize*uPx;vC=aCol;}`;
-const SFS = `varying vec3 vC;void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;gl_FragColor=vec4(vC,smoothstep(1.,.3,d));}`;
-
-function earth() {
+function earth(): Scene {
   const group = new THREE.Group(), tmp = new THREE.Vector3(), loader = new THREE.TextureLoader();
   const sunDir = new THREE.Vector3(1, 0, 0), ecl = [0, 0, 0];
   const blue = new THREE.DataTexture(new Uint8Array([22, 52, 104, 255]), 1, 1); blue.needsUpdate = true;
@@ -56,82 +49,32 @@ function earth() {
     const x = ((cw * cO - sw * sO * ci) * xv + (-sw * cO - cw * sO * ci) * yv) / RE_KM, y = ((cw * sO + sw * cO * ci) * xv + (-sw * sO + cw * cO * ci) * yv) / RE_KM, z = (sw * sI * xv + cw * sI * yv) / RE_KM;
     o[0] = x; o[1] = z; o[2] = -y; return o;
   };
-  // ---- observer location and pass prediction (location stays in this browser's localStorage; nothing is sent anywhere) ----
+  const sb = [0, 0, 0];
+  // ---- observer location and pass prediction ----
   const trackGrp = new THREE.Group(); group.add(trackGrp); // Earth-fixed frame: spins with the globe
-  let loc = null; try { loc = JSON.parse(localStorage.getItem('atlas.loc')) } catch (e) { }
-  const youMk = new Markers(1, true), youPos = new THREE.Vector3(), upV = new THREE.Vector3(), tmpW = new THREE.Vector3(); trackGrp.add(youMk.points);
+  let loc = loadLocation();
+  const predictor = new PassPredictor();
+  const youMk = new Markers(1, true), youPos = new THREE.Vector3(), tmpW = new THREE.Vector3(); trackGrp.add(youMk.points);
   function placeYou() {
-    if (!loc) { youMk.hide(0); return } const la = loc.lat * D2R, lo = loc.lon * D2R;
+    if (!loc) { youMk.hide(0); return }
+    const la = loc.lat * D2R, lo = loc.lon * D2R;
     youPos.set(Math.cos(la) * Math.cos(lo), Math.sin(la), -Math.cos(la) * Math.sin(lo)).multiplyScalar(1.004); youMk.set(0, youPos.x, youPos.y, youPos.z, [.4, 1, .6], 18);
   }
   placeYou();
-  // in-page dialog (prompt() is blocked in embedded browsers)
-  function setLocation() {
-    return new Promise(done => {
-      const ov = document.createElement('div'); ov.className = 'modal';
-      ov.innerHTML = '<div class="panel box"><h3>Your location</h3><p>Enter latitude, longitude (south and west are negative), or use your browser\'s location. It stays in this browser and is never sent anywhere.</p>' +
-        '<input type="text" placeholder="51.5, -0.12" autocomplete="off" spellcheck="false"><div class="err"></div>' +
-        '<div class="btns"><button data-a="geo">Use browser location</button><span></span><button data-a="cancel">Cancel</button><button data-a="ok" class="pri">Save</button></div></div>';
-      const inp = ov.querySelector('input'), err = ov.querySelector('.err'); inp.value = loc ? loc.lat + ', ' + loc.lon : '';
-      const close = nl => { ov.remove(); if (nl) { loc = nl; try { localStorage.setItem('atlas.loc', JSON.stringify(loc)) } catch (e) { } placeYou(); passCache = null } done() };
-      const save = () => { const m = inp.value.match(/^\s*(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)\s*$/);
-        if (!m || Math.abs(+m[1]) > 90 || Math.abs(+m[2]) > 180) { err.textContent = 'Use the form "latitude, longitude", for example 51.5, -0.12'; return } close({ lat: +m[1], lon: +m[2] }) };
-      ov.addEventListener('click', e => { const a = e.target.dataset && e.target.dataset.a; if (e.target === ov || a === 'cancel') close(null); else if (a === 'ok') save();
-        else if (a === 'geo') { err.textContent = 'Asking your browser…'; if (!navigator.geolocation) { err.textContent = 'This browser has no location support. Enter coordinates instead.'; return }
-          navigator.geolocation.getCurrentPosition(p => close({ lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3) }), () => { err.textContent = 'Location unavailable (it needs HTTPS or localhost and your permission). Enter coordinates instead.' }, { timeout: 10000 }) } });
-      inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') save(); if (e.key === 'Escape') close(null) });
-      document.body.append(ov); inp.focus(); inp.select();
-    });
+  async function setLocation() {
+    const nl = await askLocation(loc);
+    if (nl) { loc = nl; saveLocation(nl); placeYou(); predictor.reset(); }
   }
-  const COMP = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'], compass = a => COMP[Math.round(a / 22.5) % 16];
-  let passCache = null;
-  // next pass above the horizon within 7 days, stepping 20 s; "visible" = observer in darkness (sun below -6°), satellite above 10° and in sunlight
-  function findPass(rec, jd0) {
-    const lat = loc.lat * D2R, lon = loc.lon * D2R, obs = { latitude: lat, longitude: lon, height: 0 }, cl = Math.cos(lat), base = (jd0 - 2440587.5) * 864e5; let p = null;
-    for (let k = 0; k < 7 * 4320; k++) {
-      const date = new Date(base + k * 20000), pv = satellite.propagate(rec, date); if (!pv.position) continue;
-      const gm = satellite.gstime(date), la = satellite.ecfToLookAngles(obs, satellite.eciToEcf(pv.position, gm)), el = la.elevation / D2R, az = la.azimuth / D2R, jd = jd0 + k * 20 / 86400;
-      if (el > 0) {
-        if (!p) p = { rise: jd, azRise: az, ongoing: k === 0, maxEl: el, azMax: az, visible: false };
-        if (el > p.maxEl) { p.maxEl = el; p.azMax = az } p.set = jd; p.azSet = az;
-        if (el > 10 && !p.visible) {
-          const th = gm + lon; upV.set(cl * Math.cos(th), Math.sin(lat), -cl * Math.sin(th));
-          if (Math.asin(upV.dot(sunDir)) / D2R < -6) { const x = pv.position.x, y = pv.position.z, z = -pv.position.y, d = x * sunDir.x + y * sunDir.y + z * sunDir.z;
-            if (!(d < 0 && Math.hypot(x - d * sunDir.x, y - d * sunDir.y, z - d * sunDir.z) < RE_KM)) p.visible = true }
-        }
-      } else if (p) return p;
-    }
-    return p;
-  }
-  const fmtWhen = jd => jdToDate(jd).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  const fmtIn = d => { const m = Math.max(0, Math.round(d * 1440)); return m >= 1440 ? Math.floor(m / 1440) + 'd ' + Math.floor(m % 1440 / 60) + 'h' : m >= 60 ? Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : m + 'm' };
-  function passRows(i, rec) {
-    if (!rec) return [];
-    if (!loc) return [['Next pass over you', 'set your location below']];
-    const key = i + '|' + loc.lat + '|' + loc.lon, c = passCache;
-    if (!c || c.key !== key || sim.jd < c.from - 1 / 1440 || sim.jd > (c.res ? c.res.set : c.from + 7)) {
-      passCache = { key, from: sim.jd, res: undefined, pending: true }; setTimeout(() => { if (passCache && passCache.key === key) { passCache.res = findPass(rec, sim.jd); passCache.pending = false } }, 0);
-    }
-    const q = passCache, rows = [];
-    if (q.pending) return [['Next pass over you', 'calculating…']];
-    const r = q.res; if (!r) return [['Next pass over you', 'none in the next 7 days']];
-    const now = r.rise <= sim.jd, dur = Math.max(1, Math.round((r.set - r.rise) * 1440));
-    rows.push(['Next pass over you', now ? 'overhead now, sets ' + fmtWhen(r.set) : fmtWhen(r.rise) + ' (in ' + fmtIn(r.rise - sim.jd) + ')']);
-    rows.push(['Pass', `max ${r.maxEl.toFixed(0)}° ${compass(r.azMax)} · ${compass(r.azRise)} → ${compass(r.azSet)} · ${dur} min`]);
-    rows.push(['Sky', r.visible ? 'dark sky, satellite sunlit: visible' : r.maxEl < 10 ? 'stays too low to see' : 'daylight or Earth\'s shadow: not visible']);
-    return rows;
-  }
-  const sb = [0, 0, 0];
   function satBody(i) {
-    const s = sats[i], rec = typeof satellite !== 'undefined' ? satellite.twoline2satrec(s[1], s[2]) : null;
+    const s = sats[i], rec = satellite.twoline2satrec(s[1], s[2]);
     return { id: 'sat' + i, label: s[0], idx: i, action: rec ? { label: () => loc ? 'Change my location' : 'Set my location', run: setLocation } : null, minD: .004, focusD: s[3] === 0 ? 2.8 : .9, live: true,
       getPos: v => { satPos(i, sim.jd - J2000, sb); return v.set(sb[0], sb[1], sb[2]) },
       getInfo() {
         const n = e2[i * 4 + 1], per = TAU / n, a = Math.cbrt(MU / ((n / 60) ** 2)), e = e1[i * 4 + 2], rows = [['Category', cats[s[3]]], ['NORAD ID', s[1].slice(2, 7).trim()], ['Int\'l designator', s[1].slice(9, 17).trim() || '—']];
-        if (rec) { const pv = satellite.propagate(rec, jdToDate(sim.jd)); if (pv.position) { const gd = satellite.eciToGeodetic(pv.position, satellite.gstime(jdToDate(sim.jd))), v = pv.velocity;
+        if (rec) { const pv = satellite.propagate(rec, jdToDate(sim.jd)); if (pv.position) { const gd = satellite.eciToGeodetic(pv.position as satellite.EciVec3<number>, satellite.gstime(jdToDate(sim.jd))), v = pv.velocity as satellite.EciVec3<number>;
           rows.push(['Altitude', fmtNum(gd.height, 0) + ' km'], ['Position', `${(gd.latitude / D2R).toFixed(1)}°, ${(gd.longitude / D2R).toFixed(1)}°`], ['Speed', Math.hypot(v.x, v.y, v.z).toFixed(2) + ' km/s']) } else rows.push(['Status', 'orbit decayed or out of TLE validity']) }
         rows.push(['Orbit', `${fmtNum(a * (1 - e) - REQ, 0)} × ${fmtNum(a * (1 + e) - REQ, 0)} km`], ['Inclination', (e1[i * 4] / D2R).toFixed(2) + '°'], ['Period', per.toFixed(1) + ' min'], ['TLE epoch', s[1].slice(18, 32).trim()]);
-        rows.push(...passRows(i, rec));
+        rows.push(...predictor.rows(i, rec, loc, sim.jd, sunDir));
         return { sub: cats[s[3]], text: s[3] === 5 || s[3] === 6 ? 'Orbital debris: a dead object still circling the Earth. Collisions among objects like this are the main threat to working satellites.' : s[3] === 0 ? 'A crewed space station. Select it to follow it around the globe.' : 'A catalogued object in Earth orbit. Position is propagated from its public orbital elements.', rows };
       } };
   }
@@ -153,21 +96,14 @@ function earth() {
   const hostScene = {
     title: 'Earth Orbit', group, bodies: [earthBody, moonBody], minD: .0035, maxD: 400, initD: 5.2, rate: 60, live: false, timeLabel: 'Simulated date', extent: 800,
     // satellite elements are only good for weeks around today, so the dots hide for far-away dates (see update)
-    presets: [
-      { label: 'Apollo 11 lands on the Moon (1969-07-20)', date: '1969-07-20T20:17Z', focus: 'moon', rate: 60, note: 'Earth and Moon as they were. Satellite dots are hidden: their orbital data only covers weeks around today.' },
-      { label: 'Total solar eclipse, USA (2024-04-08)', date: '2024-04-08T17:30Z', focus: 'moon', rate: 60, note: 'The Moon crosses the Sun line near 18:17 UTC. Satellite dots are hidden for dates this far from today.' },
-      { label: 'Total solar eclipse, Spain (2026-08-12)', date: '2026-08-12T17:00Z', focus: 'moon', rate: 60, note: 'Greatest eclipse near 17:46 UTC. Satellite dots are hidden for dates this far from today.' },
-      { label: 'December solstice (2026-12-21)', date: '2026-12-21T14:50Z', focus: 'earth', rate: 60, note: 'The northern hemisphere is tilted farthest from the Sun: watch the terminator.' },
-      { label: 'March equinox (2027-03-20)', date: '2027-03-20T20:25Z', focus: 'earth', rate: 60, note: 'Day and night are equal everywhere.' },
-      { label: 'Longest eclipse this century (2027-08-02)', date: '2027-08-02T09:30Z', focus: 'moon', rate: 60, note: 'Totality lasts over 6 minutes near 10:07 UTC. Satellite dots are hidden for dates this far from today.' },
-    ],
+    presets: EARTH_PRESETS,
     enter() { if (Math.abs(sim.jd - nowJD()) > 45) { sim.jd = nowJD() } }, // come back to the present when the clock was left far away
     intro: 'Loading catalogue…', introRows: [],
     center: v => v.set(0, 0, 0),
     layers: [],
     async load(status) {
       status('downloading orbital elements from CelesTrak…');
-      const d = await fetch('/api/sats').then(r => { if (!r.ok) throw new Error('Satellite data is not available yet (CelesTrak limits downloads to one per group every 2 hours). Try again in a few minutes.'); return r.json() }); sats = d.sats; cats = d.cats; fetched = d.fetched; N = sats.length;
+      const d = await fetchSatellites(); sats = d.sats; cats = d.cats; fetched = d.fetched; N = sats.length;
       e1 = new Float32Array(N * 4); e2 = new Float32Array(N * 4); const col = new Float32Array(N * 3), sz = new Float32Array(N); lower = new Array(N); cnt = new Array(cats.length).fill(0);
       let ok = 0;
       for (let i = 0; i < N; i++) {
@@ -221,4 +157,5 @@ function earth() {
   };
   return hostScene;
 }
+
 register('earth', 'Earth Orbit', earth);

@@ -1,0 +1,24 @@
+{
+  "name": "cosmos-atlas",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Animated WebGL atlas of the universe, from galaxies to satellites in Earth orbit",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "api": "python -m server 8080"
+  },
+  "dependencies": {
+    "satellite.js": "5.0.0",
+    "three": "0.160.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/three": "^0.160.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}

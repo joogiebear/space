@@ -1,18 +1,12 @@
-import { THREE, U, App, cam, camera, Markers, register, screenOf, hideToast } from '../core.js';
-import { TAU, bvColor, PC_LY, fmtNum } from '../util.js';
+import * as THREE from 'three';
+import { App, Markers, U, cam, camera, register } from '@/engine';
+import { PC_LY, bvColor, fmtNum, TAU } from '@/lib';
+import { fetchConstellations, fetchExoplanets, fetchStarNames, fetchStarsBinary } from '@/data/api';
+import { METHOD, METHOD_LIST, eqToThree } from './constants';
+import type { Scene } from '@/types';
+import { EFS, EVS, FS, VS } from './shaders';
 
-const VS = `attribute float aAbs;attribute vec3 aCol;uniform float uPx,uRef,uGain;varying vec3 vC;varying float vA;
-void main(){vec4 mv=modelViewMatrix*vec4(position,1.);float d=clamp(length(mv.xyz),.02,uRef);
-float m=aAbs+5.*log(d/10.)/2.302585;float sz=clamp((7.2-m+uGain)*1.05,0.,15.);
-gl_Position=projectionMatrix*mv;gl_PointSize=sz<.8?0.:max(sz,1.4)*uPx;vC=aCol;vA=clamp(.35+(8.-m+uGain)*.12,.2,1.);}`;
-const FS = `varying vec3 vC;varying float vA;void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;float a=pow(1.-d,1.6)*vA;gl_FragColor=vec4(vC*1.1,a);}`;
-const EVS = `attribute vec3 aCol;uniform float uPx;varying vec3 vC;void main(){vC=aCol;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);gl_PointSize=6.5*uPx;}`;
-const EFS = `varying vec3 vC;void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;float r=smoothstep(.55,.65,d)*(1.-smoothstep(.85,.97,d));gl_FragColor=vec4(vC,r*.55);}`;
-const METHOD = { 'Transit': [.3, .85, 1], 'Radial Velocity': [1, .65, .25], 'Imaging': [.45, 1, .5], 'Microlensing': [1, .4, .9] };
-const METHOD_LIST = [['Transit', '#4cd9ff'], ['Radial Velocity', '#ffa640'], ['Imaging', '#73ff80'], ['Microlensing', '#ff66e6'], ['Other', '#ffffff']];
-const eqToThree = (x, y, z, o) => o.set(x, z, -y);
-
-function starmap() {
+function starmap(): Scene {
   const group = new THREE.Group(), tmp = new THREE.Vector3();
   let N = 0, pos, hip, names = [], namedIdx = new Map(), starPts = null, mat = null, absm = null;
   const exoHosts = [], exoMat = new THREE.ShaderMaterial({ uniforms: { uPx: U.uPx }, vertexShader: EVS, fragmentShader: EFS, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
@@ -74,7 +68,7 @@ function starmap() {
     layers: [],
     async load(status) {
       status('downloading star catalogue (first run can take a minute)…');
-      const [bin, nm, ex, cons] = await Promise.all([fetch('/api/stars.bin').then(r => r.arrayBuffer()), fetch('/api/stars.json').then(r => r.json()), fetch('/api/exo').then(r => r.json()).catch(() => []), fetch('/api/constellations').then(r => r.json()).catch(() => [])]);
+      const [bin, nm, ex, cons] = await Promise.all([fetchStarsBinary(), fetchStarNames(), fetchExoplanets(), fetchConstellations()]);
       const dv = new DataView(bin); N = dv.getUint32(0, true); const f = new Float32Array(bin, 4, N * 5); hip = new Int32Array(bin.slice(4 + N * 20, 4 + N * 24));
       pos = new Float32Array(N * 3); absm = new Float32Array(N); ciArr = new Float32Array(N); const col = new Float32Array(N * 3);
       for (let i = 0; i < N; i++) { eqToThree(f[i * 5], f[i * 5 + 1], f[i * 5 + 2], tmp); pos[i * 3] = tmp.x; pos[i * 3 + 1] = tmp.y; pos[i * 3 + 2] = tmp.z; absm[i] = f[i * 5 + 3]; ciArr[i] = f[i * 5 + 4]; bvColor(f[i * 5 + 4], col, i * 3) }
@@ -86,7 +80,7 @@ function starmap() {
       const byHip = new Map(); for (let i = 0; i < N; i++) if (hip[i] > 0 && !byHip.has(hip[i])) byHip.set(hip[i], i);
       const seg = []; conLabels = [];
       for (const [abbr, name, eng, lines] of cons) {
-        const used = new Set();
+        const used = new Set<number>();
         for (const ln of lines) for (let k = 0; k + 1 < ln.length; k++) { const a = byHip.get(ln[k]), b = byHip.get(ln[k + 1]); if (a == null || b == null) continue;
           seg.push(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2]); used.add(a); used.add(b) }
         if (used.size) { let x = 0, y = 0, z = 0; for (const i of used) { x += pos[i * 3]; y += pos[i * 3 + 1]; z += pos[i * 3 + 2] } conLabels.push({ name, v: new THREE.Vector3(x / used.size, y / used.size, z / used.size) }) }

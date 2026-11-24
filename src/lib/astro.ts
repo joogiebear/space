@@ -1,23 +1,18 @@
-export const TAU = Math.PI * 2, D2R = Math.PI / 180;
-export const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-export function rng(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
-export const gauss = r => (r() + r() + r() + r() - 2) * 1.2;
-export const mixc = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
-export const nowJD = () => Date.now() / 86400000 + 2440587.5;
-export const jdToDate = jd => new Date((jd - 2440587.5) * 864e5);
-export const fmtDate = jd => jdToDate(jd).toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
-export const J2000 = 2451545.0;
+/** Orbital mechanics: Kepler solver, JPL planet elements (1800-2050). */
+import { TAU, D2R } from './math';
+import { J2000 } from './time';
+
 export const AU_KM = 149597870.7, RE_KM = 6371.0;
 export const PC_LY = 3.26156;
 
-export function solveKepler(M, e) {
+export function solveKepler(M: number, e: number) {
   M = ((M % TAU) + TAU) % TAU;
   let E = e > .8 ? Math.PI : M;
   for (let i = 0; i < 14; i++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
   return E;
 }
 /** orbital elements (radians) -> ecliptic/orbit-frame xyz */
-export function orbitPos(a, e, I, Om, w, M, o) {
+export function orbitPos(a: number, e: number, I: number, Om: number, w: number, M: number, o: number[]) {
   const E = solveKepler(M, e), xv = a * (Math.cos(E) - e), yv = a * Math.sqrt(1 - e * e) * Math.sin(E);
   const cw = Math.cos(w), sw = Math.sin(w), cO = Math.cos(Om), sO = Math.sin(Om), cI = Math.cos(I), sI = Math.sin(I);
   o[0] = (cw * cO - sw * sO * cI) * xv + (-sw * cO - cw * sO * cI) * yv;
@@ -27,7 +22,7 @@ export function orbitPos(a, e, I, Om, w, M, o) {
 }
 
 // JPL approximate Keplerian elements (1800-2050): a,da, e,de, I,dI, L,dL, varpi,dvarpi, Omega,dOmega (per century)
-export const PEL = {
+export const PEL: Record<string, number[]> = {
   mercury: [0.38709927, 0.00000037, 0.20563593, 0.00001906, 7.00497902, -0.00594749, 252.25032350, 149472.67411175, 77.45779628, 0.16047689, 48.33076593, -0.12534081],
   venus: [0.72333566, 0.00000390, 0.00677672, -0.00004107, 3.39467605, -0.00078890, 181.97909950, 58517.81538729, 131.60246718, 0.00268329, 76.67984255, -0.27769418],
   earth: [1.00000261, 0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668, 100.46457166, 35999.37244981, 102.93768193, 0.32327364, 0.0, 0.0],
@@ -38,19 +33,10 @@ export const PEL = {
   neptune: [30.06992276, 0.00026291, 0.00859048, 0.00005105, 1.77004347, 0.00035372, -55.12002969, 218.45945325, 44.96476227, -0.32241464, 131.78422574, -0.00508664],
   pluto: [39.48211675, -0.00031596, 0.24882730, 0.00005170, 17.14001206, 0.00004818, 238.92903833, 145.20780515, 224.06891629, -0.04062942, 110.30393684, -0.01183482],
 };
-export function planetEl(id, jd) {
+export function planetEl(id: string, jd: number) {
   const T = (jd - J2000) / 36525, p = PEL[id];
   const Om = (p[10] + p[11] * T) * D2R, wb = (p[8] + p[9] * T) * D2R;
   return { a: p[0] + p[1] * T, e: p[2] + p[3] * T, I: (p[4] + p[5] * T) * D2R, Om, w: wb - Om, M: (((p[6] + p[7] * T) - (p[8] + p[9] * T)) % 360) * D2R };
 }
 /** heliocentric ecliptic J2000, AU */
-export function planetEcl(id, jd, o) { const q = planetEl(id, jd); return orbitPos(q.a, q.e, q.I, q.Om, q.w, q.M, o) }
-
-/** B-V colour index -> rgb 0..1 */
-const BV = [[-.3, 155, 176, 255], [0, 170, 191, 255], [.3, 202, 215, 255], [.6, 255, 242, 224], [.8, 255, 229, 207], [1.2, 255, 196, 111], [1.6, 255, 157, 80], [2.1, 255, 115, 60]];
-export function bvColor(ci, o, k = 0) {
-  ci = clamp(ci, -.3, 2.1); let i = 0; while (i < BV.length - 2 && ci > BV[i + 1][0]) i++;
-  const a = BV[i], b = BV[i + 1], t = (ci - a[0]) / (b[0] - a[0]);
-  o[k] = (a[1] + (b[1] - a[1]) * t) / 255; o[k + 1] = (a[2] + (b[2] - a[2]) * t) / 255; o[k + 2] = (a[3] + (b[3] - a[3]) * t) / 255;
-}
-export const fmtNum = (v, d = 1) => v == null ? '—' : v >= 1e6 ? (v / 1e6).toFixed(2) + ' M' : v >= 1e4 ? Math.round(v).toLocaleString() : (+v.toFixed(d)).toString();
+export function planetEcl(id: string, jd: number, o: number[]) { const q = planetEl(id, jd); return orbitPos(q.a, q.e, q.I, q.Om, q.w, q.M, o) }
