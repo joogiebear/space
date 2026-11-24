@@ -20,11 +20,11 @@ function earth(): Scene {
   const black = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); black.needsUpdate = true;
   const eMat = new THREE.ShaderMaterial({ uniforms: { uDay: { value: blue }, uNight: { value: black }, uSun: { value: sunDir } },
     vertexShader: 'varying vec2 vUv;varying vec3 vN;void main(){vUv=uv;vN=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader: 'uniform sampler2D uDay,uNight;uniform vec3 uSun;varying vec2 vUv;varying vec3 vN;void main(){vec3 N=normalize(vN);float l=dot(N,normalize(uSun));vec3 day=texture2D(uDay,vUv).rgb,night=texture2D(uNight,vUv).rgb;float dm=smoothstep(-.12,.22,l);vec3 c=mix(night*1.5+day*.03,day*(.05+max(l,0.)*1.05),dm);gl_FragColor=vec4(c,1.);}' });
-  loader.load(TEX + 'earth_atmos_2048.jpg', t => eMat.uniforms.uDay.value = t); loader.load(TEX + 'earth_lights_2048.png', t => eMat.uniforms.uNight.value = t);
+    fragmentShader: 'uniform sampler2D uDay,uNight;uniform vec3 uSun;varying vec2 vUv;varying vec3 vN;void main(){vec3 N=normalize(vN);float l=dot(N,normalize(uSun));vec3 day=texture2D(uDay,vUv).rgb,night=texture2D(uNight,vUv).rgb;float dm=smoothstep(-.12,.22,l);vec3 c=mix(night*smoothstep(.2,.6,night.r)*1.45+night*.06+day*.03,day*(.05+max(l,0.)*1.05),dm);gl_FragColor=vec4(c,1.);}' });
+  loader.load(TEX + 'earth_day_2048.jpg', t => eMat.uniforms.uDay.value = t); loader.load(TEX + 'earth_night_2048.jpg', t => eMat.uniforms.uNight.value = t);
   const earthMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), eMat); group.add(earthMesh);
   const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: .5, depthWrite: false, emissive: 0x050608 });
-  loader.load(TEX + 'earth_clouds_1024.png', t => { cloudMat.map = t; cloudMat.needsUpdate = true });
+  loader.load(TEX + 'earth_clouds_2048.png', t => { cloudMat.map = t; cloudMat.needsUpdate = true });
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.012, 64, 48), cloudMat); group.add(clouds);
   const atm = new THREE.Mesh(new THREE.SphereGeometry(1.04, 64, 48), new THREE.ShaderMaterial({ uniforms: { uSun: { value: sunDir } }, side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: 'varying vec3 vN;varying vec3 vW;void main(){vN=normalize(normalMatrix*normal);vW=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
