@@ -5,7 +5,7 @@ import { emitter } from './events';
 import { renderer } from './gl';
 import { pickAt } from './picking';
 import { deselect, select } from './selection';
-import { goUp, openScene, parentOf, sceneTitle } from './sceneManager';
+import { goUp, isBusy, openScene, parentOf, sceneTitle } from './sceneManager';
 import { toast } from '@/ui/toast';
 import { App, cam, scene } from './state';
 
@@ -37,6 +37,7 @@ function enterTarget(): Body | null {
 }
 
 export function zoomBy(k: number) {
+  if (isBusy()) return; // a scene change is in flight
   const now = performance.now();
   if (k < 1 && !App.sel) { const t = enterTarget(); if (t) select(t); }
   const lo = App.sel && App.sel.minD || scene().minD;

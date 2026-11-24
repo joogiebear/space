@@ -59,7 +59,7 @@ function solar() {
     if (d.bands) { mat.map = bandTex(d.bands); mat.color.set(0xffffff) }
     if (d.tex) loader.load(TEX + d.tex, t => { mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true });
     const mesh = new THREE.Mesh(sphereGeo, mat); group.add(mesh);
-    const b: SolarBody = { id: d.id, label: d.label, kind: d.dwarf ? 'dwarf' : 'planet', real: km(d.rkm), rkm: d.rkm, p: new THREE.Vector3(), mesh, moons: [], enter: d.enter, enterLabel: d.enterLabel, live: true,
+    const b: SolarBody = { id: d.id, label: d.label, kind: d.dwarf ? 'dwarf' : 'planet', real: km(d.rkm), rkm: d.rkm, p: new THREE.Vector3(), mesh, moons: [], diveColor: '#' + d.color.toString(16).padStart(6, '0'), enter: d.enter, enterLabel: d.enterLabel, live: true,
       getPos(v: THREE.Vector3) { return v.copy(this.p) }, d };
     b.getInfo = () => ({ sub: d.sub, text: d.text, rows: [['Distance from Sun', b.p.length().toFixed(3) + ' AU'], ['Light travel time', (b.p.length() * 8.317).toFixed(1) + ' min'], ['Year', d.period], ['Radius', fmtNum(d.rkm, 0) + ' km'], ['Moons shown', String(b.moons!.length)]] });
     if (d.ring) { const rg = new THREE.RingGeometry(1.24, 2.3, 128, 1), pa = rg.attributes.position, uv = rg.attributes.uv;

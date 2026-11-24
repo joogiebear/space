@@ -34,6 +34,8 @@ export interface Body {
   action?: BodyAction | null;
   noLabel?: boolean;
   labelCls?: string;
+  /** CSS colour the screen washes into when diving into this body. */
+  diveColor?: string;
   parentBody?: Body;
   moons?: Body[];
   [extra: string]: any;

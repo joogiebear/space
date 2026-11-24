@@ -23,7 +23,7 @@ function cosmos(): Scene {
     const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.position.set(...g.pos); pts.rotation.set(g.tilt ? g.tilt[0] : 0, 0, g.tilt ? g.tilt[1] : 0, 'ZXY');
     const glow = glowSprite(rgb01(g.core), g.R * 1.4); glow.material.opacity = irr ? .22 : .55; glow.position.set(...g.pos);
     group.add(pts, glow);
-    bodies.push({ id: g.key, label: g.name, g, enter: 'gal:' + g.key, enterLabel: 'Fly inside', focusD: g.R * 4.2, minD: g.R * 1.2, radNow: g.R * .8,
+    bodies.push({ id: g.key, label: g.name, g, enter: 'gal:' + g.key, diveColor: `rgb(${g.core.join(',')})`, enterLabel: 'Fly inside', focusD: g.R * 4.2, minD: g.R * 1.2, radNow: g.R * .8,
       getPos(v: THREE.Vector3) { return v.set(...g.pos) }, info: { sub: g.sub, text: g.text } });
   }
   return { title: 'Local Universe', group, bodies, minD: 10, maxD: 700, initD: 190, sky: false, rate: 1, extent: 1000,
@@ -43,7 +43,7 @@ function galaxy(g: GalaxyDef): Scene {
   if (g.key === 'milkyway') {
     const mkb = (id: string, label: string, rho: number, ang0: number, col: number[], info: Info, extra: Partial<Body> = {}): Body => ({ id, label, rho, ang0, col, info, radNow: 1.2, focusD: 14, minD: 3, labelCls: '',
       getPos(v: THREE.Vector3) { const a = ang0 + spinTime() / (.5 + rho); return v.set(rho * RG * Math.cos(a), 0, rho * RG * Math.sin(a)) }, ...extra });
-    bodies.push(mkb('sun', 'Sun · you are here', .5, 2.2, [1, .9, .55], { sub: 'Our star · ~26,000 ly from the centre', text: 'The Sun sits in the Orion Spur, a minor arm between two major spiral arms, and orbits the galaxy once every ~225 million years. Enter to see the stars nearest to us.' }, { enter: 'starmap', enterLabel: 'Enter the star map' }));
+    bodies.push(mkb('sun', 'Sun · you are here', .5, 2.2, [1, .9, .55], { sub: 'Our star · ~26,000 ly from the centre', text: 'The Sun sits in the Orion Spur, a minor arm between two major spiral arms, and orbits the galaxy once every ~225 million years. Enter to see the stars nearest to us.' }, { enter: 'starmap', enterLabel: 'Enter the star map', diveColor: '#ffe8a0' }));
     bodies.push(mkb('sgra', 'Sagittarius A*', 0, 0, [1, .65, .4], { sub: 'Supermassive black hole', text: 'A black hole of about 4 million solar masses sits at the very centre of the Milky Way, ringed by a dense cluster of ancient stars.' }));
   }
   const tmp = new THREE.Vector3();

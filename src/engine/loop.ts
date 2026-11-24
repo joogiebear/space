@@ -25,8 +25,8 @@ function frame(now: number) {
   if (App.sel) App.sel.getPos(tgt); else sc.center(tgt);
   if (lastSel !== App.sel) { cam.off.copy(cam.t).sub(tgt); lastSel = App.sel; }
   cam.off.multiplyScalar(Math.exp(-dt * 6)); cam.t.copy(tgt).add(cam.off);
-  const lo = App.sel && App.sel.minD || sc.minD; cam.want = clamp(cam.want, lo, sc.maxD);
-  cam.dist *= Math.pow(cam.want / cam.dist, 1 - Math.exp(-dt * 4.5));
+  if (!cam.free) { const lo = App.sel && App.sel.minD || sc.minD; cam.want = clamp(cam.want, lo, sc.maxD); }
+  cam.dist *= Math.pow(cam.want / cam.dist, 1 - Math.exp(-dt * cam.ease));
   if (opts.autoOrbit && !App.dragging && now - App.interact > 2500) cam.yaw += dt * .04;
   const cp = Math.cos(cam.pitch);
   camera.position.set(cam.t.x + cam.dist * cp * Math.sin(cam.yaw), cam.t.y + cam.dist * Math.sin(cam.pitch), cam.t.z + cam.dist * cp * Math.cos(cam.yaw));

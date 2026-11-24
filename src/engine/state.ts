@@ -6,7 +6,8 @@ import type { ActiveScene, Body } from '@/types';
 export const sim = { jd: nowJD(), rate: 1, paused: false, live: true, gt: 0 };
 
 /** Orbit camera. `want` is the eased target distance; `off` decays so focus changes glide. */
-export const cam = { yaw: .6, pitch: .5, dist: 10, want: 10, t: new THREE.Vector3(), off: new THREE.Vector3() };
+/** `ease` is how fast dist chases want (per second); `free` lifts the min/max distance clamps while diving between scenes. */
+export const cam = { yaw: .6, pitch: .5, dist: 10, want: 10, ease: 4.5, free: false, t: new THREE.Vector3(), off: new THREE.Vector3() };
 
 /** Shared app state: the active scene and the current selection/hover. */
 export const App = {

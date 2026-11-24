@@ -12,7 +12,7 @@ function starmap(): Scene {
   let N = 0, pos!: Float32Array, hip!: Int32Array, names: NamedStar[] = [], namedIdx = new Map<number, NamedStar>(), starPts: THREE.Points | null = null, mat: THREE.ShaderMaterial | null = null, absm!: Float32Array;
   const exoHosts: ExoHost[] = [], exoMat = new THREE.ShaderMaterial({ uniforms: { uPx: U.uPx }, vertexShader: EVS, fragmentShader: EFS, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
   let exoPts: THREE.Points | null = null, exoCount = 0, hostByPick = null, conLines: THREE.LineSegments | null = null, conLabels: { name: string; v: THREE.Vector3 }[] = [];
-  const sol: Body = { id: 'sol', label: 'Sol (the Sun)', enter: 'solar', enterLabel: 'Enter the solar system', focusD: 4, minD: .05, getPos: (v: THREE.Vector3) => v.set(0, 0, 0),
+  const sol: Body = { id: 'sol', label: 'Sol (the Sun)', diveColor: '#ffe9a8', enter: 'solar', enterLabel: 'Enter the solar system', focusD: 4, minD: .05, getPos: (v: THREE.Vector3) => v.set(0, 0, 0),
     info: { sub: 'Our star · G2V yellow dwarf', text: 'The centre of the map. Double-click to fly into the solar system.', rows: [['Distance', '0']] } };
   const solMk = new Markers(1); group.add(solMk.points); solMk.set(0, 0, 0, 0, [1, .9, .6], 30);
   const selMk = new Markers(1, true); group.add(selMk.points); selMk.hide(0);
