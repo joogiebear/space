@@ -23,6 +23,14 @@ describe('endpoint', () => {
   });
 
   it('exports files the server also writes (names stay in sync with server/export.py)', () => {
-    expect(Object.values(STATIC_FILES).sort()).toEqual(['constellations.json', 'craft.json', 'exo.json', 'sats.json', 'sbdb.json', 'stars.bin', 'stars_names.json']);
+    expect(Object.values(STATIC_FILES).sort()).toEqual([
+      'constellations.json',
+      'craft.json',
+      'exo.json',
+      'sats.json',
+      'sbdb.json',
+      'stars.bin',
+      'stars_names.json',
+    ]);
   });
 });

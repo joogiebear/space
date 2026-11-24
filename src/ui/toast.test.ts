@@ -4,8 +4,13 @@ import { locationRequest, ui } from './store';
 import { hideToast, toast, toastIsError } from './toast';
 
 describe('toast', () => {
-  beforeEach(() => { vi.useFakeTimers(); hideToast(); });
-  afterEach(() => { vi.useRealTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+    hideToast();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('shows a message with an optional sub-line', () => {
     toast('Loading', 'first visit');
@@ -22,8 +27,10 @@ describe('toast', () => {
 
   it('hides itself after the delay', () => {
     toast('Bye', '', 1000);
-    vi.advanceTimersByTime(999); expect(ui.toast.visible).toBe(true);
-    vi.advanceTimersByTime(2); expect(ui.toast.visible).toBe(false);
+    vi.advanceTimersByTime(999);
+    expect(ui.toast.visible).toBe(true);
+    vi.advanceTimersByTime(2);
+    expect(ui.toast.visible).toBe(false);
   });
 
   it("a newer toast cancels the older one's timer", () => {

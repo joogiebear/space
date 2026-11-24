@@ -10,9 +10,23 @@ float s=uF/max(-mv.z,1e-4);gl_PointSize=aSize*uSz*uPx*(1.+min(1.6,s*.04));vC=aCo
 export const FS = `uniform float uAlpha;varying vec3 vC;void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;float a=smoothstep(1.,.15,d)*uAlpha;gl_FragColor=vec4(vC,a);}`;
 
 export function galaxyMat(scale: number, sz: number, alpha: number) {
-  return new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 }, uScale: { value: scale }, uPx: U.uPx, uF: U.uF, uSz: { value: sz }, uAlpha: { value: alpha } },
-    vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uScale: { value: scale },
+      uPx: U.uPx,
+      uF: U.uF,
+      uSz: { value: sz },
+      uAlpha: { value: alpha },
+    },
+    vertexShader: VS,
+    fragmentShader: FS,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    blending: THREE.AdditiveBlending,
+  });
 }
 /** Shared galaxy spin phase, driven by the simulation's capped time. */
-export const spinTime = () => sim.gt * .1;
+export const spinTime = () => sim.gt * 0.1;
 export const rgb01 = (c: number[]) => new THREE.Color(c[0] / 255, c[1] / 255, c[2] / 255);

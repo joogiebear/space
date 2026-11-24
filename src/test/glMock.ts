@@ -4,11 +4,18 @@ import * as THREE from 'three';
  *  vi.mock('@/engine/gl', async () => (await import('@/test/glMock')).glMock()) */
 export function glMock() {
   return {
-    renderer: { domElement: document.createElement('canvas'), clear() {}, clearDepth() {}, render() {}, setPixelRatio() {}, setSize() {} },
-    camera: new THREE.PerspectiveCamera(50, 1, .1, 1e5),
+    renderer: {
+      domElement: document.createElement('canvas'),
+      clear() {},
+      clearDepth() {},
+      render() {},
+      setPixelRatio() {},
+      setSize() {},
+    },
+    camera: new THREE.PerspectiveCamera(50, 1, 0.1, 1e5),
     world: new THREE.Scene(),
     skyScene: new THREE.Scene(),
-    skyCam: new THREE.PerspectiveCamera(50, 1, .1, 100),
+    skyCam: new THREE.PerspectiveCamera(50, 1, 0.1, 100),
     skyPts: { visible: true },
     U: { uPx: { value: 1 }, uF: { value: 800 }, uRef: 20 },
     glowTex: {},

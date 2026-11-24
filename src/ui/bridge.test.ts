@@ -15,16 +15,30 @@ import { sceneBodies, sceneLayers, scenePresets, ui } from './store';
 beforeAll(() => initBridge());
 
 beforeEach(() => {
-  App.scene = makeScene(); App.sel = null; App.hover = null; App.path = ['test'];
-  sim.paused = false; sim.jd = 2460000.5;
-  ui.tip.visible = false; ui.sliderPos = 30; ui.rate = 1; ui.paused = false;
+  App.scene = makeScene();
+  App.sel = null;
+  App.hover = null;
+  App.path = ['test'];
+  sim.paused = false;
+  sim.jd = 2460000.5;
+  ui.tip.visible = false;
+  ui.sliderPos = 30;
+  ui.rate = 1;
+  ui.paused = false;
   refreshInfo(null);
 });
 
 describe('refreshInfo', () => {
   it('shows the scene intro when nothing is selected', () => {
     expect(ui.selId).toBeNull();
-    expect(ui.info).toMatchObject({ title: 'Test Scene', sub: '', text: 'Intro text', rows: [['Objects', '3']], actionLabel: null, enterLabel: null });
+    expect(ui.info).toMatchObject({
+      title: 'Test Scene',
+      sub: '',
+      text: 'Intro text',
+      rows: [['Objects', '3']],
+      actionLabel: null,
+      enterLabel: null,
+    });
   });
 
   it('shows a body from its static info', () => {
@@ -40,7 +54,8 @@ describe('refreshInfo', () => {
   });
 
   it('falls back to empty text for a body with no info', () => {
-    const b = makeBody('bare'); delete b.info;
+    const b = makeBody('bare');
+    delete b.info;
     refreshInfo(b);
     expect(ui.info).toMatchObject({ title: 'BARE', sub: '', text: '', rows: [] });
   });
@@ -105,12 +120,25 @@ describe('selection events', () => {
 
 describe('sceneEntered', () => {
   it('copies scene metadata, lists and the breadcrumb into the store', () => {
-    const layer = { id: 'l', label: 'L', on: true, apply() {} }, preset = { label: 'P', date: '2020-01-01T00:00Z' };
-    const sc = makeScene({ id: 'earth', title: 'Earth Orbit', timeLabel: 'Simulated date', layers: [layer], presets: [preset] });
-    App.scene = sc; App.path = ['cosmos', 'solar', 'earth'];
+    const layer = { id: 'l', label: 'L', on: true, apply() {} },
+      preset = { label: 'P', date: '2020-01-01T00:00Z' };
+    const sc = makeScene({
+      id: 'earth',
+      title: 'Earth Orbit',
+      timeLabel: 'Simulated date',
+      layers: [layer],
+      presets: [preset],
+    });
+    App.scene = sc;
+    App.path = ['cosmos', 'solar', 'earth'];
     const before = ui.sceneSerial;
     sceneEntered.emit(sc);
-    expect(ui).toMatchObject({ sceneId: 'earth', title: 'Earth Orbit', timeLabel: 'Simulated date', path: ['cosmos', 'solar', 'earth'] });
+    expect(ui).toMatchObject({
+      sceneId: 'earth',
+      title: 'Earth Orbit',
+      timeLabel: 'Simulated date',
+      path: ['cosmos', 'solar', 'earth'],
+    });
     expect(ui.sceneSerial).toBe(before + 1);
     expect(sceneBodies.value).toBe(sc.bodies);
     expect(sceneLayers.value).toEqual([layer]);
@@ -129,7 +157,9 @@ describe('sceneEntered', () => {
   });
 
   it('does not alias the engine path array', () => {
-    const sc = makeScene(); App.scene = sc; App.path = ['a', 'b'];
+    const sc = makeScene();
+    App.scene = sc;
+    App.path = ['a', 'b'];
     sceneEntered.emit(sc);
     App.path.push('c');
     expect(ui.path).toEqual(['a', 'b']);
@@ -138,9 +168,12 @@ describe('sceneEntered', () => {
 
 describe('time controls state', () => {
   it('maps the speed to a log slider position (1x..1e8x -> 0..100)', () => {
-    setRate(1); expect(ui.sliderPos).toBe(0);
-    setRate(1e8); expect(ui.sliderPos).toBeCloseTo(100, 6);
-    setRate(10000); expect(ui.sliderPos).toBeCloseTo(50, 6);
+    setRate(1);
+    expect(ui.sliderPos).toBe(0);
+    setRate(1e8);
+    expect(ui.sliderPos).toBeCloseTo(100, 6);
+    setRate(10000);
+    expect(ui.sliderPos).toBeCloseTo(50, 6);
     expect(ui.rate).toBe(10000);
   });
 
@@ -158,9 +191,12 @@ describe('time controls state', () => {
   });
 
   it('mirrors pause state', () => {
-    setPaused(true); expect(ui.paused).toBe(true);
-    togglePause(); expect(ui.paused).toBe(false);
-    pauseChanged.emit(true); expect(ui.paused).toBe(true);
+    setPaused(true);
+    expect(ui.paused).toBe(true);
+    togglePause();
+    expect(ui.paused).toBe(false);
+    pauseChanged.emit(true);
+    expect(ui.paused).toBe(true);
   });
 });
 

@@ -15,16 +15,21 @@ const SUN = new THREE.Vector3(1, 0, 0); // direction only matters to the "visibl
 
 /** Elevation (deg) of the satellite over an observer at a Julian date, straight from satellite.js. */
 function elevation(jd: number, loc = LONDON) {
-  const date = jdToDate(jd), pv = satellite.propagate(rec, date);
+  const date = jdToDate(jd),
+    pv = satellite.propagate(rec, date);
   if (!pv) throw new Error('propagation failed');
-  const look = satellite.ecfToLookAngles({ latitude: loc.lat * D2R, longitude: loc.lon * D2R, height: 0 },
-    satellite.eciToEcf(pv.position, satellite.gstime(date)));
+  const look = satellite.ecfToLookAngles(
+    { latitude: loc.lat * D2R, longitude: loc.lon * D2R, height: 0 },
+    satellite.eciToEcf(pv.position, satellite.gstime(date)),
+  );
   return look.elevation / D2R;
 }
 
 /** The observer's local "up" in scene axes (y up, ECI x/z/-y), as findPass computes it. */
 function observerUp(jd: number, loc = LONDON) {
-  const lat = loc.lat * D2R, th = satellite.gstime(jdToDate(jd)) + loc.lon * D2R, cl = Math.cos(lat);
+  const lat = loc.lat * D2R,
+    th = satellite.gstime(jdToDate(jd)) + loc.lon * D2R,
+    cl = Math.cos(lat);
   return new THREE.Vector3(cl * Math.cos(th), Math.sin(lat), -cl * Math.sin(th));
 }
 
@@ -46,17 +51,20 @@ describe('findPass', () => {
     expect(p).not.toBeNull();
     expect(p.rise).toBeGreaterThanOrEqual(EPOCH_JD);
     expect(p.set).toBeGreaterThan(p.rise);
-    expect((p.set - p.rise) * 1440).toBeLessThan(15);      // an ISS pass lasts under ~12 minutes
+    expect((p.set - p.rise) * 1440).toBeLessThan(15); // an ISS pass lasts under ~12 minutes
     expect(p.maxEl).toBeGreaterThan(0);
     expect(p.maxEl).toBeLessThanOrEqual(90);
-    for (const az of [p.azRise, p.azMax, p.azSet]) { expect(az).toBeGreaterThanOrEqual(0); expect(az).toBeLessThan(360); }
+    for (const az of [p.azRise, p.azMax, p.azSet]) {
+      expect(az).toBeGreaterThanOrEqual(0);
+      expect(az).toBeLessThan(360);
+    }
     expect(p.ongoing).toBe(false);
   });
 
   it('starts near the horizon and rises above it during the pass (cross-checked with satellite.js)', () => {
     const p = findPass(rec, EPOCH_JD, LONDON, SUN)!;
     expect(elevation(p.rise)).toBeGreaterThanOrEqual(0);
-    expect(elevation(p.rise)).toBeLessThan(6);             // first 20 s step above the horizon
+    expect(elevation(p.rise)).toBeLessThan(6); // first 20 s step above the horizon
     expect(elevation(p.set)).toBeLessThan(6);
     const mid = elevation((p.rise + p.set) / 2);
     expect(mid).toBeGreaterThan(0);
@@ -67,7 +75,7 @@ describe('findPass', () => {
     const p = findPass(rec, EPOCH_JD, LONDON, SUN)!;
     let best = -90;
     for (let jd = p.rise; jd <= p.set; jd += 5 / 86400) best = Math.max(best, elevation(jd));
-    expect(p.maxEl).toBeGreaterThan(best - 3);              // 20 s sampling can miss the exact top
+    expect(p.maxEl).toBeGreaterThan(best - 3); // 20 s sampling can miss the exact top
     expect(p.maxEl).toBeLessThanOrEqual(best + 0.01);
   });
 
@@ -85,31 +93,46 @@ describe('findPass', () => {
   });
 
   it('skips a satellite whose elements have decayed', () => {
-    const dead = satellite.twoline2satrec(TLE1, '2 25544  51.6461 221.2784 0001413  89.1723 280.4612 99.00000000236008');
+    const dead = satellite.twoline2satrec(
+      TLE1,
+      '2 25544  51.6461 221.2784 0001413  89.1723 280.4612 99.00000000236008',
+    );
     expect(findPass(dead, EPOCH_JD, LONDON, SUN)).toBeNull();
   });
 
   describe('naked-eye visibility', () => {
-    const high = firstHighPass(30), mid = (high.rise + high.set) / 2;
+    const high = firstHighPass(30),
+      mid = (high.rise + high.set) / 2;
     const up = observerUp(mid);
     const horizontal = new THREE.Vector3().crossVectors(up, new THREE.Vector3(0, 1, 0)).normalize();
-    const sunAt = (elevDeg: number) => up.clone().multiplyScalar(Math.sin(elevDeg * D2R)).add(horizontal.clone().multiplyScalar(Math.cos(elevDeg * D2R)));
+    const sunAt = (elevDeg: number) =>
+      up
+        .clone()
+        .multiplyScalar(Math.sin(elevDeg * D2R))
+        .add(horizontal.clone().multiplyScalar(Math.cos(elevDeg * D2R)));
     const visibleWith = (sun: THREE.Vector3) => findPass(rec, high.rise - 1 / 1440, LONDON, sun)!.visible;
 
     it('is not visible in daylight (sun overhead)', () => expect(visibleWith(sunAt(90))).toBe(false));
-    it('is not visible when the sky is dark but the ISS is in Earth\'s shadow (sun opposite)', () => expect(visibleWith(sunAt(-90))).toBe(false));
+    it("is not visible when the sky is dark but the ISS is in Earth's shadow (sun opposite)", () =>
+      expect(visibleWith(sunAt(-90))).toBe(false));
     it('is visible at dusk: observer in darkness, ISS still sunlit', () => expect(visibleWith(sunAt(-10))).toBe(true));
     it('is not visible in twilight brighter than -6 degrees', () => expect(visibleWith(sunAt(-3))).toBe(false));
   });
 });
 
 describe('PassPredictor', () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   const run = () => vi.advanceTimersByTimeAsync(0);
 
   it('asks for a location first', () => {
-    expect(new PassPredictor().rows(0, rec, null, EPOCH_JD, SUN)).toEqual([['Next pass over you', 'set your location below']]);
+    expect(new PassPredictor().rows(0, rec, null, EPOCH_JD, SUN)).toEqual([
+      ['Next pass over you', 'set your location below'],
+    ]);
   });
 
   it('returns nothing without orbital elements', () => {
@@ -128,21 +151,26 @@ describe('PassPredictor', () => {
   });
 
   it('says "overhead now" when the clock is inside the pass', async () => {
-    const p = findPass(rec, EPOCH_JD, LONDON, SUN)!, pp = new PassPredictor(), mid = (p.rise + p.set) / 2;
-    pp.rows(0, rec, LONDON, mid, SUN); await run();
+    const p = findPass(rec, EPOCH_JD, LONDON, SUN)!,
+      pp = new PassPredictor(),
+      mid = (p.rise + p.set) / 2;
+    pp.rows(0, rec, LONDON, mid, SUN);
+    await run();
     expect(pp.rows(0, rec, LONDON, mid, SUN)[0][1]).toMatch(/^overhead now, sets /);
   });
 
   it('recalculates when the location changes', async () => {
     const pp = new PassPredictor();
-    pp.rows(0, rec, LONDON, EPOCH_JD, SUN); await run();
+    pp.rows(0, rec, LONDON, EPOCH_JD, SUN);
+    await run();
     expect(pp.rows(0, rec, LONDON, EPOCH_JD, SUN)[0][1]).not.toBe('calculating…');
     expect(pp.rows(0, rec, { lat: 40.7, lon: -74 }, EPOCH_JD, SUN)).toEqual([['Next pass over you', 'calculating…']]);
   });
 
   it('recalculates after reset() and when the clock is rewound', async () => {
     const pp = new PassPredictor();
-    pp.rows(0, rec, LONDON, EPOCH_JD, SUN); await run();
+    pp.rows(0, rec, LONDON, EPOCH_JD, SUN);
+    await run();
     pp.reset();
     expect(pp.rows(0, rec, LONDON, EPOCH_JD, SUN)[0][1]).toBe('calculating…');
     await run();
@@ -151,13 +179,16 @@ describe('PassPredictor', () => {
 
   it('reuses the cached pass while the clock advances inside the search window', async () => {
     const pp = new PassPredictor();
-    pp.rows(0, rec, LONDON, EPOCH_JD, SUN); await run();
+    pp.rows(0, rec, LONDON, EPOCH_JD, SUN);
+    await run();
     expect(pp.rows(0, rec, LONDON, EPOCH_JD + 1 / 1440, SUN)[0][1]).not.toBe('calculating…');
   });
 
   it('reports no pass for an observer the satellite never reaches', async () => {
-    const pp = new PassPredictor(), pole = { lat: 89.9, lon: 0 };
-    pp.rows(0, rec, pole, EPOCH_JD, SUN); await run();
+    const pp = new PassPredictor(),
+      pole = { lat: 89.9, lon: 0 };
+    pp.rows(0, rec, pole, EPOCH_JD, SUN);
+    await run();
     expect(pp.rows(0, rec, pole, EPOCH_JD, SUN)).toEqual([['Next pass over you', 'none in the next 7 days']]);
   });
 });

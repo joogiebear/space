@@ -26,35 +26,66 @@ export function endpoint(route: string, staticData = STATIC_DATA, base = import.
 
 /** [name, TLE line 1, TLE line 2, category index] */
 export type SatRecord = [string, string, string, number];
-export interface SatCatalogue { cats: string[]; fetched: string; sats: SatRecord[] }
-
+export interface SatCatalogue {
+  cats: string[];
+  fetched: string;
+  sats: SatRecord[];
+}
 
 /** [hygIndex, name, constellation, spectral type, distance pc, apparent magnitude] */
 export type NamedStar = [number, string, string, string, number, number];
 /** NASA Exoplanet Archive row: [planet, host, distance pc, ra, dec, AU, radius, ?, year, method, ?, ?, spectral type] */
-export type ExoRow = [string, string, number | null, number | null, number | null, number | null, number | null, unknown, number | string | null, string, unknown, unknown, string | null];
+export type ExoRow = [
+  string,
+  string,
+  number | null,
+  number | null,
+  number | null,
+  number | null,
+  number | null,
+  unknown,
+  number | string | null,
+  string,
+  unknown,
+  unknown,
+  string | null,
+];
 
 /** [id, name, english name, lines of Hipparcos ids] */
 export type ConstellationRecord = [string, string, string, number[][]];
 
 /** [name, a, e, i, node, argPeri, meanAnomaly, epochJD, H, kind] where kind 0 belt, 1 NEO, 2 PHA, 3 comet. */
 export type SmallBodyRow = [string, number, number, number, number, number, number, number, number, number];
-export interface SmallBodies { ast: SmallBodyRow[]; com: SmallBodyRow[] }
+export interface SmallBodies {
+  ast: SmallBodyRow[];
+  com: SmallBodyRow[];
+}
 
 /** Spacecraft track: [JD, x, y, z] in AU, heliocentric ecliptic. */
-export interface CraftTrack { name: string; id: string; track: number[][] }
-export interface CraftData { when: string; craft: CraftTrack[] }
+export interface CraftTrack {
+  name: string;
+  id: string;
+  track: number[][];
+}
+export interface CraftData {
+  when: string;
+  craft: CraftTrack[];
+}
 
 async function get(path: string): Promise<Response> {
-  const url = endpoint(path), r = await fetch(url);
+  const url = endpoint(path),
+    r = await fetch(url);
   if (!r.ok) throw new Error(`${url}: ${r.status} ${r.statusText}`);
   return r;
 }
 const json = async <T>(path: string) => (await get(path)).json() as Promise<T>;
 
-export const fetchSatellites = () => json<SatCatalogue>('/api/sats').catch(() => {
-  throw new Error('Satellite data is not available yet (CelesTrak limits downloads to one per group every 2 hours, so a refresh can lag). Try again in a few minutes.');
-});
+export const fetchSatellites = () =>
+  json<SatCatalogue>('/api/sats').catch(() => {
+    throw new Error(
+      'Satellite data is not available yet (CelesTrak limits downloads to one per group every 2 hours, so a refresh can lag). Try again in a few minutes.',
+    );
+  });
 export const fetchSmallBodies = () => json<SmallBodies>('/api/sbdb');
 /** Optional: the solar system still works without spacecraft. */
 export const fetchSpacecraft = () => json<CraftData>('/api/craft').catch((): CraftData => ({ when: '', craft: [] }));
@@ -62,4 +93,5 @@ export const fetchSpacecraft = () => json<CraftData>('/api/craft').catch((): Cra
 export const fetchStarsBinary = async () => (await get('/api/stars.bin')).arrayBuffer();
 export const fetchStarNames = () => json<NamedStar[]>('/api/stars.json');
 export const fetchExoplanets = () => json<ExoRow[]>('/api/exo').catch((): ExoRow[] => []);
-export const fetchConstellations = () => json<ConstellationRecord[]>('/api/constellations').catch((): ConstellationRecord[] => []);
+export const fetchConstellations = () =>
+  json<ConstellationRecord[]>('/api/constellations').catch((): ConstellationRecord[] => []);

@@ -20,17 +20,24 @@ export const togglePause = () => setPaused(!sim.paused);
 
 /** Snap back to the real clock at 1x. */
 export function goLive() {
-  sim.jd = nowJD(); sim.live = true; setPaused(false); setRate(1);
+  sim.jd = nowJD();
+  sim.live = true;
+  setPaused(false);
+  setRate(1);
 }
 
 /** Jump to a Julian date at a given speed (time-travel presets). */
 export function jumpTo(jd: number, rate: number) {
-  sim.jd = jd; sim.live = false; setPaused(false); setRate(rate);
+  sim.jd = jd;
+  sim.live = false;
+  setPaused(false);
+  setRate(rate);
 }
 
 /** Advance the clock by `dt` real seconds. */
 export function tickClock(dt: number) {
   if (sim.paused) return;
-  if (sim.live && sim.rate === 1) sim.jd = nowJD(); else sim.jd += sim.rate * dt / 86400;
+  if (sim.live && sim.rate === 1) sim.jd = nowJD();
+  else sim.jd += (sim.rate * dt) / 86400;
   sim.gt += dt * Math.min(sim.rate, 300);
 }

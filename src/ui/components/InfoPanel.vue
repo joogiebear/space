@@ -7,9 +7,14 @@ import { ui } from '../store';
 /** Details for the selected body (or the scene intro), plus its action and "enter" buttons. */
 async function runAction() {
   const a = App.sel && App.sel.action;
-  if (a) { await a.run(); refreshInfo(App.sel); }
+  if (a) {
+    await a.run();
+    refreshInfo(App.sel);
+  }
 }
-const enter = () => { if (App.sel && App.sel.enter) openScene(App.sel.enter); };
+const enter = () => {
+  if (App.sel && App.sel.enter) openScene(App.sel.enter);
+};
 </script>
 
 <template>

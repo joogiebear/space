@@ -6,7 +6,13 @@ import { sceneBodies, sceneLayers, ui } from '../store';
 
 /** Layers (checkboxes) and Objects (select list) for the current scene. */
 const checked = ref<boolean[]>([]);
-watch(sceneLayers, ls => { checked.value = ls.map(l => l.on); }, { immediate: true });
+watch(
+  sceneLayers,
+  ls => {
+    checked.value = ls.map(l => l.on);
+  },
+  { immediate: true },
+);
 
 function toggle(L: Layer, i: number) {
   L.on = checked.value[i];
@@ -31,7 +37,7 @@ const rows = computed(() => {
       <template v-if="sceneLayers.length">
         <h4>Layers</h4>
         <label v-for="(L, i) in sceneLayers" :key="L.id">
-          <input v-model="checked[i]" type="checkbox" @change="toggle(L, i)">
+          <input v-model="checked[i]" type="checkbox" @change="toggle(L, i)" />
           <i v-if="L.color" :style="{ background: L.color }" />
           {{ L.label }}
           <span v-if="L.count != null">{{ L.count.toLocaleString() }}</span>
@@ -41,7 +47,14 @@ const rows = computed(() => {
     <div>
       <h4>Objects</h4>
       <div id="list">
-        <button v-for="row in rows" :key="row.b.id" :class="{ sub: row.sub, sel: ui.selId === row.b.id }" @click="select(row.b)">{{ row.b.label }}</button>
+        <button
+          v-for="row in rows"
+          :key="row.b.id"
+          :class="{ sub: row.sub, sel: ui.selId === row.b.id }"
+          @click="select(row.b)"
+        >
+          {{ row.b.label }}
+        </button>
       </div>
     </div>
   </div>

@@ -10,7 +10,8 @@ import { sceneBodies, sceneLayers, scenePresets, ui } from './store';
 
 /** Fill the info panel for a body, or with the scene intro when `b` is null. */
 export function refreshInfo(b: Body | null) {
-  const sc = scene(), i: Info = b ? (b.getInfo ? b.getInfo() : b.info ?? {}) : { sub: '', text: sc.intro, rows: sc.introRows };
+  const sc = scene(),
+    i: Info = b ? (b.getInfo ? b.getInfo() : (b.info ?? {})) : { sub: '', text: sc.intro, rows: sc.introRows };
   const act = b && b.action;
   ui.selId = b ? b.id : null;
   ui.info.title = b ? b.label : sc.title;
@@ -21,25 +22,45 @@ export function refreshInfo(b: Body | null) {
   ui.info.enterLabel = b && b.enter ? (b.enterLabel || 'Enter') + ' ›' : null;
 }
 
-const refreshDate = () => { ui.dateText = App.scene?.timeLabel ? fmtDate(sim.jd) : fmtDate(sim.jd).slice(0, 10); };
+const refreshDate = () => {
+  ui.dateText = App.scene?.timeLabel ? fmtDate(sim.jd) : fmtDate(sim.jd).slice(0, 10);
+};
 
 /** Copy engine events into the reactive store. Call once before mounting the app. */
 export function initBridge() {
   selectionChanged.on(refreshInfo);
-  slowTick.on(() => { if (App.sel && App.sel.live) refreshInfo(App.sel); refreshDate(); });
+  slowTick.on(() => {
+    if (App.sel && App.sel.live) refreshInfo(App.sel);
+    refreshDate();
+  });
   sceneEntered.on(sc => {
-    ui.sceneId = sc.id; ui.title = sc.title; ui.timeLabel = sc.timeLabel || 'Date'; ui.path = [...App.path];
-    sceneBodies.value = sc.bodies ?? []; sceneLayers.value = sc.layers ?? []; scenePresets.value = sc.presets ?? [];
+    ui.sceneId = sc.id;
+    ui.title = sc.title;
+    ui.timeLabel = sc.timeLabel || 'Date';
+    ui.path = [...App.path];
+    sceneBodies.value = sc.bodies ?? [];
+    sceneLayers.value = sc.layers ?? [];
+    scenePresets.value = sc.presets ?? [];
     ui.sceneSerial++;
-    refreshInfo(null); refreshDate();
+    refreshInfo(null);
+    refreshDate();
   });
   rateChanged.on((r, fromSlider) => {
     ui.rate = r;
-    if (!fromSlider) ui.sliderPos = clamp(100 * Math.log10(Math.max(r, 1)) / 8, 0, 100);
+    if (!fromSlider) ui.sliderPos = clamp((100 * Math.log10(Math.max(r, 1))) / 8, 0, 100);
   });
-  pauseChanged.on(p => { ui.paused = p; });
+  pauseChanged.on(p => {
+    ui.paused = p;
+  });
   hoverChanged.on((b, x, y) => {
-    ui.tip.visible = !!b; if (b) { ui.tip.text = b.label; ui.tip.x = x + 14; ui.tip.y = y + 12; }
+    ui.tip.visible = !!b;
+    if (b) {
+      ui.tip.text = b.label;
+      ui.tip.x = x + 14;
+      ui.tip.y = y + 12;
+    }
   });
-  dragStarted.on(() => { ui.tip.visible = false; });
+  dragStarted.on(() => {
+    ui.tip.visible = false;
+  });
 }

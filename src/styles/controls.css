@@ -1,11 +1,65 @@
 /* Time controls and the jump-to-moment menu */
-#ctl{right:14px;bottom:14px;padding:10px 14px;display:flex;flex-direction:column;gap:8px;width:270px}
-#ctl label{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:13px;cursor:pointer}
-#ctl .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-#ctl input[type=range]{width:100%;accent-color:var(--acc)}
-#ctl .top{display:flex;justify-content:space-between;color:var(--dim);font-size:12px}
-#ctl .top span:last-child{color:var(--tx)}
-#ctl button{background:none;border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:3px 10px;font:inherit;cursor:pointer}
-#ctl button:hover{border-color:var(--acc)}
-#jump{width:100%;background:rgba(10,16,40,.9);border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:4px 8px;font:inherit;font-size:13px;cursor:pointer}
-#jump:hover,#jump:focus{border-color:var(--acc);outline:none}
+#ctl {
+  right: 14px;
+  bottom: 14px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 270px;
+}
+#ctl label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dim);
+  font-size: 13px;
+  cursor: pointer;
+}
+#ctl .row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+#ctl input[type='range'] {
+  width: 100%;
+  accent-color: var(--acc);
+}
+#ctl .top {
+  display: flex;
+  justify-content: space-between;
+  color: var(--dim);
+  font-size: 12px;
+}
+#ctl .top span:last-child {
+  color: var(--tx);
+}
+#ctl button {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--tx);
+  border-radius: 7px;
+  padding: 3px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+#ctl button:hover {
+  border-color: var(--acc);
+}
+#jump {
+  width: 100%;
+  background: rgba(10, 16, 40, 0.9);
+  border: 1px solid var(--line);
+  color: var(--tx);
+  border-radius: 7px;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+#jump:hover,
+#jump:focus {
+  border-color: var(--acc);
+  outline: none;
+}

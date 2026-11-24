@@ -7,8 +7,15 @@ import { focusSearch } from './searchFocus';
 /** Esc/Backspace: deselect, then go up a level. Space: pause. "/": search. */
 export function initShortcuts() {
   addEventListener('keydown', e => {
-    if (e.key === 'Escape' || e.key === 'Backspace') { if (App.sel) deselect(); else goUp(); }
-    else if (e.key === ' ') { e.preventDefault(); togglePause(); }
-    else if (e.key === '/') { e.preventDefault(); focusSearch(); }
+    if (e.key === 'Escape' || e.key === 'Backspace') {
+      if (App.sel) deselect();
+      else goUp();
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      togglePause();
+    } else if (e.key === '/') {
+      e.preventDefault();
+      focusSearch();
+    }
   });
 }

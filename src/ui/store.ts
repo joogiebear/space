@@ -16,7 +16,9 @@ export const ui = reactive({
   sceneSerial: 0,
   selId: null as string | null,
   info: {
-    title: '', sub: '', text: '',
+    title: '',
+    sub: '',
+    text: '',
     rows: [] as string[][],
     actionLabel: null as string | null,
     enterLabel: null as string | null,
@@ -36,5 +38,8 @@ export const sceneLayers = shallowRef<Layer[]>([]);
 export const scenePresets = shallowRef<Preset[]>([]);
 
 /** An open "set your location" dialog, resolved with the new location or null. */
-export interface LocationRequest { current: Loc | null; resolve: (loc: Loc | null) => void }
+export interface LocationRequest {
+  current: Loc | null;
+  resolve: (loc: Loc | null) => void;
+}
 export const locationRequest = shallowRef<LocationRequest | null>(null);

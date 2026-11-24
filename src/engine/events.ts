@@ -7,7 +7,11 @@ export interface Emitter<A extends unknown[]> {
 export function emitter<A extends unknown[] = []>(): Emitter<A> {
   const subs: ((...args: A) => void)[] = [];
   return {
-    on: fn => { subs.push(fn) },
-    emit: (...args) => { for (const fn of subs) fn(...args) },
+    on: fn => {
+      subs.push(fn);
+    },
+    emit: (...args) => {
+      for (const fn of subs) fn(...args);
+    },
   };
 }
