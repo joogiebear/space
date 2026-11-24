@@ -3,7 +3,7 @@ import { clamp } from '@/lib';
 import type { Body } from '@/types';
 import { emitter } from './events';
 import { createGestures, type PointerKind } from './gesture';
-import { renderer } from './gl';
+import { camera, renderer } from './gl';
 import { pickAt } from './picking';
 import { deselect, select } from './selection';
 import { goUp, isBusy, openScene, parentOf, sceneTitle } from './sceneManager';
@@ -51,8 +51,9 @@ function enterTarget(): Body | null {
 
 /** Turn the camera around its target (radians). Used by the keyboard; dragging does the same inline. */
 export function orbitBy(dyaw: number, dpitch: number) {
-  cam.yaw += dyaw;
-  cam.pitch = clamp(cam.pitch + dpitch, -1.5, 1.5);
+  const k = scene().lookAround ? -1 : 1; // looking around, "left" turns the view left: the opposite of orbiting a target
+  cam.yaw += k * dyaw;
+  cam.pitch = clamp(cam.pitch + k * dpitch, -1.5, 1.5);
   App.interact = performance.now();
 }
 
@@ -114,8 +115,15 @@ export function initInput() {
     },
     orbit(dx, dy) {
       dragStarted.emit();
-      cam.yaw -= dx * 0.0055;
-      cam.pitch = clamp(cam.pitch + dy * 0.0055, -1.5, 1.5);
+      if (scene().lookAround) {
+        // grab the sky: it follows the finger, at a rate that matches the field of view so the drag feels 1:1
+        const rate = (2 * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(App.H, 1);
+        cam.yaw += dx * rate;
+        cam.pitch = clamp(cam.pitch - dy * rate, -1.5, 1.5);
+      } else {
+        cam.yaw -= dx * 0.0055;
+        cam.pitch = clamp(cam.pitch + dy * 0.0055, -1.5, 1.5);
+      }
       App.interact = performance.now();
     },
     pinch(k) {

@@ -5,6 +5,7 @@ import * as THREE from 'three';
 export function glMock() {
   return {
     syncSize() {},
+    setFov() {},
     contextLost: { on() {}, emit() {} },
     contextRestored: { on() {}, emit() {} },
     renderer: {

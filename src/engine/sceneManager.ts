@@ -37,7 +37,9 @@ const PARENT = (id: string): string | null =>
           ? 'starmap'
           : id === 'earth'
             ? 'solar'
-            : null;
+            : id === 'sky'
+              ? 'earth'
+              : null;
 export const parentOf = PARENT;
 export const chain = (id: string) => {
   const c: string[] = [];
@@ -52,6 +54,7 @@ export const TABS: [string, string][] = [
   ['starmap', 'Star Map'],
   ['solar', 'Solar System'],
   ['earth', 'Earth Orbit'],
+  ['sky', 'Sky Tonight'],
 ];
 export const isSceneId = (id: string) => id in REG;
 
@@ -123,7 +126,8 @@ export async function goScene(id: string, { deeper = true, instant = false } = {
   world.add(sc.group);
   sc.enter?.();
   cam.free = false;
-  cam.pitch = 0.5;
+  cam.pitch = sc.startPitch ?? 0.5;
+  if (sc.startYaw !== undefined) cam.yaw = sc.startYaw;
   cam.want = sc.initD;
   sc.center(cam.t);
   cam.off.set(0, 0, 0);

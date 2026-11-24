@@ -64,6 +64,17 @@ after 60 days without repository activity; re-enable it from the Actions tab if 
 
 To host it elsewhere, run the two commands above with a different `VITE_BASE`, or deploy the Python server.
 
+## Sky Tonight
+
+The **Sky Tonight** tab shows the sky as it looks from your location at the simulated moment: the day and twilight sky,
+12,000 stars with constellation lines, the Sun, the Moon with its true phase, and the planets. Select anything for its
+altitude, compass direction, rise and set times, and brightness. The Time panel makes the sky turn.
+
+Everything is computed in the browser (`src/lib/sky.ts`, with tests against almanac values): sidereal time and
+precession, the Sun and planets from the JPL elements the solar system already uses, and an abridged lunar theory good to
+about 0.3 degrees. Planet brightness is approximate (distance only, no phase terms). Your location is stored only in
+your browser (set it from **Your location** in the Objects list); until then the sky is shown from Greenwich.
+
 ## Share links and tours
 
 The address bar always carries the scene and the selected object (`#solar?sel=mars`). **Share** in the Time panel

@@ -303,6 +303,13 @@ function earth(): Scene {
     // satellite elements are only good for weeks around today, so the dots hide for far-away dates (see update)
     presets: EARTH_PRESETS,
     enter() {
+      // the location may have been set in Sky Tonight since this scene last ran
+      const saved = loadLocation();
+      if (saved && (saved.lat !== loc?.lat || saved.lon !== loc?.lon)) {
+        loc = saved;
+        placeYou();
+        predictor.reset();
+      }
       if (Math.abs(sim.jd - nowJD()) > 45) {
         sim.jd = nowJD();
       }

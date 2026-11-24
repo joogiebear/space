@@ -94,6 +94,13 @@ export const skyPts = new THREE.Points(
 );
 skyScene.add(skyPts);
 
+/** Change the camera's field of view (degrees) and keep the point-size scale in step with it. */
+export function setFov(deg: number) {
+  if (camera.fov === deg) return;
+  camera.fov = deg;
+  U.uF.value = (App.H * 0.5) / Math.tan((deg * Math.PI) / 360);
+}
+
 /* ---- glow sprites ---- */
 const glowCanvas = document.createElement('canvas');
 glowCanvas.width = glowCanvas.height = 128;

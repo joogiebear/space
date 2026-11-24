@@ -156,6 +156,7 @@ test.describe('guided tours', () => {
     const card = page.locator('#tour');
     await expect(card).toBeVisible();
     await expect(card.locator('h2')).toHaveText('The Sun');
+    await card.getByRole('button', { name: 'Pause' }).click(); // the test drives the steps, not the autoplay timer
     await card.getByRole('button', { name: 'Next' }).click();
     await expect(card.locator('h2')).toHaveText('Mercury');
     await expect(page.locator('#iT')).toHaveText(/Mercury/i, { timeout: 20_000 });
@@ -172,6 +173,7 @@ test.describe('guided tours', () => {
     await page.locator('#tours').selectOption({ label: 'Our place in the universe' });
     const card = page.locator('#tour');
     await expect(card.locator('h2')).toHaveText('Earth orbit');
+    await card.getByRole('button', { name: 'Pause' }).click(); // the test drives the steps, not the autoplay timer
     for (const title of ['The solar system', 'Our stellar neighbourhood', 'The Milky Way', 'The galaxies around us']) {
       await card.getByRole('button', { name: 'Next' }).click();
       await expect(card.locator('h2')).toHaveText(title);
@@ -190,5 +192,72 @@ test.describe('guided tours', () => {
     await expect(page.locator('#tabs .tab.on')).toHaveText('Earth Orbit', { timeout: 15_000 }); // the first step has landed
     await page.locator('#tabs').getByRole('button', { name: 'Star Map' }).click();
     await expect(page.locator('#tour')).toHaveCount(0, { timeout: 15_000 });
+  });
+});
+
+test.describe('Sky Tonight', () => {
+  test.skip(({ isMobile }) => isMobile, 'covered on desktop');
+  const FULL_MOON = '#sky?sel=moon&t=2000-01-21T04:40:00.000Z&r=1&pz=1';
+
+  test('opens with no star data and still shows the Sun, Moon and planets', async ({ page }) => {
+    const errors = await boot(page);
+    await page.goto('./' + FULL_MOON);
+    await expect(page.locator('#iT')).toHaveText('The Moon', { timeout: 20_000 });
+    await expect(page.locator('#iS')).toContainText('Full Moon');
+    await expect(page.locator('#rows')).toContainText('Altitude');
+    expect(errors).toEqual([]);
+  });
+
+  test('the Sun reports the right stage of twilight for London at sunset', async ({ page }) => {
+    await boot(page);
+    // London, 24 Nov 2026: sunset is about 15:56 UTC, so 16:15 is civil twilight and 18:00 is full night
+    await page.goto('./#sky?sel=sun&t=2026-11-24T16:15:00.000Z&r=1&pz=1');
+    await expect(page.locator('#rows')).toContainText('Civil twilight', { timeout: 20_000 });
+    await page.goto('./#sky?sel=sun&t=2026-11-24T18:30:00.000Z&r=1&pz=1');
+    await expect(page.locator('#rows')).toContainText('Full night');
+  });
+
+  test('with a star catalogue, a star can be found by name and selected', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', e => errors.push(e.message));
+    // three rows: the Sun (skipped), Sirius and a faint star, in the binary layout the app reads
+    const d = 2.64,
+      ra = 101.287 * (Math.PI / 180),
+      dec = -16.716 * (Math.PI / 180);
+    const bin = Buffer.alloc(4 + 3 * 20 + 3 * 4);
+    bin.writeUInt32LE(3, 0);
+    const row = (i: number, x: number, y: number, z: number, absM: number, ci: number) =>
+      [x, y, z, absM, ci].forEach((v, k) => bin.writeFloatLE(v, 4 + (i * 5 + k) * 4));
+    row(0, 0, 0, 0, 4.83, 0.65);
+    row(1, d * Math.cos(dec) * Math.cos(ra), d * Math.cos(dec) * Math.sin(ra), d * Math.sin(dec), 1.43, 0.0);
+    row(2, 30, 20, 10, 5, 1.2);
+    bin.writeInt32LE(0, 4 + 60);
+    bin.writeInt32LE(32349, 4 + 64);
+    bin.writeInt32LE(1, 4 + 68);
+    // Playwright tries the most recently added route first, so the catch-all goes in first
+    await page.route('**/data/**', r => r.fulfill({ status: 404, body: 'not found' }));
+    await page.route('**/data/stars.bin', r =>
+      r.fulfill({ status: 200, contentType: 'application/octet-stream', body: bin }),
+    );
+    await page.route('**/data/stars_names.json', r => r.fulfill({ json: [[1, 'Sirius', 'CMa', 'A1V', 2.64, -1.46]] }));
+    await page.route('**/data/constellations.json', r => r.fulfill({ json: [] }));
+    await page.goto('./#sky?t=2026-01-20T22:00:00.000Z&r=1&pz=1');
+    await expect(page.locator('#rows')).toContainText('catalogue', { timeout: 20_000 });
+    await page.locator('#q').fill('sirius');
+    await page.locator('#results button').first().click();
+    await expect(page.locator('#iT')).toHaveText('Sirius');
+    await expect(page.locator('#rows')).toContainText('Altitude');
+    await expect(page.locator('#rows')).toContainText('Constellation');
+    await expect(page.locator('#rows')).toContainText('light-years');
+    expect(errors).toEqual([]);
+  });
+
+  test('Escape from the sky goes back up to Earth orbit', async ({ page }) => {
+    await boot(page);
+    await page.goto('./#sky');
+    await expect(page.locator('#tabs .tab.on')).toHaveText('Sky Tonight', { timeout: 20_000 });
+    await page.locator('#gl').focus();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#tabs .tab.on')).toHaveText('Earth Orbit', { timeout: 20_000 });
   });
 });

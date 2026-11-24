@@ -44,6 +44,7 @@ export function initBridge() {
   });
   slowTick.on(() => {
     if (App.sel && App.sel.live) refreshInfo(App.sel);
+    else if (!App.sel && App.scene?.liveIntro) refreshInfo(null);
     refreshDate();
   });
   sceneEntered.on(sc => {

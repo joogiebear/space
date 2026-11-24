@@ -91,6 +91,13 @@ export interface Scene {
   live?: boolean;
   timeLabel?: string;
   extent?: number;
+  /** An observer's view from the middle: dragging turns the view like a grab, the camera never leaves the centre. */
+  lookAround?: boolean;
+  /** Starting camera angles on entry (radians); read after `enter()`. */
+  startYaw?: number;
+  startPitch?: number;
+  /** The summary shown when nothing is selected changes with time: refresh it every half second. */
+  liveIntro?: boolean;
   /** false hides the background star sky. */
   sky?: boolean;
   intro?: string;

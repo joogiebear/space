@@ -3,3 +3,4 @@ import './galaxies';
 import './starmap';
 import './solar';
 import './earth';
+import './sky';

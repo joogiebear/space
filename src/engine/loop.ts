@@ -27,7 +27,7 @@ function frame(now: number) {
   sc.update(dt);
 
   // camera follows the selection (or the scene centre) and glides between targets
-  if (App.sel) App.sel.getPos(tgt);
+  if (App.sel && !sc.lookAround) App.sel.getPos(tgt);
   else sc.center(tgt);
   if (lastSel !== App.sel) {
     cam.off.copy(cam.t).sub(tgt);
@@ -40,7 +40,7 @@ function frame(now: number) {
     cam.want = clamp(cam.want, lo, sc.maxD);
   }
   cam.dist *= Math.pow(cam.want / cam.dist, 1 - Math.exp(-dt * cam.ease));
-  if (opts.autoOrbit && !App.dragging && now - App.interact > 2500) cam.yaw += dt * 0.04;
+  if (opts.autoOrbit && !sc.lookAround && !App.dragging && now - App.interact > 2500) cam.yaw += dt * 0.04;
   const cp = Math.cos(cam.pitch);
   camera.position.set(
     cam.t.x + cam.dist * cp * Math.sin(cam.yaw),
