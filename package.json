@@ -1,6 +1,7 @@
 {
   "name": "cosmos-atlas",
   "private": true,
+  "license": "MIT",
   "version": "1.0.0",
   "type": "module",
   "description": "Animated WebGL atlas of the universe, from galaxies to satellites in Earth orbit",

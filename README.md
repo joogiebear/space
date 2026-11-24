@@ -108,3 +108,8 @@ server at run time and cached locally.
 - Planet textures in `public/assets/tex/` come from the three.js examples; see that repository for their terms.
 
 The data sources have their own terms of use. This project is not affiliated with any of them.
+
+## License
+
+The code is [MIT](LICENSE) licensed. That covers this repository's source only: the data fetched at
+run time and the planet textures keep their own terms (see above).
