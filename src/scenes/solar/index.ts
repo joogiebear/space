@@ -97,7 +97,7 @@ function solar() {
     const p = new THREE.Points(g, mat); p.frustumCulled = false; group.add(p); return p;
   }
   function craftPos(b: CraftBody, jd: number) { // linear interpolation along the Horizons track, clamped at the ends
-    const t = b.track; let k = 0, hi = t.length - 1;
+    const t = b.track; let k: number, hi = t.length - 1;
     if (jd <= t[0][0]) k = 0; else if (jd >= t[hi][0]) k = hi - 1; else { let lo = 0; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (t[m][0] <= jd) lo = m; else hi = m } k = lo }
     const a = t[k], c = t[k + 1], f = Math.min(1, Math.max(0, (jd - a[0]) / (c[0] - a[0])));
     b.p.set(a[1] + (c[1] - a[1]) * f, a[3] + (c[3] - a[3]) * f, -(a[2] + (c[2] - a[2]) * f));
@@ -126,7 +126,7 @@ function solar() {
     layers: [],
     isHidden: b => b.kind === 'moon' && !inFamily(b),
     async load(status) {
-      const self = this; status('downloading asteroid & comet orbits…');
+      status('downloading asteroid & comet orbits…');
       const [sb, cr] = await Promise.all([fetchSmallBodies(), fetchSpacecraft()]);
       ast = sb.ast; com = sb.com; allRows = ast.concat(com);
       sets.belt = buildSet(ast.filter(r => r[9] === 0), smallMat([.78, .7, .55], 1.5));
@@ -137,7 +137,6 @@ function solar() {
         getPos(v: THREE.Vector3) { return v.copy(this.p) },
         getInfo() { const d = this.p.length(); return { sub: 'Spacecraft', text: 'Position interpolated from JPL Horizons ephemeris (fetched ' + cr.when + '; covers roughly 2 months back to 10 months ahead, held at the nearest end outside that).', rows: [['Distance from Sun', d.toFixed(2) + ' AU'], ['Light travel time from Sun', (d * 8.317 / 60).toFixed(1) + ' hours']] } } };
         craftPos(b, sim.jd); craftMk.set(i, b.p.x, b.p.y, b.p.z, [1, .85, .35], 16); return b });
-      const loaded = (self.loadedAt = Date.now());
       this.layers = [
         { id: 'orbits', label: 'Planet orbits', on: true, apply: o => { orbitLines.forEach(x => x.line.visible = o) } },
         { id: 'belt', label: 'Asteroids', color: '#c7b38c', count: sets.belt.geometry.attributes.aE1.count, on: true, apply: o => sets.belt.visible = o },
@@ -150,7 +149,7 @@ function solar() {
     },
     update(dt) {
       const jd = sim.jd, days = jd - J2000;
-      sun.getPos(tmp); camera.position && 0;
+      sun.getPos(tmp);
       for (const b of bodies) {
         if (b.kind === 'planet' || b.kind === 'dwarf') { planetEcl(b.id, jd, ecl); eclToThree(ecl, b.p) }
         else if (b.kind === 'moon') { const mb = b as MoonBody, th = mb.th0 + TAU * days / mb.P, x = Math.cos(th) * mb.a, z = Math.sin(th) * mb.a; mb.p.set(mb.parentBody.p.x + x, mb.parentBody.p.y - z * Math.sin(mb.inc), mb.parentBody.p.z + z * Math.cos(mb.inc)) }
@@ -161,7 +160,7 @@ function solar() {
         const dist = cpos.distanceTo(b.p), r = rDisp(b.real, dist); b.radNow = r; b.mesh.position.copy(b.p); b.mesh.scale.setScalar(r);
         if (b.kind !== 'sun' && b.id !== 'moon') b.mesh.rotation.y += dt * .15;
       }
-      const sd = cpos.length(), sr = sun.radNow || 0;
+      const sr = sun.radNow || 0;
       sunGlow.scale.setScalar(sr * 3.4); sunGlow2.scale.setScalar(sr * 1.7); sunGlow.material.opacity = .5; sunGlow2.material.opacity = .4;
       for (const m of moonLines) { m.line.visible = inFamily(m) && sc.layerOrbits !== false; m.line.position.copy(m.parentBody.p) }
       for (const o of orbitLines) o.line.material.opacity = App.sel && (App.sel === o.b || App.sel.parentBody === o.b) ? .65 : .2;
@@ -179,7 +178,7 @@ function solar() {
       const s = { x: 0, y: 0, z: 0 }; let best: CraftBody | null = null, bd = 14;
       for (const c of craft) { if (c.hidden) continue; if (!screenOf(c.p, s)) continue; const d = Math.hypot(s.x - mx, s.y - my); if (d < bd) { bd = d; best = c } }
       if (best || !click || !allRows.length) return best;
-      const o = [0, 0, 0], v = new THREE.Vector3(), days = sim.jd, camera_ = camera; camera_.updateMatrixWorld();
+      const o = [0, 0, 0], days = sim.jd, camera_ = camera; camera_.updateMatrixWorld();
       const e = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).elements; let br = null as SmallBodyRow | null; bd = 16;
       const test = (rows: SmallBodyRow[], flagOk: (r: SmallBodyRow) => boolean) => { for (const r of rows) { if (!flagOk(r)) continue;
         const n = .01720209895 / (r[1] * Math.sqrt(r[1])); orbitPos(r[1], r[2], r[3] * D2R, r[4] * D2R, r[5] * D2R, r[6] * D2R + n * (days - r[7]), o);

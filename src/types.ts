@@ -38,6 +38,7 @@ export interface Body {
   diveColor?: string;
   parentBody?: Body;
   moons?: Body[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- deliberate escape hatch: scenes attach their own fields
   [extra: string]: any;
 }
 
@@ -105,6 +106,7 @@ export interface Scene {
   pickCustom?(mx: number, my: number, click: boolean): Body | null;
   extraLabels?(emit: EmitLabel): void;
   search?(q: string): SearchResult[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- deliberate escape hatch: scenes attach their own fields
   [extra: string]: any;
 }
 

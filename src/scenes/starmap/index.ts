@@ -9,9 +9,10 @@ interface ExoHost { name: string; x: number; y: number; z: number; d: number; sp
 
 function starmap(): Scene {
   const group = new THREE.Group(), tmp = new THREE.Vector3();
-  let N = 0, pos!: Float32Array, hip!: Int32Array, names: NamedStar[] = [], namedIdx = new Map<number, NamedStar>(), starPts: THREE.Points | null = null, mat: THREE.ShaderMaterial | null = null, absm!: Float32Array;
+  let N = 0, pos!: Float32Array, hip!: Int32Array, names: NamedStar[] = [], starPts: THREE.Points | null = null, mat: THREE.ShaderMaterial | null = null, absm!: Float32Array;
   const exoHosts: ExoHost[] = [], exoMat = new THREE.ShaderMaterial({ uniforms: { uPx: U.uPx }, vertexShader: EVS, fragmentShader: EFS, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
-  let exoPts: THREE.Points | null = null, exoCount = 0, hostByPick = null, conLines: THREE.LineSegments | null = null, conLabels: { name: string; v: THREE.Vector3 }[] = [];
+  let exoPts: THREE.Points | null = null, exoCount = 0, conLines: THREE.LineSegments | null = null, conLabels: { name: string; v: THREE.Vector3 }[] = [];
+  const namedIdx = new Map<number, NamedStar>();
   const sol: Body = { id: 'sol', label: 'Sol (the Sun)', diveColor: '#ffe9a8', enter: 'solar', enterLabel: 'Enter the solar system', focusD: 4, minD: .05, getPos: (v: THREE.Vector3) => v.set(0, 0, 0),
     info: { sub: 'Our star · G2V yellow dwarf', text: 'The centre of the map. Double-click to fly into the solar system.', rows: [['Distance', '0']] } };
   const solMk = new Markers(1); group.add(solMk.points); solMk.set(0, 0, 0, 0, [1, .9, .6], 30);
@@ -38,7 +39,7 @@ function starmap(): Scene {
     info: { sub: `Exoplanet system · ${h.planets.length} known planet${h.planets.length > 1 ? 's' : ''}`, text: h.planets.map(p => `${p[0]}${p[6] ? ' · ' + (+p[6]).toFixed(1) + ' R⊕' : ''}${p[5] ? ' · ' + p[5] + ' AU' : ''}`).join('\n'),
       rows: [['Distance', `${fmtNum(h.d * PC_LY, 0)} light-years`], ['Star type', h.spect || '—'], ['Method', h.planets[0][9]], ['Discovered', String(h.planets.map(p => p[8]).sort()[0] || '—')]] } });
 
-  function pickScreen(mx: number, my: number, click: boolean): Body | null {
+  function pickScreen(mx: number, my: number, _click: boolean): Body | null {
     if (!pos) return null;
     camera.updateMatrixWorld(); const e = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).elements;
     const W = App.W, H = App.H, cx = camera.position;
@@ -48,7 +49,7 @@ function starmap(): Scene {
         const sx = ((e[0] * h.x + e[4] * h.y + e[8] * h.z + e[12]) / w * .5 + .5) * W, sy = (-(e[1] * h.x + e[5] * h.y + e[9] * h.z + e[13]) / w * .5 + .5) * H, d = Math.hypot(sx - mx, sy - my); if (d < bd) { bd = d; bh = h } }
       if (bh) return hostBody(bh); }
     if (!layerSt.stars) return null;
-    let best = -1, bs = 1e9; const ref = U.uRef || 20;
+    let best = -1, bs = 1e9;
     for (let i = 0; i < N; i++) {
       const x = pos[i * 3], y = pos[i * 3 + 1], z = pos[i * 3 + 2], w = e[3] * x + e[7] * y + e[11] * z + e[15]; if (w <= 0) continue;
       const sx = ((e[0] * x + e[4] * y + e[8] * z + e[12]) / w * .5 + .5) * W; if (Math.abs(sx - mx) > 14) continue;
@@ -80,7 +81,7 @@ function starmap(): Scene {
       // constellation figures: Hipparcos id pairs -> line segments between real 3D star positions
       const byHip = new Map(); for (let i = 0; i < N; i++) if (hip[i] > 0 && !byHip.has(hip[i])) byHip.set(hip[i], i);
       const seg: number[] = []; conLabels = [];
-      for (const [abbr, name, eng, lines] of cons) {
+      for (const [, name, , lines] of cons) {
         const used = new Set<number>();
         for (const ln of lines) for (let k = 0; k + 1 < ln.length; k++) { const a = byHip.get(ln[k]), b = byHip.get(ln[k + 1]); if (a == null || b == null) continue;
           seg.push(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2]); used.add(a); used.add(b) }

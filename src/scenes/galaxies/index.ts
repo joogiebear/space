@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { App, Markers, U, glowSprite, register } from '@/engine';
-import { TAU, gauss, mixc, rng } from '@/lib';
+import { TAU, mixc, rng } from '@/lib';
 import type { Body, Info, Scene } from '@/types';
 import { GALAXIES, type GalaxyDef } from './data';
 import { makeGalaxyGeo } from './generator';

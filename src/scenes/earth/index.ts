@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as satellite from 'satellite.js';
 import { App, Markers, U, camera, register, sim } from '@/engine';
 import { D2R, J2000, RE_KM, TAU, fmtNum, jdToDate, nowJD, planetEcl } from '@/lib';
-import { CAT_COL, CAT_HEX, EPS, J2, MU, REQ, eclToEqThree, gmst } from './constants';
+import { CAT_COL, CAT_HEX, J2, MU, REQ, eclToEqThree, gmst } from './constants';
 import { fetchSatellites } from '@/data/api';
 import type { SatRecord } from '@/data/api';
 import { askLocation, loadLocation, saveLocation } from './location';
@@ -40,7 +40,8 @@ function earth(): Scene {
     info: { sub: 'Natural satellite · ~384,400 km away', text: 'Shown at its true position and relative size. Notice how small Earth\'s whole satellite swarm looks next to the distance to the Moon.', rows: [] } };
   const mk = new Markers(1, true); group.add(mk.points); mk.hide(0);
 
-  let N = 0, sats: SatRecord[] = [], fetched = '', points: THREE.Points | null = null, mat: THREE.ShaderMaterial | null = null, cpuT = 0, cats: string[] = [], lower: string[] = [], cnt: number[] = [], stationIdx: number[] = [];
+  let N = 0, sats: SatRecord[] = [], fetched = '', points: THREE.Points | null = null, mat: THREE.ShaderMaterial | null = null, cpuT = 0, cats: string[] = [], lower: string[] = [], cnt: number[] = [];
+  const stationIdx: number[] = [];
   let e1!: Float32Array, e2!: Float32Array, cpu!: Float32Array; // assigned in load(), which runs before update/pick
   const visible: number[] = new Array(8).fill(1);
   const satPos = (i: number, days: number, o: number[]) => { // JS twin of the vertex shader
@@ -107,14 +108,13 @@ function earth(): Scene {
       status('downloading orbital elements from CelesTrak…');
       const d = await fetchSatellites(); sats = d.sats; cats = d.cats; fetched = d.fetched; N = sats.length;
       e1 = new Float32Array(N * 4); e2 = new Float32Array(N * 4); const col = new Float32Array(N * 3), sz = new Float32Array(N); lower = new Array(N); cnt = new Array(cats.length).fill(0);
-      let ok = 0;
       for (let i = 0; i < N; i++) {
         const [name, l1, l2, c] = sats[i]; lower[i] = name.toLowerCase();
         const yy = +l1.slice(18, 20), year = yy < 57 ? 2000 + yy : 1900 + yy, epoch = Date.UTC(year, 0, 1) / 864e5 + 2440587.5 + (+l1.slice(20, 32)) - 1;
         const n = +l2.slice(52, 63) * TAU / 1440, e = +('0.' + l2.slice(26, 33).trim());
         e1.set([+l2.slice(8, 16) * D2R, +l2.slice(17, 25) * D2R, e, +l2.slice(34, 42) * D2R], i * 4); e2.set([+l2.slice(43, 51) * D2R, n, epoch - J2000, c], i * 4);
         col.set(CAT_COL[c] || [1, 1, 1], i * 3); sz[i] = c === 0 ? 7 : c === 5 || c === 6 ? 2.6 : c === 2 ? 2 : 2.4; cnt[c]++;
-        if (n > 0 && e < .95) ok++; if (c === 0) stationIdx.push(i);
+        if (c === 0) stationIdx.push(i);
       }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
       g.setAttribute('aE1', new THREE.BufferAttribute(e1, 4)); g.setAttribute('aE2', new THREE.BufferAttribute(e2, 4)); g.setAttribute('aCol', new THREE.BufferAttribute(col, 3)); g.setAttribute('aSize', new THREE.BufferAttribute(sz, 1));
