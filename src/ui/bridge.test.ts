@@ -250,6 +250,11 @@ describe('phone sheets', () => {
     expect(ui.sheet).toBe('info');
   });
 
+  it('does not pop the sheet open when a zoom merely homes in on something (quiet select)', () => {
+    select(makeBody('a'), true);
+    expect(ui.sheet).toBe('none');
+  });
+
   it('switches from another sheet to the details of what was just picked', () => {
     ui.sheet = 'side'; // picked from the Layers/Objects list
     select(makeBody('a'));

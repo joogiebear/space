@@ -29,11 +29,12 @@ const refreshDate = () => {
 
 /** Copy engine events into the reactive store. Call once before mounting the app. */
 export function initBridge() {
-  selectionChanged.on(b => {
+  selectionChanged.on((b, quiet) => {
     refreshInfo(b);
     // on a phone: show the details of what was just picked; tapping empty space dismisses them
-    if (b) ui.sheet = 'info';
-    else if (ui.sheet === 'info') ui.sheet = 'none';
+    if (b) {
+      if (!quiet) ui.sheet = 'info';
+    } else if (ui.sheet === 'info') ui.sheet = 'none';
   });
   slowTick.on(() => {
     if (App.sel && App.sel.live) refreshInfo(App.sel);

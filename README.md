@@ -77,6 +77,19 @@ hand-built sun geometry for the visibility rules), the reactive store and its en
 clock (`engine/clock.test.ts`), and the date, orbit and colour helpers (`lib/lib.test.ts`).
 Tests that touch the engine mock `engine/gl.ts` (see `src/test/glMock.ts`) since jsdom has no WebGL.
 
+Touch gestures (`engine/gesture.test.ts`) and canvas sizing (`engine/viewport.test.ts`) are tested as plain logic.
+
+### Browser smoke tests
+
+```
+npx playwright install chromium   # once
+npm run e2e                       # builds the static site, serves it, runs desktop + phone projects
+```
+
+`e2e/smoke.spec.ts` drives the real production build in Chromium (software WebGL): it boots, the canvas fills the
+screen and follows window changes, the keyboard works, and real two-finger pinch and one-finger drag gestures
+neither select anything nor open a panel. CI runs it on every push.
+
 ## Code style
 
 ```

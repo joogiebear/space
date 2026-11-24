@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { clamp } from '@/lib';
 import type { Body } from '@/types';
 import { emitter } from './events';
+import { createGestures, type PointerKind } from './gesture';
 import { renderer } from './gl';
 import { pickAt } from './picking';
 import { deselect, select } from './selection';
@@ -27,6 +28,9 @@ let push = 0,
   pullT = 0,
   hinted = false;
 const PULL_NEEDED = 0.6;
+/** Smallest tap target: a fingertip is far less precise than a mouse pointer. */
+const TOUCH_PICK_PX = 24,
+  MOUSE_PICK_PX = 12;
 const _p = new THREE.Vector3();
 
 /** The enterable body to zoom toward: the hovered one, else the one nearest the camera's focus point. */
@@ -57,7 +61,7 @@ export function zoomBy(k: number) {
   const now = performance.now();
   if (k < 1 && !App.sel) {
     const t = enterTarget();
-    if (t) select(t);
+    if (t) select(t, true); // quiet: zooming homes in, it does not open the details sheet
   }
   const lo = (App.sel && App.sel.minD) || scene().minD;
   cam.want = clamp(cam.want * k, lo, scene().maxD);
@@ -97,76 +101,53 @@ export function zoomBy(k: number) {
 export function initInput() {
   const gl = document.querySelector('#gl') as HTMLElement,
     el = renderer.domElement;
-  const ptrs = new Map<number, { x: number; y: number }>();
-  let down: { x: number; y: number; moved: boolean } | null = null,
-    pinch = 0,
-    hoverT = 0;
+  let hoverT = 0;
 
-  el.addEventListener('pointerdown', e => {
-    el.setPointerCapture(e.pointerId);
-    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    down = { x: e.clientX, y: e.clientY, moved: false };
-    App.dragging = true;
-    gl.classList.add('drag');
-    if (ptrs.size === 2) {
-      const [a, b] = [...ptrs.values()];
-      pinch = Math.hypot(a.x - b.x, a.y - b.y);
-    }
-  });
-
-  el.addEventListener('pointermove', e => {
-    const p = ptrs.get(e.pointerId);
-    if (!p) {
-      const now = performance.now();
-      if (now - hoverT > 70) {
-        hoverT = now;
-        const h = pickAt(e.clientX, e.clientY, false);
-        App.hover = h;
-        gl.classList.toggle('hover', !!h);
-        hoverChanged.emit(h, e.clientX, e.clientY);
-      }
-      return;
-    }
-    const dx = e.clientX - p.x,
-      dy = e.clientY - p.y;
-    p.x = e.clientX;
-    p.y = e.clientY;
-    dragStarted.emit();
-    if (ptrs.size === 2) {
-      const [a, b] = [...ptrs.values()],
-        d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (pinch) zoomBy(pinch / d);
-      pinch = d;
-      if (down) down.moved = true;
-      return;
-    }
-    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) down.moved = true;
-    if (down && down.moved) {
+  const gestures = createGestures({
+    start() {
+      App.dragging = true;
+      gl.classList.add('drag');
+    },
+    end() {
+      App.dragging = false;
+      gl.classList.remove('drag');
+    },
+    orbit(dx, dy) {
+      dragStarted.emit();
       cam.yaw -= dx * 0.0055;
       cam.pitch = clamp(cam.pitch + dy * 0.0055, -1.5, 1.5);
       App.interact = performance.now();
-    }
-  });
-
-  el.addEventListener('pointerup', e => {
-    ptrs.delete(e.pointerId);
-    gl.classList.remove('drag');
-    pinch = 0;
-    if (down && !down.moved && ptrs.size === 0) {
-      const h = pickAt(e.clientX, e.clientY, true);
+    },
+    pinch(k) {
+      dragStarted.emit();
+      zoomBy(k);
+    },
+    tap(x, y, kind) {
+      const h = pickAt(x, y, true, kind === 'touch' ? TOUCH_PICK_PX : MOUSE_PICK_PX);
       if (h) select(h);
       else deselect();
-    }
-    down = null;
-    App.dragging = false;
+    },
   });
 
-  el.addEventListener('pointercancel', e => {
-    ptrs.delete(e.pointerId);
-    down = null;
-    App.dragging = false;
-    gl.classList.remove('drag');
+  el.addEventListener('pointerdown', e => {
+    el.setPointerCapture(e.pointerId);
+    gestures.down(e.pointerId, e.clientX, e.clientY, e.pointerType as PointerKind, e.timeStamp);
   });
+
+  el.addEventListener('pointermove', e => {
+    if (gestures.move(e.pointerId, e.clientX, e.clientY)) return;
+    const now = performance.now();
+    if (now - hoverT > 70) {
+      hoverT = now;
+      const h = pickAt(e.clientX, e.clientY, false);
+      App.hover = h;
+      gl.classList.toggle('hover', !!h);
+      hoverChanged.emit(h, e.clientX, e.clientY);
+    }
+  });
+
+  el.addEventListener('pointerup', e => gestures.up(e.pointerId, e.clientX, e.clientY, e.timeStamp));
+  el.addEventListener('pointercancel', e => gestures.cancel(e.pointerId));
 
   el.addEventListener('dblclick', e => {
     const h = pickAt(e.clientX, e.clientY, true);

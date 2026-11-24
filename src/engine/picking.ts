@@ -17,7 +17,7 @@ export function screenOf(v: THREE.Vector3, out: { x: number; y: number; z: numbe
 }
 
 /** The body under a screen point: listed bodies first, then the scene's own picker (millions of points). */
-export function pickAt(mx: number, my: number, click: boolean): Body | null {
+export function pickAt(mx: number, my: number, click: boolean, minPx = 12): Body | null {
   const sc = scene();
   let best: Body | null = null,
     bz = 1e9;
@@ -25,7 +25,7 @@ export function pickAt(mx: number, my: number, click: boolean): Body | null {
     if (sc.isHidden && sc.isHidden(b)) continue;
     b.getPos(bp);
     if (!screenOf(bp, sp)) continue;
-    const rpx = Math.max(b.radNow ? (b.radNow * U.uF.value) / camera.position.distanceTo(bp) : 0, 12);
+    const rpx = Math.max(b.radNow ? (b.radNow * U.uF.value) / camera.position.distanceTo(bp) : 0, minPx);
     if (Math.hypot(sp.x - mx, sp.y - my) <= rpx && sp.z < bz) {
       best = b;
       bz = sp.z;

@@ -16,7 +16,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "api": "python -m server 8080"
+    "api": "python -m server 8080",
+    "build:static": "cross-env VITE_STATIC_DATA=1 vite build",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "satellite.js": "7.2.0",
@@ -27,10 +29,12 @@
     "@emnapi/core": "2.0.0-beta.2",
     "@emnapi/runtime": "2.0.0-beta.2",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.6",
     "@types/three": "^0.187.0",
     "@vitejs/plugin-vue": "^6.0.11",
     "axe-core": "^4.14.1",
+    "cross-env": "^10.1.0",
     "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vue": "^10.12.1",

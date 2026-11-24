@@ -55,3 +55,28 @@ jobs:
         run: python -m compileall -q server
       - name: Import the app (catches missing names between modules)
         run: python -c "import server.app; print('routes:', sorted(server.app.API))"
+
+  e2e:
+    name: Browser smoke test (desktop and phone)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run Playwright
+        run: npm run e2e
+      - name: Keep the report when something fails
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7

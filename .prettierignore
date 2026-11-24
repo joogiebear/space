@@ -13,3 +13,5 @@ docs/
 # Python is not handled by Prettier
 server/
 tools/
+playwright-report/
+test-results/
