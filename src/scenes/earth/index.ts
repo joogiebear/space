@@ -85,7 +85,7 @@ function earth(): Scene {
     noLabel: true,
     info: {
       sub: 'Planet · Earth orbit view',
-      text: 'The globe shows real day and night for the simulation date. Every dot around it is a catalogued object in orbit. Click one for its details and orbit.',
+      text: 'The globe shows real day and night for the simulation date. Every dot around it is a catalogued object in orbit. Select one for its details and orbit.',
       rows: [['Radius', '6,371 km']],
     },
   };

@@ -45,7 +45,7 @@ export const PLANETS: PlanetDef[] = [
     enter: 'earth',
     enterLabel: 'Enter Earth orbit',
     sub: 'Planet · 365.25-day year',
-    text: 'The only world known to host life. Double-click to see every satellite and piece of debris tracked in orbit around it.',
+    text: 'The only world known to host life. Enter its orbit to see every satellite and piece of debris tracked around it.',
     period: '365.25 days',
   },
   {

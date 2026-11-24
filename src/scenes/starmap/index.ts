@@ -59,7 +59,7 @@ function starmap(): Scene {
     getPos: (v: THREE.Vector3) => v.set(0, 0, 0),
     info: {
       sub: 'Our star · G2V yellow dwarf',
-      text: 'The centre of the map. Double-click to fly into the solar system.',
+      text: 'The centre of the map. Zoom in on it, or use Enter, to fly into the solar system.',
       rows: [['Distance', '0']],
     },
   };

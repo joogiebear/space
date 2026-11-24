@@ -29,7 +29,12 @@ const refreshDate = () => {
 
 /** Copy engine events into the reactive store. Call once before mounting the app. */
 export function initBridge() {
-  selectionChanged.on(refreshInfo);
+  selectionChanged.on(b => {
+    refreshInfo(b);
+    // on a phone: show the details of what was just picked; tapping empty space dismisses them
+    if (b) ui.sheet = 'info';
+    else if (ui.sheet === 'info') ui.sheet = 'none';
+  });
   slowTick.on(() => {
     if (App.sel && App.sel.live) refreshInfo(App.sel);
     refreshDate();
@@ -43,6 +48,7 @@ export function initBridge() {
     sceneLayers.value = sc.layers ?? [];
     scenePresets.value = sc.presets ?? [];
     ui.sceneSerial++;
+    ui.sheet = 'none';
     announce(`${sc.title} view`);
     refreshInfo(null);
     refreshDate();

@@ -6,6 +6,8 @@ import type { Loc } from '@/scenes/earth/location';
  * Reactive state the Vue panels render. The engine never reads it: ui/bridge.ts copies engine events into it,
  * and components call engine functions (select, goScene, setRate...) directly.
  */
+export type Sheet = 'none' | 'info' | 'side' | 'time' | 'search';
+
 export const ui = reactive({
   sceneId: '',
   title: '',
@@ -30,6 +32,8 @@ export const ui = reactive({
   dateText: '',
   tip: { visible: false, text: '', x: 0, y: 0 },
   toast: { visible: false, msg: '', sub: '' },
+  /** Phones show one panel at a time as a sheet above the bottom bar; desktop ignores this. */
+  sheet: 'none' as Sheet,
   /** Text for the screen-reader live region (see announce()). */
   announce: '',
 });

@@ -15,6 +15,7 @@ import { sceneBodies, sceneLayers, scenePresets, ui } from './store';
 beforeAll(() => initBridge());
 
 beforeEach(() => {
+  ui.sheet = 'none';
   App.scene = makeScene();
   App.sel = null;
   App.hover = null;
@@ -240,5 +241,39 @@ describe('slow tick', () => {
     App.scene = makeScene({ timeLabel: 'Simulated date' });
     slowTick.emit();
     expect(ui.dateText).toBe('2023-02-25 00:00:00 UTC');
+  });
+});
+
+describe('phone sheets', () => {
+  it('opens the details sheet when something is selected', () => {
+    select(makeBody('a'));
+    expect(ui.sheet).toBe('info');
+  });
+
+  it('switches from another sheet to the details of what was just picked', () => {
+    ui.sheet = 'side'; // picked from the Layers/Objects list
+    select(makeBody('a'));
+    expect(ui.sheet).toBe('info');
+  });
+
+  it('closes the details sheet when the selection is cleared', () => {
+    select(makeBody('a'));
+    deselect();
+    expect(ui.sheet).toBe('none');
+  });
+
+  it('leaves a different open sheet alone when the selection is cleared', () => {
+    select(makeBody('a'));
+    ui.sheet = 'time'; // the user moved on to the time controls
+    deselect();
+    expect(ui.sheet).toBe('time');
+  });
+
+  it('closes every sheet on a view change, so the new view is not covered', () => {
+    ui.sheet = 'side';
+    const sc = makeScene({ id: 'next' });
+    App.scene = sc;
+    sceneEntered.emit(sc);
+    expect(ui.sheet).toBe('none');
   });
 });

@@ -44,7 +44,7 @@ function onJump(e: Event) {
 </script>
 
 <template>
-  <section id="ctl" class="panel" aria-label="Time controls">
+  <section id="ctl" class="panel" :class="{ open: ui.sheet === 'time' }" aria-label="Time controls">
     <div>
       <div class="top">
         <span>Time speed</span><span id="rateTxt">{{ rateText }}</span>

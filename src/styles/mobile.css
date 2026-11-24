@@ -1,0 +1,132 @@
+/* Phones and small landscape screens: one panel at a time, as a sheet above a bottom bar */
+#mbar {
+  display: none;
+}
+/* touch screens have no hover, so the pointer tooltip would just stick */
+@media (hover: none) {
+  #tip {
+    display: none !important;
+  }
+}
+@media (max-width: 820px), (max-height: 520px) {
+  :root {
+    --edge: 8px;
+    --bar: 52px;
+    --safe-bottom: max(var(--edge), env(safe-area-inset-bottom));
+  }
+
+  /* top bar: crumbs wrap, the view tabs scroll sideways instead of wrapping into a tall block */
+  #top {
+    top: max(var(--edge), env(safe-area-inset-top));
+    left: var(--edge);
+    right: var(--edge);
+    max-width: none;
+    padding: 6px 8px;
+  }
+  #top b {
+    display: none;
+  }
+  #top #tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  #top #tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    flex: none;
+    white-space: nowrap;
+    min-height: 32px;
+    padding: 4px 10px;
+  }
+  .crumb {
+    min-height: 28px;
+  }
+
+  /* bottom bar */
+  #mbar {
+    display: flex;
+    position: fixed;
+    left: var(--edge);
+    right: var(--edge);
+    bottom: var(--safe-bottom);
+    z-index: 30;
+    gap: 6px;
+    padding: 6px;
+    height: var(--bar);
+  }
+  #mbar button {
+    flex: 1;
+    min-height: 40px;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--tx);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  #mbar button.on {
+    background: var(--acc);
+    border-color: var(--acc);
+    color: #07102a;
+    font-weight: 600;
+  }
+
+  /* panels become sheets: hidden until opened from the bar */
+  #info,
+  #side,
+  #ctl,
+  #search {
+    display: none;
+    position: fixed;
+    top: auto;
+    left: var(--edge);
+    right: var(--edge);
+    width: auto;
+    bottom: calc(var(--safe-bottom) + var(--bar) + 6px);
+    max-height: min(52dvh, 440px);
+    overflow: auto;
+    z-index: 20;
+  }
+  #info.open {
+    display: block;
+  }
+  #side.open,
+  #ctl.open {
+    display: flex;
+  }
+  #search.open {
+    display: block;
+  }
+  #results {
+    max-height: 32dvh;
+  }
+  #list {
+    max-height: 22dvh;
+  }
+  /* comfortable touch targets in the lists */
+  #list button,
+  #results button {
+    min-height: 40px;
+  }
+  #side label {
+    min-height: 32px;
+  }
+  #toast {
+    max-width: calc(100% - 32px);
+  }
+  .modal .box {
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+  }
+}
+
+/* a phone held sideways: the view tabs already say where you are, so drop the breadcrumb row to give the map the height */
+@media (max-height: 520px) {
+  #top > div.r {
+    display: none;
+  }
+}

@@ -380,7 +380,7 @@ function solar() {
     extent: 600,
     presets: SOLAR_PRESETS,
     intro:
-      'Real positions of the planets for the date shown, computed from JPL orbital elements, plus ~96,000 asteroids, 1,300 comets and 14 spacecraft. Planet and moon sizes are exaggerated when zoomed out. Select a planet to reveal its moons; double-click Earth to see its satellites.',
+      'Real positions of the planets for the date shown, computed from JPL orbital elements, plus ~96,000 asteroids, 1,300 comets and 14 spacecraft. Planet and moon sizes are exaggerated when zoomed out. Select a planet to reveal its moons; enter Earth to see its satellites.',
     introRows: [
       ['Asteroids', '…'],
       ['Comets', '…'],

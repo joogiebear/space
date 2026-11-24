@@ -85,7 +85,7 @@ function cosmos(): Scene {
     rate: 1,
     extent: 1000,
     intro:
-      'A map of famous galaxies near the Milky Way. Positions are schematic and distances heavily compressed. Click a galaxy to focus it, or just keep zooming in on one to fly inside.',
+      'A map of famous galaxies near the Milky Way. Positions are schematic and distances heavily compressed. Select a galaxy to focus it, or just keep zooming in on one to fly inside.',
     center(v: THREE.Vector3) {
       return v.set(0, 0, 0);
     },
@@ -174,7 +174,7 @@ function galaxy(g: GalaxyDef): Scene {
     initD: 150,
     rate: 1,
     extent: 400,
-    intro: g.text + (g.key === 'milkyway' ? ' Find the Sun and double-click it to go closer.' : ''),
+    intro: g.text + (g.key === 'milkyway' ? ' Find the Sun and zoom in on it (or use Enter) to go closer.' : ''),
     introRows: [['Type', g.sub]],
     center(v: THREE.Vector3) {
       return v.set(0, 0, 0);

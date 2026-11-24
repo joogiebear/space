@@ -51,7 +51,7 @@ function onKey(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div id="search" class="panel" role="search">
+  <div id="search" class="panel" :class="{ open: ui.sheet === 'search' }" role="search">
     <input
       id="q"
       ref="input"

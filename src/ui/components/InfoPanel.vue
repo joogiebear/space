@@ -18,7 +18,7 @@ const enter = () => {
 </script>
 
 <template>
-  <section id="info" class="panel" aria-labelledby="iT">
+  <section id="info" class="panel" :class="{ open: ui.sheet === 'info' }" aria-labelledby="iT">
     <h2 id="iT" aria-live="polite" aria-atomic="true">{{ ui.info.title }}</h2>
     <div id="iS" class="sub">{{ ui.info.sub }}</div>
     <p id="iP">{{ ui.info.text }}</p>

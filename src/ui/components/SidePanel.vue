@@ -32,7 +32,7 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <aside id="side" class="panel" aria-label="Layers and objects">
+  <aside id="side" class="panel" :class="{ open: ui.sheet === 'side' }" aria-label="Layers and objects">
     <div id="layers">
       <template v-if="sceneLayers.length">
         <h2>Layers</h2>
