@@ -36,6 +36,19 @@ load takes a minute). CelesTrak only allows one download per group every two
 hours; the server keeps each group on disk and serves the last good copy if it
 is rate-limited.
 
+## Tests
+
+```
+npm test            # Vitest, one run (jsdom, no WebGL needed)
+npm run test:watch
+```
+
+Covered: pass prediction (`scenes/earth/passes.test.ts`: checked against satellite.js and
+hand-built sun geometry for the visibility rules), the reactive store and its engine bridge
+(`ui/bridge.test.ts`), toasts and the location dialog (`ui/toast.test.ts`), the simulation
+clock (`engine/clock.test.ts`), and the date, orbit and colour helpers (`lib/lib.test.ts`).
+Tests that touch the engine mock `engine/gl.ts` (see `src/test/glMock.ts`) since jsdom has no WebGL.
+
 ## Controls
 
 Drag to orbit, wheel to zoom, click to select. Zoom in on a galaxy, the Sun, or Earth and keep going to fly inside
@@ -56,6 +69,7 @@ src/
   ui/                   Vue 3 panels: App.vue and components/ (TopBar, SearchBox, SidePanel, InfoPanel, TimePanel, ...)
                         store.ts holds the reactive state; bridge.ts copies engine events into it
   data/api.ts           Typed client for /api/*
+  test/                 Test setup, a WebGL mock and fake scenes (tests sit next to the code they cover)
   scenes/               One folder per view; each registers itself
     galaxies/ starmap/ solar/ earth/   index.ts + shaders, data, presets as needed
   styles/               CSS split by area
