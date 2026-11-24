@@ -25,6 +25,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Lint (ESLint, zero warnings)
+        run: npm run lint
+      - name: Format check (Prettier)
+        run: npm run format:check
       - name: Type-check (vue-tsc, strict)
         run: npm run typecheck
       - name: Unit tests

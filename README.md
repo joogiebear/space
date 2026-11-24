@@ -77,6 +77,20 @@ hand-built sun geometry for the visibility rules), the reactive store and its en
 clock (`engine/clock.test.ts`), and the date, orbit and colour helpers (`lib/lib.test.ts`).
 Tests that touch the engine mock `engine/gl.ts` (see `src/test/glMock.ts`) since jsdom has no WebGL.
 
+## Code style
+
+```
+npm run lint          # ESLint (typescript-eslint + eslint-plugin-vue), warnings count as failures
+npm run lint:fix
+npm run format        # Prettier, writes changes
+npm run format:check  # what CI runs
+```
+
+Prettier owns layout (120 columns, single quotes, semicolons) and ESLint owns correctness; `.editorconfig` makes
+editors agree. CI runs lint, format check, type-check, tests and the build on every push and pull request.
+The one big formatting commit is listed in `.git-blame-ignore-revs`; GitHub honours it automatically, and locally
+`git config blame.ignoreRevsFile .git-blame-ignore-revs` makes `git blame` skip it too.
+
 ## Controls
 
 Drag to orbit, wheel to zoom, click to select. Zoom in on a galaxy, the Sun, or Earth and keep going to fly inside
