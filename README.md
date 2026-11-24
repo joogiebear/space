@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/joogiebear/space/actions/workflows/ci.yml/badge.svg)](https://github.com/joogiebear/space/actions/workflows/ci.yml)
 
+**[Live demo: joogiebear.github.io/space](https://joogiebear.github.io/space/)**
+
 An animated WebGL atlas of the universe, from the local galaxy group down to the
 satellites and debris orbiting Earth. Real data, drawn on the GPU.
 
@@ -37,6 +39,23 @@ The server fetches and caches public data under `cache/` on first use (the first
 load takes a minute). CelesTrak only allows one download per group every two
 hours; the server keeps each group on disk and serves the last good copy if it
 is rate-limited.
+
+## Hosting
+
+The live demo runs on GitHub Pages, which is free but static, so the Python server cannot run there.
+Instead `.github/workflows/pages.yml` runs it once per deployment:
+
+1. build the front end with `VITE_STATIC_DATA=1` (the data client reads `data/*.json` instead of `/api/*`)
+   and `VITE_BASE=/space/` (the site lives under a sub-path),
+2. run `python -m server.export dist/data`, which fetches every source with the same code and cache as
+   the live server and writes the payloads as plain files,
+3. deploy `dist/` to Pages.
+
+It runs on every push to `main` and every 3 hours (CelesTrak refreshes every 2), and keeps `cache/` between
+runs so a source that refuses the runner falls back to its last good copy. GitHub pauses scheduled workflows
+after 60 days without repository activity; re-enable it from the Actions tab if that happens.
+
+To host it elsewhere, run the two commands above with a different `VITE_BASE`, or deploy the Python server.
 
 ## Tests
 
