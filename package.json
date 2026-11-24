@@ -19,6 +19,8 @@
     "vue": "^3.5.46"
   },
   "devDependencies": {
+    "@emnapi/core": "2.0.0-beta.2",
+    "@emnapi/runtime": "2.0.0-beta.2",
     "@types/node": "^26.6.6",
     "@types/three": "^0.160.0",
     "@vitejs/plugin-vue": "^6.0.11",
