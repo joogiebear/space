@@ -346,3 +346,35 @@ test.describe('astronomy calendar', () => {
     await expect(page.locator('#dateTxt')).toContainText('2026-08-12');
   });
 });
+
+test.describe('Sky Tonight tour', () => {
+  test.skip(({ isMobile }) => isMobile, 'the tour menu lives in the desktop top bar');
+
+  test('is built for the viewer, speeds the clock up for the time-lapse and hands it back', async ({ page }) => {
+    const errors = await boot(page);
+    // a dark winter evening in Greenwich, so the Moon, a planet and a star are all there to be found
+    await page.clock.setFixedTime(new Date('2026-11-24T20:00:00Z'));
+    await page.goto('./#cosmos');
+    await page.locator('#tours').selectOption({ label: 'Your sky tonight' });
+    const card = page.locator('#tour');
+    await expect(card.locator('h2')).toHaveText('Your sky right now', { timeout: 20_000 });
+    await expect(page.locator('#tabs .tab.on')).toHaveText('Sky Tonight');
+    await card.getByRole('button', { name: 'Pause' }).click(); // the test drives the steps
+    await card.getByRole('button', { name: 'Next' }).click();
+    await expect(card.locator('h2')).toHaveText('The Moon');
+    await expect(card.locator('p')).toContainText('Full Moon');
+    await expect(page.locator('#iT')).toHaveText('The Moon');
+    await card.getByRole('button', { name: 'Next' }).click();
+    await expect(page.locator('#iT')).toHaveText(/Saturn|Jupiter|Mars|Venus|Mercury/);
+    await card.getByRole('button', { name: 'Next' }).click();
+    await expect(card.locator('p')).toContainText('up in the');
+    await card.getByRole('button', { name: 'Next' }).click();
+    await expect(card.locator('h2')).toHaveText('Watch the sky turn');
+    await expect(page.locator('#rateTxt')).toContainText('×7,200');
+    // ending the tour in the middle of the time-lapse must not leave the clock racing
+    await page.keyboard.press('Escape');
+    await expect(card).toHaveCount(0);
+    await expect(page.locator('#rateTxt')).toHaveText('×1');
+    expect(errors).toEqual([]);
+  });
+});

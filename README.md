@@ -102,7 +102,7 @@ copies a fuller link that also holds the simulated date, speed, pause state and 
 unknown is ignored. The format is in `src/lib/view.ts`.
 
 **Guided tours** (top bar, "Guided tours…") step through captions, moving the camera, the selection and the clock for
-you: Next/Back, Pause/Play, Esc to leave. Tours are plain data in `src/scenes/tours.ts`, written in the same view format
+you: Next/Back, Pause/Play, Esc to leave. **Your sky tonight** is built when you start it, from your saved location and the real sky: it finds the Moon, the brightest planet and the brightest star that are up, runs a day in twelve seconds, then returns to real time. Tours are plain data in `src/scenes/tours.ts`, written in the same view format
 as share links, so adding one means adding an entry to that list. The engine is `src/engine/tour.ts`.
 
 ## Tests

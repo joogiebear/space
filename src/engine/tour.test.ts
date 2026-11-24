@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeScene } from '@/test/fakeScene';
 
-const { sceneEntered, goScene, applyView, goLive, isBusy } = vi.hoisted(() => ({
+const { sceneEntered, goScene, applyView, goLive, setRate, isBusy } = vi.hoisted(() => ({
+  setRate: vi.fn(),
   isBusy: vi.fn(() => false),
   sceneEntered: (() => {
     const fns: ((s: { id: string }) => void)[] = [];
@@ -18,7 +19,7 @@ vi.mock('./sceneManager', () => ({
   chain: (id: string) => (id === 'earth' ? ['solar', 'earth'] : ['solar']),
 }));
 vi.mock('./share', () => ({ applyView: (...a: unknown[]) => applyView(...a) }));
-vi.mock('./clock', () => ({ goLive: () => goLive() }));
+vi.mock('./clock', () => ({ goLive: () => goLive(), setRate: (r: number) => setRate(r) }));
 
 import { App } from './state';
 import { next, prev, readingMs, startTour, stopTour, toggleAuto, tourActive, tourChanged, type Tour } from './tour';

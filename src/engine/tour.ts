@@ -1,5 +1,5 @@
 import type { ViewState } from '@/lib/view';
-import { goLive } from './clock';
+import { goLive, setRate } from './clock';
 import { emitter } from './events';
 import { chain, goScene, isBusy, sceneEntered } from './sceneManager';
 import { applyView } from './share';
@@ -12,6 +12,8 @@ export interface TourStep {
   text: string;
   /** Return to the real clock on arrival (the view's `t` is ignored when set). */
   live?: boolean;
+  /** The step speeds the clock up for effect: normal speed comes back when the tour leaves it or ends. */
+  transient?: boolean;
   /** Milliseconds to stay before moving on by itself; defaults to reading time for the text. */
   hold?: number;
 }
@@ -20,6 +22,8 @@ export interface Tour {
   title: string;
   blurb: string;
   steps: TourStep[];
+  /** Tours that depend on where and when you are write their steps when they start (the `steps` above are then empty). */
+  build?(): TourStep[];
 }
 
 export interface TourStatus {
@@ -72,6 +76,7 @@ async function go(n: number) {
   if (!tour) return;
   const mine = ++token;
   clearTimeout(timer);
+  if (tour.steps[index]?.transient) setRate(1);
   index = n;
   const step = tour.steps[n];
   expected = step.view.scene;
@@ -96,14 +101,16 @@ async function go(n: number) {
 }
 
 export function startTour(t: Tour) {
-  if (!t.steps.length) return;
-  tour = t;
+  const steps = t.build ? t.build() : t.steps;
+  if (!steps.length) return;
+  tour = { ...t, steps };
   auto = true;
   go(0);
 }
 
 export function stopTour() {
   if (!tour) return;
+  if (tour.steps[index]?.transient) setRate(1);
   tour = null;
   waiting = false;
   token++;

@@ -1,4 +1,9 @@
 import type { Tour } from '@/engine/tour';
+import { nowJD } from '@/lib';
+import { loadLocation } from './earth/location';
+import { skyTourSteps } from './skyTour';
+
+const GREENWICH = { lat: 51.4769, lon: -0.0005 };
 
 /**
  * Guided tours. Each step names a scene and (optionally) an object, a moment in time and a camera distance, using the
@@ -123,5 +128,15 @@ export const TOURS: Tour[] = [
         live: true,
       },
     ],
+  },
+  {
+    id: 'skytonight',
+    title: 'Your sky tonight',
+    blurb: 'The Moon, the brightest planet and star that are up, worked out for where you are',
+    steps: [],
+    build: () => {
+      const saved = loadLocation();
+      return skyTourSteps(nowJD(), saved ?? GREENWICH, saved !== null);
+    },
   },
 ];
