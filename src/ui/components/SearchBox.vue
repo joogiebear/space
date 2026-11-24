@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, shallowRef, watch } from 'vue';
+import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { select } from '@/engine/selection';
 import { scene } from '@/engine/state';
 import type { SearchResult } from '@/types';
@@ -16,6 +16,13 @@ watch(
   () => ui.sceneSerial,
   () => reset(),
 );
+
+/** Read out by screen readers as the user types; the results list itself is plain buttons. */
+const status = computed(() => {
+  if (q.value.trim().length < 2) return '';
+  const n = results.value.length;
+  return n === 0 ? 'No results' : `${n} result${n === 1 ? '' : 's'}`;
+});
 
 function reset() {
   q.value = '';
@@ -44,11 +51,13 @@ function onKey(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div id="search" class="panel">
+  <div id="search" class="panel" role="search">
     <input
       id="q"
       ref="input"
       v-model="q"
+      aria-label="Search this view"
+      aria-controls="results"
       placeholder="Search this view…  (stars, satellites, planets…)"
       autocomplete="off"
       @input="onInput"
@@ -59,5 +68,6 @@ function onKey(e: KeyboardEvent) {
         {{ r.label }}<small v-if="r.sub">{{ r.sub }}</small>
       </button>
     </div>
+    <div class="sr-only" role="status">{{ status }}</div>
   </div>
 </template>

@@ -1,0 +1,34 @@
+/* Accessibility: screen-reader-only text, visible keyboard focus, reduced motion */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+/* the map fills the screen, so draw its focus ring inside the edge */
+#gl:focus-visible {
+  outline-offset: -3px;
+}
+/* the search and dialog inputs swap their outline for a bright border on focus: keep that, but make it unmistakable */
+#search input:focus-visible,
+.modal input:focus-visible {
+  box-shadow: 0 0 0 2px var(--acc);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

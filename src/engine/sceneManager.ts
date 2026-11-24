@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { nowJD } from '@/lib';
+import { nowJD, prefersReducedMotion } from '@/lib';
 import type { ActiveScene, Scene } from '@/types';
 import { $ } from '@/ui/dom';
 import { ui } from '@/ui/store';
@@ -88,7 +88,9 @@ export async function goScene(id: string, { deeper = true, instant = false } = {
   const prev = App.scene,
     from = prev?.id;
   const diveInto = deeper && App.sel && App.sel.enter === id ? App.sel : null;
-  if (!instant) {
+  // First load, or a user who asked for less motion: swap scenes with no plunge and no wash
+  const calm = instant || prefersReducedMotion();
+  if (!calm) {
     // phase 1: keep moving in the direction of travel, washing the screen out
     cam.free = true;
     cam.ease = 6;
@@ -125,7 +127,7 @@ export async function goScene(id: string, { deeper = true, instant = false } = {
   cam.want = sc.initD;
   sc.center(cam.t);
   cam.off.set(0, 0, 0);
-  if (instant) {
+  if (calm) {
     cam.dist = sc.initD;
     cam.ease = 4.5;
   } else {
@@ -158,6 +160,6 @@ export async function goScene(id: string, { deeper = true, instant = false } = {
   } catch {
     /* sandboxed frames */
   }
-  if (!instant) wash(0, SETTLE_MS);
+  if (!calm) wash(0, SETTLE_MS);
   busy = false;
 }

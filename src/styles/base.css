@@ -1,10 +1,10 @@
 /* Design tokens, page reset, canvas and labels */
 :root {
   --bg: #02030a;
-  --panel: rgba(10, 14, 30, 0.74);
+  --panel: rgba(10, 14, 30, 0.84); /* opaque enough that text stays readable even over a bright star field */
   --line: rgba(150, 175, 255, 0.18);
   --tx: #e2e8ff;
-  --dim: #8e9bc6;
+  --dim: #9eabd2;
   --acc: #86a8ff;
 }
 * {

@@ -18,8 +18,8 @@ const enter = () => {
 </script>
 
 <template>
-  <div id="info" class="panel">
-    <h2 id="iT">{{ ui.info.title }}</h2>
+  <section id="info" class="panel" aria-labelledby="iT">
+    <h2 id="iT" aria-live="polite" aria-atomic="true">{{ ui.info.title }}</h2>
     <div id="iS" class="sub">{{ ui.info.sub }}</div>
     <p id="iP">{{ ui.info.text }}</p>
     <dl id="rows">
@@ -30,5 +30,5 @@ const enter = () => {
     </dl>
     <button v-show="ui.info.actionLabel" id="act" @click="runAction">{{ ui.info.actionLabel }}</button>
     <button v-show="ui.info.enterLabel" id="enter" @click="enter">{{ ui.info.enterLabel }}</button>
-  </div>
+  </section>
 </template>

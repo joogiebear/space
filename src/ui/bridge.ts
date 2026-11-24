@@ -6,6 +6,7 @@ import { selectionChanged } from '@/engine/selection';
 import { App, scene, sim } from '@/engine/state';
 import { clamp, fmtDate } from '@/lib';
 import type { Body, Info } from '@/types';
+import { announce } from './announce';
 import { sceneBodies, sceneLayers, scenePresets, ui } from './store';
 
 /** Fill the info panel for a body, or with the scene intro when `b` is null. */
@@ -42,6 +43,7 @@ export function initBridge() {
     sceneLayers.value = sc.layers ?? [];
     scenePresets.value = sc.presets ?? [];
     ui.sceneSerial++;
+    announce(`${sc.title} view`);
     refreshInfo(null);
     refreshDate();
   });

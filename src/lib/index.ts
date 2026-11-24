@@ -3,3 +3,4 @@ export * from './time';
 export * from './format';
 export * from './astro';
 export * from './color';
+export * from './motion';

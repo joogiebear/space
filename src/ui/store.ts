@@ -30,6 +30,8 @@ export const ui = reactive({
   dateText: '',
   tip: { visible: false, text: '', x: 0, y: 0 },
   toast: { visible: false, msg: '', sub: '' },
+  /** Text for the screen-reader live region (see announce()). */
+  announce: '',
 });
 
 // Scene objects hold three.js data: keep them out of Vue's deep proxying.

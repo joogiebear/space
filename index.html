@@ -3,13 +3,43 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#02030a" />
+    <meta
+      name="description"
+      content="An animated 3D atlas of the universe: galaxies, 109,000 real stars, the solar system and 20,000 satellites in Earth orbit, drawn on real data."
+    />
     <title>Cosmos Atlas</title>
   </head>
   <body>
-    <div id="gl"></div>
-    <div id="labels"></div>
+    <main id="stage">
+      <div
+        id="gl"
+        tabindex="0"
+        role="application"
+        aria-label="Interactive 3D map. Drag or use the arrow keys to orbit, scroll or plus and minus to zoom, Enter to go inside the selected object, Escape to go back, question mark for all keys. Every object is also listed in the Objects panel."
+      ></div>
+      <div id="labels" aria-hidden="true"></div>
+    </main>
     <div id="app"></div>
-    <div id="fade"></div>
+    <div id="fade" aria-hidden="true"></div>
+    <noscript>
+      <p
+        style="
+          position: fixed;
+          inset: 0;
+          margin: 0;
+          padding: 32px;
+          color: #e2e8ff;
+          background: #02030a;
+          font:
+            16px system-ui,
+            sans-serif;
+        "
+      >
+        Cosmos Atlas draws a 3D map of the universe and needs JavaScript. Turn it on and reload, or open the
+        <a href="atlas2d.html" style="color: #86a8ff">simplified 2D version</a>.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

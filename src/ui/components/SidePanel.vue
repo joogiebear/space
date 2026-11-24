@@ -32,30 +32,31 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <div id="side" class="panel">
+  <aside id="side" class="panel" aria-label="Layers and objects">
     <div id="layers">
       <template v-if="sceneLayers.length">
-        <h4>Layers</h4>
+        <h2>Layers</h2>
         <label v-for="(L, i) in sceneLayers" :key="L.id">
           <input v-model="checked[i]" type="checkbox" @change="toggle(L, i)" />
-          <i v-if="L.color" :style="{ background: L.color }" />
+          <i v-if="L.color" :style="{ background: L.color }" aria-hidden="true" />
           {{ L.label }}
           <span v-if="L.count != null">{{ L.count.toLocaleString() }}</span>
         </label>
       </template>
     </div>
     <div>
-      <h4>Objects</h4>
+      <h2>Objects</h2>
       <div id="list">
         <button
           v-for="row in rows"
           :key="row.b.id"
           :class="{ sub: row.sub, sel: ui.selId === row.b.id }"
+          :aria-pressed="ui.selId === row.b.id"
           @click="select(row.b)"
         >
           {{ row.b.label }}
         </button>
       </div>
     </div>
-  </div>
+  </aside>
 </template>

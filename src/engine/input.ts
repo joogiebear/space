@@ -45,6 +45,13 @@ function enterTarget(): Body | null {
   return best;
 }
 
+/** Turn the camera around its target (radians). Used by the keyboard; dragging does the same inline. */
+export function orbitBy(dyaw: number, dpitch: number) {
+  cam.yaw += dyaw;
+  cam.pitch = clamp(cam.pitch + dpitch, -1.5, 1.5);
+  App.interact = performance.now();
+}
+
 export function zoomBy(k: number) {
   if (isBusy()) return; // a scene change is in flight
   const now = performance.now();

@@ -5,17 +5,25 @@ import { locationRequest } from '../store';
 
 /** "Your location" dialog (prompt() is blocked in embedded browsers). It stays in this browser and is never sent anywhere. */
 const NUM = /^\s*(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)\s*$/;
+const FOCUSABLE = 'button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])';
 const text = ref(''),
   err = ref(''),
-  input = ref<HTMLInputElement | null>(null);
+  input = ref<HTMLInputElement | null>(null),
+  box = ref<HTMLElement | null>(null);
+let opener: HTMLElement | null = null;
 
-watch(locationRequest, async req => {
-  if (!req) return;
-  text.value = req.current ? `${req.current.lat}, ${req.current.lon}` : '';
-  err.value = '';
-  await nextTick();
-  input.value?.focus();
-  input.value?.select();
+watch(locationRequest, async (req, prev) => {
+  if (req && !prev) {
+    opener = document.activeElement instanceof HTMLElement ? document.activeElement : null; // to hand focus back on close
+    text.value = req.current ? `${req.current.lat}, ${req.current.lon}` : '';
+    err.value = '';
+    await nextTick();
+    input.value?.focus();
+    input.value?.select();
+  } else if (!req && prev) {
+    opener?.focus();
+    opener = null;
+  }
 });
 
 const close = (loc: Loc | null) => locationRequest.value?.resolve(loc);
@@ -44,18 +52,42 @@ function useBrowser() {
   );
 }
 
+/** Esc closes, Enter saves from the field, Tab wraps inside the dialog, and no key leaks to the map's shortcuts. */
 function onKey(e: KeyboardEvent) {
   e.stopPropagation();
-  if (e.key === 'Enter') save();
-  if (e.key === 'Escape') close(null);
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    close(null);
+  } else if (e.key === 'Enter' && e.target === input.value) {
+    e.preventDefault();
+    save();
+  } else if (e.key === 'Tab' && box.value) {
+    const items = [...box.value.querySelectorAll<HTMLElement>(FOCUSABLE)];
+    const first = items[0],
+      last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 }
 </script>
 
 <template>
-  <div v-if="locationRequest" class="modal" @click.self="close(null)">
-    <div class="panel box">
-      <h3>Your location</h3>
-      <p>
+  <div v-if="locationRequest" class="modal" @click.self="close(null)" @keydown="onKey">
+    <div
+      ref="box"
+      class="panel box"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="loc-title"
+      aria-describedby="loc-desc"
+    >
+      <h3 id="loc-title">Your location</h3>
+      <p id="loc-desc">
         Enter latitude, longitude (south and west are negative), or use your browser's location. It stays in this
         browser and is never sent anywhere.
       </p>
@@ -63,12 +95,13 @@ function onKey(e: KeyboardEvent) {
         ref="input"
         v-model="text"
         type="text"
+        aria-label="Latitude and longitude"
+        aria-describedby="loc-err"
         placeholder="51.5, -0.12"
         autocomplete="off"
         spellcheck="false"
-        @keydown="onKey"
       />
-      <div class="err">{{ err }}</div>
+      <div id="loc-err" class="err" role="alert">{{ err }}</div>
       <div class="btns">
         <button @click="useBrowser">Use browser location</button>
         <span />

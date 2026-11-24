@@ -44,12 +44,21 @@ function onJump(e: Event) {
 </script>
 
 <template>
-  <div id="ctl" class="panel">
+  <section id="ctl" class="panel" aria-label="Time controls">
     <div>
       <div class="top">
         <span>Time speed</span><span id="rateTxt">{{ rateText }}</span>
       </div>
-      <input id="speed" type="range" min="0" max="100" :value="ui.sliderPos" @input="onSlide" />
+      <input
+        id="speed"
+        type="range"
+        min="0"
+        max="100"
+        aria-label="Simulation speed"
+        :aria-valuetext="rateText"
+        :value="ui.sliderPos"
+        @input="onSlide"
+      />
     </div>
     <div class="row">
       <button id="pause" @click="togglePause">{{ ui.paused ? 'Play' : 'Pause' }}</button>
@@ -64,5 +73,5 @@ function onJump(e: Event) {
     <div class="top">
       <span>{{ ui.timeLabel }}</span><span id="dateTxt">{{ ui.dateText }}</span>
     </div>
-  </div>
+  </section>
 </template>

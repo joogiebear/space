@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { nowJD } from '@/lib';
+import { nowJD, prefersReducedMotion } from '@/lib';
 import type { ActiveScene, Body } from '@/types';
 
 /** The simulation clock. `jd` is a Julian date; `rate` is sim-seconds per real second. */
@@ -32,7 +32,7 @@ export const App = {
 };
 
 /** Toggles bound to checkboxes in the time panel. */
-export const opts = { labels: true, autoOrbit: true };
+export const opts = { labels: true, autoOrbit: !prefersReducedMotion() };
 
 /** The active scene. Throws before the first scene opens (never the case once the app is running). */
 export function scene(): ActiveScene {

@@ -1,3 +1,4 @@
+import { announce } from './announce';
 import { ui } from './store';
 
 let timer: ReturnType<typeof setTimeout>;
@@ -7,6 +8,7 @@ export function toast(msg: string, sub = '', ms = 0) {
   ui.toast.msg = msg;
   ui.toast.sub = sub;
   ui.toast.visible = true;
+  announce(sub ? `${msg}. ${sub}` : msg);
   clearTimeout(timer);
   if (ms)
     timer = setTimeout(() => {
