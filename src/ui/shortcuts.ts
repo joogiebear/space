@@ -2,7 +2,7 @@ import { togglePause } from '@/engine/clock';
 import { goUp } from '@/engine/sceneManager';
 import { deselect } from '@/engine/selection';
 import { App } from '@/engine/state';
-import { focusSearch } from './search';
+import { focusSearch } from './searchFocus';
 
 /** Esc/Backspace: deselect, then go up a level. Space: pause. "/": search. */
 export function initShortcuts() {

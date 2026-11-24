@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { nowJD } from '@/lib';
 import type { ActiveScene, Scene } from '@/types';
 import { $ } from '@/ui/dom';
-import { hideToast, toast } from '@/ui/toast';
+import { ui } from '@/ui/store';
+import { hideToast, toast, toastIsError } from '@/ui/toast';
 import { setRate } from './clock';
 import { emitter } from './events';
 import { skyPts, world } from './gl';
@@ -13,7 +14,7 @@ const REG: Record<string, Registration> = {};
 const cache: Record<string, Scene> = {};
 
 /** Fires after a scene is on screen; the UI rebuilds its panels. */
-export const sceneEntered = emitter<[Scene]>();
+export const sceneEntered = emitter<[ActiveScene]>();
 
 /** Scenes call this once at import time. */
 export function register(id: string, title: string, factory: () => Scene) { REG[id] = { title, factory }; }
@@ -63,13 +64,13 @@ export async function goScene(id: string, { deeper = true, instant = false } = {
   const sc = cache[id] || (cache[id] = REG[id].factory());
   sc.id = id;
   App.scene = sc as ActiveScene; App.sel = null; App.hover = null; App.path = chain(id);
-  $('#tip').style.display = 'none';
+  ui.tip.visible = false;
   if (sc.load && !sc.loaded) {
     toast('Loading ' + sc.title + '…', 'first visit downloads live data');
     try { await sc.load(msg => toast('Loading ' + sc.title + '…', msg)); }
     catch (e) { console.error(e); toast('Some data failed to load', String(e).slice(0, 120), 4000); }
     sc.loaded = true;
-    if (!$('#toast').innerHTML.includes('failed')) hideToast();
+    if (!toastIsError()) hideToast();
   }
   world.add(sc.group); sc.enter?.();
   cam.free = false; cam.pitch = .5; cam.want = sc.initD;
@@ -87,7 +88,7 @@ export async function goScene(id: string, { deeper = true, instant = false } = {
   }
   skyPts.visible = sc.sky !== false;
   if (sc.rate != null) { setRate(sc.rate); sim.live = !!sc.live; if (sc.live) sim.jd = nowJD(); }
-  sceneEntered.emit(sc);
+  sceneEntered.emit(sc as ActiveScene);
   try { history.replaceState(null, '', '#' + id); } catch { /* sandboxed frames */ }
   if (!instant) wash(0, SETTLE_MS);
   busy = false;

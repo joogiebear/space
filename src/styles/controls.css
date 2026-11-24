@@ -7,5 +7,5 @@
 #ctl .top span:last-child{color:var(--tx)}
 #ctl button{background:none;border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:3px 10px;font:inherit;cursor:pointer}
 #ctl button:hover{border-color:var(--acc)}
-#jump{width:100%;background:rgba(10,16,40,.9);border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:4px 8px;font:inherit;font-size:13px;cursor:pointer;display:none}
+#jump{width:100%;background:rgba(10,16,40,.9);border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:4px 8px;font:inherit;font-size:13px;cursor:pointer}
 #jump:hover,#jump:focus{border-color:var(--acc);outline:none}

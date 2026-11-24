@@ -16,7 +16,7 @@ Requires Node 20+ and Python 3.9+ (standard library only).
 
 ```
 npm install
-npm run build          # type-checks, then bundles the front end into dist/
+npm run build          # type-checks (vue-tsc), then bundles the front end into dist/
 python -m server 8080  # serves dist/ and the data API at http://localhost:8080
 ```
 
@@ -47,13 +47,14 @@ moment in time" menu (solar system and Earth views) jumps to historic events.
 ## Project layout
 
 ```
-index.html              Vite entry: the fixed DOM the UI binds to
+index.html              Vite entry: the canvas, label layer and the #app mount point
 src/
   main.ts               Wires the UI, input, loop and first scene
   types.ts              Scene, Body, Layer, Preset: the contracts scenes implement
   lib/                  Pure helpers: math, Julian dates, orbital mechanics, colour, formatting
   engine/               Renderer, camera, picking, labels, input, clock, scene manager, render loop
-  ui/                   One file per panel: info, layers, objects, search, time, presets, tooltip
+  ui/                   Vue 3 panels: App.vue and components/ (TopBar, SearchBox, SidePanel, InfoPanel, TimePanel, ...)
+                        store.ts holds the reactive state; bridge.ts copies engine events into it
   data/api.ts           Typed client for /api/*
   scenes/               One folder per view; each registers itself
     galaxies/ starmap/ solar/ earth/   index.ts + shaders, data, presets as needed
@@ -73,6 +74,5 @@ belongs in the navigation) add it to `PARENT` and `TABS` in `engine/sceneManager
 
 Satellite positions use mean elements and are accurate to a few km, not
 operational-grade. Galaxy positions and distances are schematic. Spacecraft
-follow Horizons ephemerides over a window around the fetch date. TypeScript runs
-in non-strict mode for now; the shared contracts in `types.ts` are typed, and
-scene internals are still loosely typed.
+follow Horizons ephemerides over a window around the fetch date. The project
+type-checks under TypeScript `strict`.
