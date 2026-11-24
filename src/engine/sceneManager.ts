@@ -1,11 +1,11 @@
 import { nowJD } from '@/lib';
-import type { Scene } from '@/types';
+import type { ActiveScene, Scene } from '@/types';
 import { $ } from '@/ui/dom';
 import { hideToast, toast } from '@/ui/toast';
 import { setRate } from './clock';
 import { emitter } from './events';
 import { skyPts, world } from './gl';
-import { App, cam, sim } from './state';
+import { App, cam, sim, scene } from './state';
 
 interface Registration { title: string; factory: () => Scene }
 const REG: Record<string, Registration> = {};
@@ -21,6 +21,7 @@ export const sceneTitle = (id: string) => REG[id].title;
 /** Navigation tree: each scene's parent, so "up" and the breadcrumb work. */
 const PARENT = (id: string): string | null =>
   id === 'cosmos' ? null : id.startsWith('gal:') ? 'cosmos' : id === 'starmap' ? 'gal:milkyway' : id === 'solar' ? 'starmap' : id === 'earth' ? 'solar' : null;
+export const parentOf = PARENT;
 export const chain = (id: string) => { const c: string[] = []; for (let x: string | null = id; x; x = PARENT(x)) c.unshift(x); return c; };
 
 /** Direct-jump tabs along the top. */
@@ -32,7 +33,7 @@ let busy = false;
 export const isBusy = () => busy;
 
 export const openScene = (id: string) => goScene(id, { deeper: true });
-export const goUp = () => { const p = PARENT(App.scene.id); if (p) goScene(p, { deeper: false }); };
+export const goUp = () => { const p = PARENT(scene().id); if (p) goScene(p, { deeper: false }); };
 
 export async function goScene(id: string, { deeper = true, instant = false } = {}) {
   if (busy || !REG[id]) return;
@@ -43,7 +44,7 @@ export async function goScene(id: string, { deeper = true, instant = false } = {
   if (prev) { prev.leave?.(); world.remove(prev.group); }
   const sc = cache[id] || (cache[id] = REG[id].factory());
   sc.id = id;
-  App.scene = sc; App.sel = null; App.hover = null; App.path = chain(id);
+  App.scene = sc as ActiveScene; App.sel = null; App.hover = null; App.path = chain(id);
   $('#tip').style.display = 'none';
   if (sc.load && !sc.loaded) {
     toast('Loading ' + sc.title + '…', 'first visit downloads live data');

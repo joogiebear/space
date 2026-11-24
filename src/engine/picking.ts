@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { Body } from '@/types';
 import { U, camera } from './gl';
-import { App } from './state';
+import { App, scene } from './state';
 
 const pv = new THREE.Vector3(), sp = { x: 0, y: 0, z: 0 }, bp = new THREE.Vector3();
 
@@ -14,7 +14,7 @@ export function screenOf(v: THREE.Vector3, out: { x: number; y: number; z: numbe
 
 /** The body under a screen point: listed bodies first, then the scene's own picker (millions of points). */
 export function pickAt(mx: number, my: number, click: boolean): Body | null {
-  const sc = App.scene; let best: Body | null = null, bz = 1e9;
+  const sc = scene(); let best: Body | null = null, bz = 1e9;
   for (const b of sc.bodies || []) {
     if (sc.isHidden && sc.isHidden(b)) continue;
     b.getPos(bp); if (!screenOf(bp, sp)) continue;

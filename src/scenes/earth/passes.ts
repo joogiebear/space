@@ -74,7 +74,7 @@ export class PassPredictor {
       const entry: Cached = this.cache = { key, from: jdNow, res: undefined, pending: true };
       setTimeout(() => { if (this.cache === entry) { entry.res = findPass(rec, jdNow, loc, sunDir); entry.pending = false; } }, 0);
     }
-    const q = this.cache;
-    return q.pending ? [['Next pass over you', 'calculating…']] : describe(q.res, jdNow);
+    const q = this.cache!;
+    return q.pending ? [['Next pass over you', 'calculating…']] : describe(q.res ?? null, jdNow);
   }
 }

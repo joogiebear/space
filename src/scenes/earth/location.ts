@@ -4,7 +4,7 @@ export interface Loc { lat: number; lon: number }
 const KEY = 'atlas.loc';
 
 export function loadLocation(): Loc | null {
-  try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; }
+  try { return JSON.parse(localStorage.getItem(KEY) as string); } catch { return null; }
 }
 
 export function saveLocation(loc: Loc) {
@@ -20,7 +20,7 @@ export function askLocation(current: Loc | null): Promise<Loc | null> {
     ov.innerHTML = '<div class="panel box"><h3>Your location</h3><p>Enter latitude, longitude (south and west are negative), or use your browser\'s location. It stays in this browser and is never sent anywhere.</p>' +
       '<input type="text" placeholder="51.5, -0.12" autocomplete="off" spellcheck="false"><div class="err"></div>' +
       '<div class="btns"><button data-a="geo">Use browser location</button><span></span><button data-a="cancel">Cancel</button><button data-a="ok" class="pri">Save</button></div></div>';
-    const inp = ov.querySelector('input'), err = ov.querySelector('.err');
+    const inp = ov.querySelector('input')!, err = ov.querySelector('.err')!;
     inp.value = current ? current.lat + ', ' + current.lon : '';
     const close = (loc: Loc | null) => { ov.remove(); done(loc); };
     const save = () => {

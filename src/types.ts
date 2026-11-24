@@ -29,7 +29,7 @@ export interface Body {
   focusD?: number;
   minD?: number;
   /** Scene id to open on double-click / "Enter". */
-  enter?: string;
+  enter?: string | null;
   enterLabel?: string;
   action?: BodyAction | null;
   noLabel?: boolean;
@@ -79,6 +79,8 @@ export interface Scene {
   presets?: Preset[];
   minD: number;
   maxD: number;
+  /** Zooming out past this distance (and pushing on) goes up a level. Defaults to maxD. */
+  exitD?: number;
   initD: number;
   /** Simulation speed on entry; omit to leave the clock alone. */
   rate?: number;
@@ -103,3 +105,6 @@ export interface Scene {
   search?(q: string): SearchResult[];
   [extra: string]: any;
 }
+
+/** A scene that is on screen: the manager has assigned its id. */
+export type ActiveScene = Scene & { id: string };

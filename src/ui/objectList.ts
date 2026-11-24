@@ -1,5 +1,5 @@
 import { select } from '@/engine/selection';
-import { App } from '@/engine/state';
+import { App, scene } from '@/engine/state';
 import type { Body } from '@/types';
 import { $ } from './dom';
 
@@ -11,7 +11,7 @@ export function buildObjectList() {
     x.textContent = b.label; if (sub) x.className = 'sub'; x.dataset.id = b.id; x.onclick = () => select(b);
     el.appendChild(x);
   };
-  for (const b of App.scene.bodies || []) {
+  for (const b of scene().bodies || []) {
     if (b.parentBody) continue;
     add(b);
     for (const m of b.moons || []) add(m, true);

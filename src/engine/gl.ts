@@ -51,7 +51,7 @@ skyScene.add(skyPts);
 const glowCanvas = document.createElement('canvas');
 glowCanvas.width = glowCanvas.height = 128;
 {
-  const g = glowCanvas.getContext('2d'), r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  const g = glowCanvas.getContext('2d')!, r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
   r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.25, 'rgba(255,255,255,.45)'); r.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = r; g.fillRect(0, 0, 128, 128);
 }

@@ -5,8 +5,9 @@ import { emitter } from './events';
 import { renderer } from './gl';
 import { pickAt } from './picking';
 import { deselect, select } from './selection';
-import { openScene } from './sceneManager';
-import { App, cam } from './state';
+import { goUp, openScene, parentOf, sceneTitle } from './sceneManager';
+import { toast } from '@/ui/toast';
+import { App, cam, scene } from './state';
 
 /** (body under the pointer or null, clientX, clientY): the tooltip subscribes. */
 export const hoverChanged = emitter<[Body | null, number, number]>();
@@ -19,15 +20,16 @@ export const dragStarted = emitter();
  * notches), so mice, trackpads and pinch all feel the same; it decays if the user pauses.
  */
 const PUSH_NEEDED = .35, PUSH_WINDOW_MS = 900;
-let push = 0, pushT = 0;
+let push = 0, pushT = 0, pullOut = 0, pullT = 0, hinted = false;
+const PULL_NEEDED = .6;
 const _p = new THREE.Vector3();
 
 /** The enterable body to zoom toward: the hovered one, else the one nearest the camera's focus point. */
 function enterTarget(): Body | null {
   if (App.hover?.enter) return App.hover;
-  let best: Body | null = null, bd = App.scene.initD * .35 * (cam.dist / App.scene.initD);
-  for (const b of App.scene.bodies || []) {
-    if (!b.enter || (App.scene.isHidden && App.scene.isHidden(b))) continue;
+  let best: Body | null = null, bd = scene().initD * .35 * (cam.dist / scene().initD);
+  for (const b of scene().bodies || []) {
+    if (!b.enter || scene().isHidden?.(b)) continue;
     const d = b.getPos(_p).distanceTo(cam.t);
     if (d < bd) { bd = d; best = b; }
   }
@@ -37,14 +39,22 @@ function enterTarget(): Body | null {
 export function zoomBy(k: number) {
   const now = performance.now();
   if (k < 1 && !App.sel) { const t = enterTarget(); if (t) select(t); }
-  const lo = App.sel && App.sel.minD || App.scene.minD;
-  cam.want = clamp(cam.want * k, lo, App.scene.maxD);
+  const lo = App.sel && App.sel.minD || scene().minD;
+  cam.want = clamp(cam.want * k, lo, scene().maxD);
   App.interact = now;
   const s = App.sel;
   if (k < 1 && s?.enter && cam.want <= lo * 1.001 && cam.dist < lo * 1.8) {
     push = (now - pushT > PUSH_WINDOW_MS ? 0 : push) - Math.log(k); pushT = now;
     if (push >= PUSH_NEEDED) { push = 0; openScene(s.enter); }
   } else if (k > 1) push = 0;
+
+  // zooming out far enough (and pushing on) returns to the parent view
+  const parent = parentOf(scene().id), exit = scene().exitD ?? scene().maxD;
+  if (parent && k > 1 && cam.want >= exit * .999 && cam.dist > exit * .85) {
+    if (!hinted) { hinted = true; toast('Keep zooming out to go back', sceneTitle(parent), 1600); }
+    pullOut = (now - pullT > PUSH_WINDOW_MS ? 0 : pullOut) + Math.log(k); pullT = now;
+    if (pullOut >= PULL_NEEDED) { pullOut = 0; hinted = false; goUp(); }
+  } else if (k < 1 || cam.want < exit * .8) { pullOut = 0; hinted = false; }
 }
 
 /** Mouse, touch (drag + pinch) and wheel control of the orbit camera, plus picking by click. */

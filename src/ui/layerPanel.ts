@@ -1,10 +1,10 @@
-import { App } from '@/engine/state';
+import { App, scene } from '@/engine/state';
 import { $ } from './dom';
 
 /** Checkbox list from the scene's `layers`. */
 export function buildLayerPanel() {
   const el = $('#layers'); el.innerHTML = '';
-  const ls = App.scene.layers || []; if (!ls.length) return;
+  const ls = scene().layers || []; if (!ls.length) return;
   const h = document.createElement('h4'); h.textContent = 'Layers'; el.appendChild(h);
   for (const L of ls) {
     const lab = document.createElement('label'), cb = document.createElement('input');

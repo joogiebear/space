@@ -1,5 +1,5 @@
 import { select } from '@/engine/selection';
-import { App } from '@/engine/state';
+import { App, scene } from '@/engine/state';
 import { $ } from './dom';
 
 const input = () => $<HTMLInputElement>('#q'), results = () => $('#results');
@@ -13,7 +13,7 @@ export function initSearch() {
   q.addEventListener('input', () => {
     const text = q.value.trim().toLowerCase(); res.innerHTML = '';
     if (text.length < 2) { res.classList.remove('open'); return; }
-    const rs = App.scene.search ? App.scene.search(text) : [];
+    const rs = scene().search?.(text) ?? [];
     for (const r of rs.slice(0, 14)) {
       const b = document.createElement('button'); b.append(r.label);
       if (r.sub) { const s = document.createElement('small'); s.textContent = r.sub; b.append(s); }

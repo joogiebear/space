@@ -4,6 +4,12 @@
 export type SatRecord = [string, string, string, number];
 export interface SatCatalogue { cats: string[]; fetched: string; sats: SatRecord[] }
 
+
+/** [hygIndex, name, constellation, spectral type, distance pc, apparent magnitude] */
+export type NamedStar = [number, string, string, string, number, number];
+/** NASA Exoplanet Archive row: [planet, host, distance pc, ra, dec, AU, radius, ?, year, method, ?, ?, spectral type] */
+export type ExoRow = [string, string, number | null, number | null, number | null, number | null, number | null, unknown, number | string | null, string, unknown, unknown, string | null];
+
 /** [id, name, english name, lines of Hipparcos ids] */
 export type ConstellationRecord = [string, string, string, number[][]];
 
@@ -30,8 +36,6 @@ export const fetchSmallBodies = () => json<SmallBodies>('/api/sbdb');
 export const fetchSpacecraft = () => json<CraftData>('/api/craft').catch((): CraftData => ({ when: '', craft: [] }));
 /** Binary: uint32 N, then N x float32 [x, y, z, absMag, B-V], then N x int32 Hipparcos id. */
 export const fetchStarsBinary = async () => (await get('/api/stars.bin')).arrayBuffer();
-/** [hygIndex, name, constellation, spectral type, distance pc, apparent magnitude] */
-export const fetchStarNames = () => json<any[][]>('/api/stars.json');
-/** NASA Exoplanet Archive rows (see server/sources/exoplanets.py for column order). */
-export const fetchExoplanets = () => json<any[][]>('/api/exo').catch((): any[][] => []);
+export const fetchStarNames = () => json<NamedStar[]>('/api/stars.json');
+export const fetchExoplanets = () => json<ExoRow[]>('/api/exo').catch((): ExoRow[] => []);
 export const fetchConstellations = () => json<ConstellationRecord[]>('/api/constellations').catch((): ConstellationRecord[] => []);

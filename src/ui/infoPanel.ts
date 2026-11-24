@@ -1,14 +1,14 @@
 import { slowTick } from '@/engine/loop';
 import { openScene } from '@/engine/sceneManager';
 import { selectionChanged } from '@/engine/selection';
-import { App, sim } from '@/engine/state';
+import { App, sim, scene } from '@/engine/state';
 import { fmtDate } from '@/lib';
-import type { Body } from '@/types';
+import type { Body, Info } from '@/types';
 import { $ } from './dom';
 
 /** Fill the bottom-left panel for a body, or for the scene intro when `b` is null. */
 export function showInfo(b: Body | null) {
-  const sc = App.scene, i = b ? (b.getInfo ? b.getInfo() : b.info) : { sub: '', text: sc.intro, rows: sc.introRows };
+  const sc = scene(), i: Info = b ? (b.getInfo ? b.getInfo() : b.info ?? {}) : { sub: '', text: sc.intro, rows: sc.introRows };
   $('#iT').textContent = b ? b.label : sc.title;
   $('#iS').textContent = i.sub || '';
   $('#iP').textContent = i.text || '';
@@ -31,6 +31,6 @@ export function initInfoPanel() {
   $('#enter').onclick = () => { if (App.sel && App.sel.enter) openScene(App.sel.enter); };
   slowTick.on(() => {
     if (App.sel && App.sel.live) showInfo(App.sel);
-    $('#dateTxt').textContent = App.scene.timeLabel ? fmtDate(sim.jd) : fmtDate(sim.jd).slice(0, 10);
+    $('#dateTxt').textContent = scene().timeLabel ? fmtDate(sim.jd) : fmtDate(sim.jd).slice(0, 10);
   });
 }

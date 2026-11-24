@@ -4,10 +4,11 @@ import { App, Markers, U, camera, register, sim } from '@/engine';
 import { D2R, J2000, RE_KM, TAU, fmtNum, jdToDate, nowJD, planetEcl } from '@/lib';
 import { CAT_COL, CAT_HEX, EPS, J2, MU, REQ, eclToEqThree, gmst } from './constants';
 import { fetchSatellites } from '@/data/api';
+import type { SatRecord } from '@/data/api';
 import { askLocation, loadLocation, saveLocation } from './location';
 import { PassPredictor } from './passes';
 import { EARTH_PRESETS } from './presets';
-import type { Scene } from '@/types';
+import type { Body, Layer, Scene, SearchResult } from '@/types';
 import { SFS, SVS } from './shaders';
 
 const TEX = 'assets/tex/';
@@ -33,15 +34,16 @@ function earth(): Scene {
   const moonMesh = new THREE.Mesh(new THREE.SphereGeometry(.2725, 40, 28), new THREE.MeshLambertMaterial({ color: 0xbbbbbb })); group.add(moonMesh);
   loader.load(TEX + 'moon_1024.jpg', t => { moonMesh.material.map = t; moonMesh.material.color.set(0xffffff); moonMesh.material.needsUpdate = true });
 
-  const earthBody = { id: 'earth', label: 'Earth', radNow: 1, focusD: 5, minD: 1.3, getPos: v => v.set(0, 0, 0), noLabel: true,
+  const earthBody: Body = { id: 'earth', label: 'Earth', radNow: 1, focusD: 5, minD: 1.3, getPos: (v: THREE.Vector3) => v.set(0, 0, 0), noLabel: true,
     info: { sub: 'Planet · Earth orbit view', text: 'The globe shows real day and night for the simulation date. Every dot around it is a catalogued object in orbit. Click one for its details and orbit.', rows: [['Radius', '6,371 km']] } };
-  const moonBody = { id: 'moon', label: 'The Moon', radNow: .2725, focusD: 2, minD: .5, getPos: v => v.copy(moonMesh.position),
+  const moonBody: Body = { id: 'moon', label: 'The Moon', radNow: .2725, focusD: 2, minD: .5, getPos: (v: THREE.Vector3) => v.copy(moonMesh.position),
     info: { sub: 'Natural satellite · ~384,400 km away', text: 'Shown at its true position and relative size. Notice how small Earth\'s whole satellite swarm looks next to the distance to the Moon.', rows: [] } };
   const mk = new Markers(1, true); group.add(mk.points); mk.hide(0);
 
-  let N = 0, sats = [], e1, e2, cats = [], lower = [], fetched = '', points = null, mat = null, cpu = null, cpuT = 0, cnt = [], stationIdx = [];
-  const visible = new Array(8).fill(1);
-  const satPos = (i, days, o) => { // JS twin of the vertex shader
+  let N = 0, sats: SatRecord[] = [], fetched = '', points: THREE.Points | null = null, mat: THREE.ShaderMaterial | null = null, cpuT = 0, cats: string[] = [], lower: string[] = [], cnt: number[] = [], stationIdx: number[] = [];
+  let e1!: Float32Array, e2!: Float32Array, cpu!: Float32Array; // assigned in load(), which runs before update/pick
+  const visible: number[] = new Array(8).fill(1);
+  const satPos = (i: number, days: number, o: number[]) => { // JS twin of the vertex shader
     const inc = e1[i * 4], e = e1[i * 4 + 2], n = e2[i * 4 + 1] / 60, a = Math.cbrt(MU / (n * n)), dt = (days - e2[i * 4 + 2]) * 86400, p = a * (1 - e * e), k = 1.5 * J2 * (REQ / p) ** 2, ci = Math.cos(inc);
     const Om = e1[i * 4 + 1] - k * n * ci * dt, w = e1[i * 4 + 3] + .5 * k * n * (5 * ci * ci - 1) * dt, M = e2[i * 4] + n * (1 + .5 * k * Math.sqrt(1 - e * e) * (3 * ci * ci - 1)) * dt;
     let E = ((M % TAU) + TAU) % TAU; const Mm = E; if (e > .8) E = Math.PI; for (let j = 0; j < 8; j++) E -= (E - e * Math.sin(E) - Mm) / (1 - e * Math.cos(E));
@@ -65,12 +67,12 @@ function earth(): Scene {
     const nl = await askLocation(loc);
     if (nl) { loc = nl; saveLocation(nl); placeYou(); predictor.reset(); }
   }
-  function satBody(i) {
+  function satBody(i: number): Body {
     const s = sats[i], rec = satellite.twoline2satrec(s[1], s[2]);
     return { id: 'sat' + i, label: s[0], idx: i, action: rec ? { label: () => loc ? 'Change my location' : 'Set my location', run: setLocation } : null, minD: .004, focusD: s[3] === 0 ? 2.8 : .9, live: true,
-      getPos: v => { satPos(i, sim.jd - J2000, sb); return v.set(sb[0], sb[1], sb[2]) },
+      getPos: (v: THREE.Vector3) => { satPos(i, sim.jd - J2000, sb); return v.set(sb[0], sb[1], sb[2]) },
       getInfo() {
-        const n = e2[i * 4 + 1], per = TAU / n, a = Math.cbrt(MU / ((n / 60) ** 2)), e = e1[i * 4 + 2], rows = [['Category', cats[s[3]]], ['NORAD ID', s[1].slice(2, 7).trim()], ['Int\'l designator', s[1].slice(9, 17).trim() || '—']];
+        const n = e2[i * 4 + 1], per = TAU / n, a = Math.cbrt(MU / ((n / 60) ** 2)), e = e1[i * 4 + 2], rows: string[][] = [['Category', cats[s[3]]], ['NORAD ID', s[1].slice(2, 7).trim()], ['Int\'l designator', s[1].slice(9, 17).trim() || '—']];
         if (rec) { const pv = satellite.propagate(rec, jdToDate(sim.jd)); if (pv.position) { const gd = satellite.eciToGeodetic(pv.position as satellite.EciVec3<number>, satellite.gstime(jdToDate(sim.jd))), v = pv.velocity as satellite.EciVec3<number>;
           rows.push(['Altitude', fmtNum(gd.height, 0) + ' km'], ['Position', `${(gd.latitude / D2R).toFixed(1)}°, ${(gd.longitude / D2R).toFixed(1)}°`], ['Speed', Math.hypot(v.x, v.y, v.z).toFixed(2) + ' km/s']) } else rows.push(['Status', 'orbit decayed or out of TLE validity']) }
         rows.push(['Orbit', `${fmtNum(a * (1 - e) - REQ, 0)} × ${fmtNum(a * (1 + e) - REQ, 0)} km`], ['Inclination', (e1[i * 4] / D2R).toFixed(2) + '°'], ['Period', per.toFixed(1) + ' min'], ['TLE epoch', s[1].slice(18, 32).trim()]);
@@ -78,13 +80,13 @@ function earth(): Scene {
         return { sub: cats[s[3]], text: s[3] === 5 || s[3] === 6 ? 'Orbital debris: a dead object still circling the Earth. Collisions among objects like this are the main threat to working satellites.' : s[3] === 0 ? 'A crewed space station. Select it to follow it around the globe.' : 'A catalogued object in Earth orbit. Position is propagated from its public orbital elements.', rows };
       } };
   }
-  let orbitLine = null, trackLine = null, trackT = 0, trackIdx = -1, issBody = null;
+  let orbitLine: THREE.Line | null = null, trackLine: THREE.Line | null = null, trackT = 0, trackIdx = -1, issBody: Body | null = null;
   function clearOrbit() { if (orbitLine) { group.remove(orbitLine); orbitLine.geometry.dispose(); orbitLine = null } clearTrack() }
   function clearTrack() { if (trackLine) { trackGrp.remove(trackLine); trackLine.geometry.dispose(); trackLine = null } trackIdx = -1 }
   // ground track: the sub-satellite path on the surface, from 0.4 orbits ago to 1.3 orbits ahead
-  function buildTrack(idx) {
+  function buildTrack(idx: number) {
     if (trackLine) { trackGrp.remove(trackLine); trackLine.geometry.dispose() }
-    const per = TAU / e2[idx * 4 + 1] / 1440, jd0 = sim.jd, o = [0, 0, 0], pts = [], K = 260;
+    const per = TAU / e2[idx * 4 + 1] / 1440, jd0 = sim.jd, o = [0, 0, 0], pts: THREE.Vector3[] = [], K = 260;
     for (let i = 0; i <= K; i++) {
       const dt = per * (-.4 + 1.7 * i / K); satPos(idx, jd0 + dt - J2000, o);
       const g = gmst(jd0 + dt), c = Math.cos(g), s = Math.sin(g), x = o[0] * c - o[2] * s, z = o[0] * s + o[2] * c, L = Math.hypot(x, o[1], z) || 1;
@@ -93,8 +95,8 @@ function earth(): Scene {
     trackLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x4cf0ff, transparent: true, opacity: .85, depthWrite: false }));
     trackGrp.add(trackLine); trackIdx = idx; trackT = performance.now();
   }
-  const hostScene = {
-    title: 'Earth Orbit', group, bodies: [earthBody, moonBody], minD: .0035, maxD: 400, initD: 5.2, rate: 60, live: false, timeLabel: 'Simulated date', extent: 800,
+  const hostScene: Scene = {
+    title: 'Earth Orbit', group, bodies: [earthBody, moonBody], minD: .0035, maxD: 400, exitD: 120, initD: 5.2, rate: 60, live: false, timeLabel: 'Simulated date', extent: 800,
     // satellite elements are only good for weeks around today, so the dots hide for far-away dates (see update)
     presets: EARTH_PRESETS,
     enter() { if (Math.abs(sim.jd - nowJD()) > 45) { sim.jd = nowJD() } }, // come back to the present when the clock was left far away
@@ -118,9 +120,9 @@ function earth(): Scene {
       g.setAttribute('aE1', new THREE.BufferAttribute(e1, 4)); g.setAttribute('aE2', new THREE.BufferAttribute(e2, 4)); g.setAttribute('aCol', new THREE.BufferAttribute(col, 3)); g.setAttribute('aSize', new THREE.BufferAttribute(sz, 1));
       mat = new THREE.ShaderMaterial({ uniforms: { uDays: { value: 0 }, uPx: U.uPx, uVis: { value: visible } }, vertexShader: SVS, fragmentShader: SFS, transparent: true, depthWrite: false, depthTest: true, blending: THREE.AdditiveBlending });
       points = new THREE.Points(g, mat); points.frustumCulled = false; group.add(points); cpu = new Float32Array(N * 3);
-      this.layers = cats.map((c, i) => ({ id: 'c' + i, label: c, color: CAT_HEX(CAT_COL[i]), count: cnt[i], on: true, apply: o => { visible[i] = o ? 1 : 0; mat.uniforms.uVis.value = visible.slice() } }));
+      this.layers = cats.map((c, i): Layer => ({ id: 'c' + i, label: c, color: CAT_HEX(CAT_COL[i]), count: cnt[i], on: true, apply: (o: boolean) => { visible[i] = o ? 1 : 0; mat!.uniforms.uVis.value = visible.slice() } }));
       const iss = sats.findIndex(s => /^ISS \(ZARYA\)/.test(s[0]));
-      if (iss >= 0 && !issBody) { issBody = satBody(iss); issBody.label = 'ISS (International Space Station)'; issBody.pinned = true; this.bodies.splice(1, 0, issBody) }
+      if (iss >= 0 && !issBody) { issBody = satBody(iss); issBody.label = 'ISS (International Space Station)'; issBody.pinned = true; this.bodies!.splice(1, 0, issBody) }
       this.intro = 'Every active satellite, station and tracked piece of debris in the public CelesTrak catalogue, drawn at its real position for the date shown. Positions are propagated on the GPU from orbital elements, so accuracy is a few kilometres. Click any dot.';
       this.introRows = [['Objects', N.toLocaleString()], ['Catalogue fetched', fetched]];
     },
@@ -135,7 +137,7 @@ function earth(): Scene {
       if (trackIdx >= 0 && performance.now() - trackT > 3000) buildTrack(trackIdx); // keep the window sliding with the clock
       if (App.sel) { App.sel.getPos(tmp); mk.set(0, tmp.x, tmp.y, tmp.z, [1, 1, 1], 26) } else mk.hide(0);
     },
-    onSelect(b) { clearOrbit(); if (b && b.idx != null) { buildTrack(b.idx); const pts = [], per = TAU / e2[b.idx * 4 + 1] / 1440, o = [0, 0, 0], d0 = sim.jd - J2000; for (let i = 0; i <= 220; i++) { satPos(b.idx, d0 + per * i / 220, o); pts.push(new THREE.Vector3(o[0], o[1], o[2])) }
+    onSelect(b) { clearOrbit(); if (b && b.idx != null) { buildTrack(b.idx); const pts: THREE.Vector3[] = [], per = TAU / e2[b.idx * 4 + 1] / 1440, o = [0, 0, 0], d0 = sim.jd - J2000; for (let i = 0; i <= 220; i++) { satPos(b.idx, d0 + per * i / 220, o); pts.push(new THREE.Vector3(o[0], o[1], o[2])) }
       orbitLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .6 })); group.add(orbitLine) } },
     pickCustom(mx, my) {
       if (!points || !points.visible) return null; const now = performance.now(), o = [0, 0, 0];
@@ -153,7 +155,7 @@ function earth(): Scene {
       return best >= 0 ? satBody(best) : null;
     },
     extraLabels(emit) { if (loc) emit('You', trackGrp.localToWorld(tmpW.copy(youPos)), '', 9); if (!points) return; const o = [0, 0, 0], d = sim.jd - J2000; if (!visible[0]) return; for (const i of stationIdx) { satPos(i, d, o); emit(sats[i][0].replace(/\s*\(.*\)/, ''), tmp.set(o[0], o[1], o[2]), 'dim', 8) } emit('Moon', moonMesh.position, 'dim', 10) },
-    search(q) { const out = []; for (let i = 0; i < N; i++) if (lower[i].includes(q)) { out.push({ label: sats[i][0], sub: cats[sats[i][3]], make: () => satBody(i) }); if (out.length > 14) break } return out },
+    search(q: string) { const out: SearchResult[] = []; for (let i = 0; i < N; i++) if (lower[i].includes(q)) { out.push({ label: sats[i][0], sub: cats[sats[i][3]], make: () => satBody(i) }); if (out.length > 14) break } return out },
   };
   return hostScene;
 }
