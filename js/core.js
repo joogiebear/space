@@ -101,6 +101,7 @@ export function showInfo(b) {
   $('#iT').textContent = b ? b.label : sc.title; $('#iS').textContent = i.sub || ''; $('#iP').textContent = i.text || '';
   const rows = $('#rows'); rows.innerHTML = '';
   for (const [k, v] of i.rows || []) { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; rows.append(dt, dd) }
+  const a = $('#act'), act = b && b.action; a.style.display = act ? 'inline-block' : 'none'; if (act) a.textContent = typeof act.label === 'function' ? act.label() : act.label;
   const e = $('#enter'); e.style.display = b && b.enter ? 'inline-block' : 'none';
   if (b && b.enter) e.textContent = (b.enterLabel || 'Enter') + ' ›';
   document.querySelectorAll('#list button').forEach(x => x.classList.toggle('sel', !!b && x.dataset.id === b.id));
@@ -110,7 +111,8 @@ export function select(b) {
   App.scene.onSelect?.(b);
 }
 export function deselect() { if (!App.sel) return; App.scene.onSelect?.(null); App.sel = null; cam.want = App.scene.initD; showInfo(null) }
-$('#enter').onclick = () => { if (App.sel && App.sel.enter) openScene(App.sel.enter) };
+$('#act').onclick = () => { const a = App.sel && App.sel.action; if (a) Promise.resolve(a.run()).then(() => showInfo(App.sel)) };
+$('#enter').onclick =() => { if (App.sel && App.sel.enter) openScene(App.sel.enter) };
 
 function buildList() {
   const el = $('#list'); el.innerHTML = '';

@@ -43,6 +43,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:14px/1.
 #info p{margin:0;color:#c3ccee;font-size:13.5px}
 #rows{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin-top:8px;font-size:12.5px}
 #rows dt{color:var(--dim)}#rows dd{margin:0;color:var(--tx)}
+#act{margin:10px 8px 0 0;background:rgba(120,150,255,.16);color:var(--acc);border:1px solid rgba(140,170,255,.4);border-radius:8px;padding:5px 12px;font:inherit;font-weight:600;cursor:pointer;display:none}
 #enter{margin-top:10px;background:var(--acc);color:#07102a;border:0;border-radius:8px;padding:6px 14px;font:inherit;font-weight:600;cursor:pointer;display:none}
 #ctl{right:14px;bottom:14px;padding:10px 14px;display:flex;flex-direction:column;gap:8px;width:270px}
 #ctl label{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:13px;cursor:pointer}
@@ -70,7 +71,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:14px/1.
 </div>
 <div id="search" class="panel"><input id="q" placeholder="Search this view…  (stars, satellites, planets…)" autocomplete="off"><div id="results"></div></div>
 <div id="side" class="panel"><div id="layers"></div><div><h4>Objects</h4><div id="list"></div></div></div>
-<div id="info" class="panel"><h2 id="iT"></h2><div class="sub" id="iS"></div><p id="iP"></p><dl id="rows"></dl><button id="enter">Enter ›</button></div>
+<div id="info" class="panel"><h2 id="iT"></h2><div class="sub" id="iS"></div><p id="iP"></p><dl id="rows"></dl><button id="act"></button><button id="enter">Enter ›</button></div>
 <div id="ctl" class="panel">
   <div><div class="top"><span>Time speed</span><span id="rateTxt"></span></div><input id="speed" type="range" min="0" max="100" value="30"></div>
   <div class="row"><button id="pause">Pause</button><button id="live">Live</button>

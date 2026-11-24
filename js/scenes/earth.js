@@ -56,21 +56,77 @@ function earth() {
     const x = ((cw * cO - sw * sO * ci) * xv + (-sw * cO - cw * sO * ci) * yv) / RE_KM, y = ((cw * sO + sw * cO * ci) * xv + (-sw * sO + cw * cO * ci) * yv) / RE_KM, z = (sw * sI * xv + cw * sI * yv) / RE_KM;
     o[0] = x; o[1] = z; o[2] = -y; return o;
   };
+  // ---- observer location and pass prediction (location stays in this browser's localStorage; nothing is sent anywhere) ----
+  const trackGrp = new THREE.Group(); group.add(trackGrp); // Earth-fixed frame: spins with the globe
+  let loc = null; try { loc = JSON.parse(localStorage.getItem('atlas.loc')) } catch (e) { }
+  const youMk = new Markers(1, true), youPos = new THREE.Vector3(), upV = new THREE.Vector3(), tmpW = new THREE.Vector3(); trackGrp.add(youMk.points);
+  function placeYou() {
+    if (!loc) { youMk.hide(0); return } const la = loc.lat * D2R, lo = loc.lon * D2R;
+    youPos.set(Math.cos(la) * Math.cos(lo), Math.sin(la), -Math.cos(la) * Math.sin(lo)).multiplyScalar(1.004); youMk.set(0, youPos.x, youPos.y, youPos.z, [.4, 1, .6], 18);
+  }
+  placeYou();
+  async function setLocation() {
+    const s = prompt('Your location as "latitude, longitude", e.g. 51.5, -0.12 (south and west are negative).\nLeave empty to use your browser location (needs HTTPS or localhost).\nIt stays in this browser and is never sent anywhere.', loc ? loc.lat + ', ' + loc.lon : '');
+    if (s === null) return; let nl = null;
+    if (s.trim()) { const m = s.match(/^\s*(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)\s*$/);
+      if (!m || Math.abs(+m[1]) > 90 || Math.abs(+m[2]) > 180) { alert('That does not look like "latitude, longitude".'); return } nl = { lat: +m[1], lon: +m[2] } }
+    else if (navigator.geolocation) nl = await new Promise(res => navigator.geolocation.getCurrentPosition(p => res({ lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3) }), () => res(null), { timeout: 10000 }));
+    if (!nl) { alert('Could not get your location. Enter coordinates instead.'); return }
+    loc = nl; try { localStorage.setItem('atlas.loc', JSON.stringify(loc)) } catch (e) { } placeYou(); passCache = null;
+  }
+  const COMP = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'], compass = a => COMP[Math.round(a / 22.5) % 16];
+  let passCache = null;
+  // next pass above the horizon within 7 days, stepping 20 s; "visible" = observer in darkness (sun below -6°), satellite above 10° and in sunlight
+  function findPass(rec, jd0) {
+    const lat = loc.lat * D2R, lon = loc.lon * D2R, obs = { latitude: lat, longitude: lon, height: 0 }, cl = Math.cos(lat), base = (jd0 - 2440587.5) * 864e5; let p = null;
+    for (let k = 0; k < 7 * 4320; k++) {
+      const date = new Date(base + k * 20000), pv = satellite.propagate(rec, date); if (!pv.position) continue;
+      const gm = satellite.gstime(date), la = satellite.ecfToLookAngles(obs, satellite.eciToEcf(pv.position, gm)), el = la.elevation / D2R, az = la.azimuth / D2R, jd = jd0 + k * 20 / 86400;
+      if (el > 0) {
+        if (!p) p = { rise: jd, azRise: az, ongoing: k === 0, maxEl: el, azMax: az, visible: false };
+        if (el > p.maxEl) { p.maxEl = el; p.azMax = az } p.set = jd; p.azSet = az;
+        if (el > 10 && !p.visible) {
+          const th = gm + lon; upV.set(cl * Math.cos(th), Math.sin(lat), -cl * Math.sin(th));
+          if (Math.asin(upV.dot(sunDir)) / D2R < -6) { const x = pv.position.x, y = pv.position.z, z = -pv.position.y, d = x * sunDir.x + y * sunDir.y + z * sunDir.z;
+            if (!(d < 0 && Math.hypot(x - d * sunDir.x, y - d * sunDir.y, z - d * sunDir.z) < RE_KM)) p.visible = true }
+        }
+      } else if (p) return p;
+    }
+    return p;
+  }
+  const fmtWhen = jd => jdToDate(jd).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const fmtIn = d => { const m = Math.max(0, Math.round(d * 1440)); return m >= 1440 ? Math.floor(m / 1440) + 'd ' + Math.floor(m % 1440 / 60) + 'h' : m >= 60 ? Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : m + 'm' };
+  function passRows(i, rec) {
+    if (!rec) return [];
+    if (!loc) return [['Next pass over you', 'set your location below']];
+    const key = i + '|' + loc.lat + '|' + loc.lon, c = passCache;
+    if (!c || c.key !== key || sim.jd < c.from - 1 / 1440 || sim.jd > (c.res ? c.res.set : c.from + 7)) {
+      passCache = { key, from: sim.jd, res: undefined, pending: true }; setTimeout(() => { if (passCache && passCache.key === key) { passCache.res = findPass(rec, sim.jd); passCache.pending = false } }, 0);
+    }
+    const q = passCache, rows = [];
+    if (q.pending) return [['Next pass over you', 'calculating…']];
+    const r = q.res; if (!r) return [['Next pass over you', 'none in the next 7 days']];
+    const now = r.rise <= sim.jd, dur = Math.max(1, Math.round((r.set - r.rise) * 1440));
+    rows.push(['Next pass over you', now ? 'overhead now, sets ' + fmtWhen(r.set) : fmtWhen(r.rise) + ' (in ' + fmtIn(r.rise - sim.jd) + ')']);
+    rows.push(['Pass', `max ${r.maxEl.toFixed(0)}° ${compass(r.azMax)} · ${compass(r.azRise)} → ${compass(r.azSet)} · ${dur} min`]);
+    rows.push(['Sky', r.visible ? 'dark sky, satellite sunlit: visible' : r.maxEl < 10 ? 'stays too low to see' : 'daylight or Earth\'s shadow: not visible']);
+    return rows;
+  }
   const sb = [0, 0, 0];
   function satBody(i) {
     const s = sats[i], rec = typeof satellite !== 'undefined' ? satellite.twoline2satrec(s[1], s[2]) : null;
-    return { id: 'sat' + i, label: s[0], idx: i, minD: .004, focusD: s[3] === 0 ? 2.8 : .9, live: true,
+    return { id: 'sat' + i, label: s[0], idx: i, action: rec ? { label: () => loc ? 'Change my location' : 'Set my location', run: setLocation } : null, minD: .004, focusD: s[3] === 0 ? 2.8 : .9, live: true,
       getPos: v => { satPos(i, sim.jd - J2000, sb); return v.set(sb[0], sb[1], sb[2]) },
       getInfo() {
         const n = e2[i * 4 + 1], per = TAU / n, a = Math.cbrt(MU / ((n / 60) ** 2)), e = e1[i * 4 + 2], rows = [['Category', cats[s[3]]], ['NORAD ID', s[1].slice(2, 7).trim()], ['Int\'l designator', s[1].slice(9, 17).trim() || '—']];
         if (rec) { const pv = satellite.propagate(rec, jdToDate(sim.jd)); if (pv.position) { const gd = satellite.eciToGeodetic(pv.position, satellite.gstime(jdToDate(sim.jd))), v = pv.velocity;
           rows.push(['Altitude', fmtNum(gd.height, 0) + ' km'], ['Position', `${(gd.latitude / D2R).toFixed(1)}°, ${(gd.longitude / D2R).toFixed(1)}°`], ['Speed', Math.hypot(v.x, v.y, v.z).toFixed(2) + ' km/s']) } else rows.push(['Status', 'orbit decayed or out of TLE validity']) }
         rows.push(['Orbit', `${fmtNum(a * (1 - e) - REQ, 0)} × ${fmtNum(a * (1 + e) - REQ, 0)} km`], ['Inclination', (e1[i * 4] / D2R).toFixed(2) + '°'], ['Period', per.toFixed(1) + ' min'], ['TLE epoch', s[1].slice(18, 32).trim()]);
+        rows.push(...passRows(i, rec));
         return { sub: cats[s[3]], text: s[3] === 5 || s[3] === 6 ? 'Orbital debris: a dead object still circling the Earth. Collisions among objects like this are the main threat to working satellites.' : s[3] === 0 ? 'A crewed space station. Select it to follow it around the globe.' : 'A catalogued object in Earth orbit. Position is propagated from its public orbital elements.', rows };
       } };
   }
   let orbitLine = null, trackLine = null, trackT = 0, trackIdx = -1, issBody = null;
-  const trackGrp = new THREE.Group(); group.add(trackGrp); // Earth-fixed frame: spins with the globe
   function clearOrbit() { if (orbitLine) { group.remove(orbitLine); orbitLine.geometry.dispose(); orbitLine = null } clearTrack() }
   function clearTrack() { if (trackLine) { trackGrp.remove(trackLine); trackLine.geometry.dispose(); trackLine = null } trackIdx = -1 }
   // ground track: the sub-satellite path on the surface, from 0.4 orbits ago to 1.3 orbits ahead
@@ -140,7 +196,7 @@ function earth() {
       }
       return best >= 0 ? satBody(best) : null;
     },
-    extraLabels(emit) { if (!points) return; const o = [0, 0, 0], d = sim.jd - J2000; if (!visible[0]) return; for (const i of stationIdx) { satPos(i, d, o); emit(sats[i][0].replace(/\s*\(.*\)/, ''), tmp.set(o[0], o[1], o[2]), 'dim', 8) } emit('Moon', moonMesh.position, 'dim', 10) },
+    extraLabels(emit) { if (loc) emit('You', trackGrp.localToWorld(tmpW.copy(youPos)), '', 9); if (!points) return; const o = [0, 0, 0], d = sim.jd - J2000; if (!visible[0]) return; for (const i of stationIdx) { satPos(i, d, o); emit(sats[i][0].replace(/\s*\(.*\)/, ''), tmp.set(o[0], o[1], o[2]), 'dim', 8) } emit('Moon', moonMesh.position, 'dim', 10) },
     search(q) { const out = []; for (let i = 0; i < N; i++) if (lower[i].includes(q)) { out.push({ label: sats[i][0], sub: cats[sats[i][3]], make: () => satBody(i) }); if (out.length > 14) break } return out },
   };
   return hostScene;
