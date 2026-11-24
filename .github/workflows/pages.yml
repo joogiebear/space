@@ -69,6 +69,71 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Fails (and so emails you) when the live site is up but its data is missing or stale: for example when
+  # CelesTrak keeps refusing the runner and the last good copy ages past the limit.
+  verify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check the live data
+        env:
+          SITE: ${{ needs.deploy.outputs.page_url }}
+          RUN_ID: ${{ github.run_id }}
+          MAX_SAT_AGE_HOURS: '6'
+        run: |
+          python - <<'PY'
+          import datetime, json, os, sys, time, urllib.request
+
+          base = os.environ['SITE'].rstrip('/') + '/data/'
+          max_age = float(os.environ['MAX_SAT_AGE_HOURS'])
+
+          def get(name):
+              # the CDN can lag a few seconds behind a deploy: retry, and bypass caches with a query string
+              last = None
+              for attempt in range(8):
+                  try:
+                      with urllib.request.urlopen(f"{base}{name}?v={os.environ['RUN_ID']}-{attempt}", timeout=60) as r:
+                          return r.read()
+                  except Exception as e:
+                      last = e; time.sleep(15)
+              raise SystemExit(f'FAIL {name}: {last!r}')
+
+          problems = []
+          def check(ok, msg):
+              print(('ok   ' if ok else 'FAIL ') + msg)
+              if not ok: problems.append(msg)
+
+          sats = json.loads(get('sats.json'))
+          fetched = datetime.datetime.strptime(sats['fetched'][:19], '%Y-%m-%d %H:%M:%S').replace(tzinfo=datetime.timezone.utc)
+          age = (datetime.datetime.now(datetime.timezone.utc) - fetched).total_seconds() / 3600
+          check(len(sats['sats']) > 10000, f"satellites: {len(sats['sats'])} objects (need > 10000)")
+          check(age < max_age, f'satellite data is {age:.1f} h old (limit {max_age:g} h)')
+          check('partial' not in sats['fetched'], 'satellite catalogue is complete (no groups missing)')
+          check(len(get('stars.bin')) > 1_000_000, 'star catalogue present')
+          sb = json.loads(get('sbdb.json')); check(len(sb['ast']) > 50000 and len(sb['com']) > 500, f"small bodies: {len(sb['ast'])} asteroids, {len(sb['com'])} comets")
+          check(len(json.loads(get('exo.json'))) > 1000, 'exoplanets present')
+          check(len(json.loads(get('craft.json'))['craft']) >= 10, 'spacecraft tracks present')
+          check(len(json.loads(get('constellations.json'))) == 88, '88 constellations')
+          check(len(json.loads(get('stars_names.json'))) > 100, 'named stars present')
+          sys.exit(1 if problems else 0)
+          PY
+
+      # GitHub switches scheduled workflows off after 60 days without repository activity. Re-enabling the
+      # workflow each run is a best-effort way to keep the schedule alive; it never fails the job.
+      - name: Keep the schedule enabled
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/pages.yml/enable"
