@@ -5,7 +5,9 @@ from array import array
 from ..common import CACHE, HOUR, fetch, log, short_lived
 
 
-HYG = 'https://raw.githubusercontent.com/astronexus/HYG-Database/main/hyg/CURRENT/hygdata_v40.csv.gz'
+# Pinned to a commit so an upstream reshuffle cannot break the build; bump deliberately (and re-check the column names below).
+HYG_COMMIT = 'c7f7f883fe678cc7680169a50ccd7dcc49b060ce'
+HYG = 'https://raw.githubusercontent.com/astronexus/HYG-Database/%s/hyg/CURRENT/hygdata_v40.csv.gz' % HYG_COMMIT
 
 
 def build_stars():
