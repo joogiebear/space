@@ -30,6 +30,7 @@ three.js and satellite.js load from jsDelivr / cdnjs; planet textures are in
 
 ## Controls
 
+Use the "Jump to a moment in time" menu for historic and future events (solar system and Earth views).
 Drag to orbit, wheel to zoom, click to select, double-click to enter a body.
 `Esc` / `Backspace` goes up a level, `Space` pauses, `/` searches. The slider
 at the bottom changes simulation speed (1x to 100,000,000x).

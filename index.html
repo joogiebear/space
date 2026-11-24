@@ -53,6 +53,16 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:14px/1.
 #ctl .top span:last-child{color:var(--tx)}
 #ctl button{background:none;border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:3px 10px;font:inherit;cursor:pointer}
 #ctl button:hover{border-color:var(--acc)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal .box{position:static;width:min(390px,calc(100% - 28px));padding:16px 18px;user-select:text}
+.modal h3{margin:0 0 6px;font-size:16px}.modal p{margin:0 0 10px;color:#c3ccee;font-size:13px}
+.modal input{width:100%;box-sizing:border-box;background:rgba(5,8,22,.9);border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:7px 10px;font:inherit}
+.modal input:focus{border-color:var(--acc);outline:none}.modal .err{color:#ff8f8f;font-size:12.5px;min-height:18px;margin-top:4px}
+.modal .btns{display:flex;gap:8px;align-items:center}.modal .btns span{flex:1}
+.modal button{background:none;border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:5px 12px;font:inherit;cursor:pointer}
+.modal button:hover{border-color:var(--acc)}.modal button.pri{background:var(--acc);color:#07102a;border:0;font-weight:600}
+#jump{width:100%;background:rgba(10,16,40,.9);border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:4px 8px;font:inherit;font-size:13px;cursor:pointer;display:none}
+#jump:hover,#jump:focus{border-color:var(--acc);outline:none}
 #tip{position:fixed;pointer-events:none;background:rgba(5,8,20,.92);border:1px solid var(--line);border-radius:7px;padding:3px 8px;font-size:12px;display:none;white-space:nowrap}
 #toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 22px;display:none;text-align:center;backdrop-filter:blur(10px)}
 #toast small{display:block;color:var(--dim);margin-top:2px}
@@ -76,6 +86,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:14px/1.
   <div><div class="top"><span>Time speed</span><span id="rateTxt"></span></div><input id="speed" type="range" min="0" max="100" value="30"></div>
   <div class="row"><button id="pause">Pause</button><button id="live">Live</button>
     <label><input type="checkbox" id="tLab" checked> Labels</label><label><input type="checkbox" id="tAuto" checked> Auto-orbit</label></div>
+  <select id="jump" aria-label="Jump to a moment in time"></select>
   <div class="top"><span id="dateLbl">Date</span><span id="dateTxt"></span></div>
 </div>
 <div id="tip"></div><div id="toast"></div><div id="fade"></div>

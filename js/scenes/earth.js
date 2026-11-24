@@ -1,5 +1,5 @@
 import { THREE, U, sim, App, cam, camera, Markers, register } from '../core.js';
-import { TAU, D2R, J2000, RE_KM, planetEcl, jdToDate, fmtNum } from '../util.js';
+import { TAU, D2R, J2000, RE_KM, nowJD, planetEcl, jdToDate, fmtNum } from '../util.js';
 
 const TEX = 'assets/tex/';
 const EPS = 23.4393 * D2R, MU = 398600.4418, J2 = 1.08262668e-3, REQ = 6378.137;
@@ -65,14 +65,23 @@ function earth() {
     youPos.set(Math.cos(la) * Math.cos(lo), Math.sin(la), -Math.cos(la) * Math.sin(lo)).multiplyScalar(1.004); youMk.set(0, youPos.x, youPos.y, youPos.z, [.4, 1, .6], 18);
   }
   placeYou();
-  async function setLocation() {
-    const s = prompt('Your location as "latitude, longitude", e.g. 51.5, -0.12 (south and west are negative).\nLeave empty to use your browser location (needs HTTPS or localhost).\nIt stays in this browser and is never sent anywhere.', loc ? loc.lat + ', ' + loc.lon : '');
-    if (s === null) return; let nl = null;
-    if (s.trim()) { const m = s.match(/^\s*(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)\s*$/);
-      if (!m || Math.abs(+m[1]) > 90 || Math.abs(+m[2]) > 180) { alert('That does not look like "latitude, longitude".'); return } nl = { lat: +m[1], lon: +m[2] } }
-    else if (navigator.geolocation) nl = await new Promise(res => navigator.geolocation.getCurrentPosition(p => res({ lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3) }), () => res(null), { timeout: 10000 }));
-    if (!nl) { alert('Could not get your location. Enter coordinates instead.'); return }
-    loc = nl; try { localStorage.setItem('atlas.loc', JSON.stringify(loc)) } catch (e) { } placeYou(); passCache = null;
+  // in-page dialog (prompt() is blocked in embedded browsers)
+  function setLocation() {
+    return new Promise(done => {
+      const ov = document.createElement('div'); ov.className = 'modal';
+      ov.innerHTML = '<div class="panel box"><h3>Your location</h3><p>Enter latitude, longitude (south and west are negative), or use your browser\'s location. It stays in this browser and is never sent anywhere.</p>' +
+        '<input type="text" placeholder="51.5, -0.12" autocomplete="off" spellcheck="false"><div class="err"></div>' +
+        '<div class="btns"><button data-a="geo">Use browser location</button><span></span><button data-a="cancel">Cancel</button><button data-a="ok" class="pri">Save</button></div></div>';
+      const inp = ov.querySelector('input'), err = ov.querySelector('.err'); inp.value = loc ? loc.lat + ', ' + loc.lon : '';
+      const close = nl => { ov.remove(); if (nl) { loc = nl; try { localStorage.setItem('atlas.loc', JSON.stringify(loc)) } catch (e) { } placeYou(); passCache = null } done() };
+      const save = () => { const m = inp.value.match(/^\s*(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)\s*$/);
+        if (!m || Math.abs(+m[1]) > 90 || Math.abs(+m[2]) > 180) { err.textContent = 'Use the form "latitude, longitude", for example 51.5, -0.12'; return } close({ lat: +m[1], lon: +m[2] }) };
+      ov.addEventListener('click', e => { const a = e.target.dataset && e.target.dataset.a; if (e.target === ov || a === 'cancel') close(null); else if (a === 'ok') save();
+        else if (a === 'geo') { err.textContent = 'Asking your browser…'; if (!navigator.geolocation) { err.textContent = 'This browser has no location support. Enter coordinates instead.'; return }
+          navigator.geolocation.getCurrentPosition(p => close({ lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3) }), () => { err.textContent = 'Location unavailable (it needs HTTPS or localhost and your permission). Enter coordinates instead.' }, { timeout: 10000 }) } });
+      inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') save(); if (e.key === 'Escape') close(null) });
+      document.body.append(ov); inp.focus(); inp.select();
+    });
   }
   const COMP = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'], compass = a => COMP[Math.round(a / 22.5) % 16];
   let passCache = null;
@@ -143,6 +152,16 @@ function earth() {
   }
   const hostScene = {
     title: 'Earth Orbit', group, bodies: [earthBody, moonBody], minD: .0035, maxD: 400, initD: 5.2, rate: 60, live: false, timeLabel: 'Simulated date', extent: 800,
+    // satellite elements are only good for weeks around today, so the dots hide for far-away dates (see update)
+    presets: [
+      { label: 'Apollo 11 lands on the Moon (1969-07-20)', date: '1969-07-20T20:17Z', focus: 'moon', rate: 60, note: 'Earth and Moon as they were. Satellite dots are hidden: their orbital data only covers weeks around today.' },
+      { label: 'Total solar eclipse, USA (2024-04-08)', date: '2024-04-08T17:30Z', focus: 'moon', rate: 60, note: 'The Moon crosses the Sun line near 18:17 UTC. Satellite dots are hidden for dates this far from today.' },
+      { label: 'Total solar eclipse, Spain (2026-08-12)', date: '2026-08-12T17:00Z', focus: 'moon', rate: 60, note: 'Greatest eclipse near 17:46 UTC. Satellite dots are hidden for dates this far from today.' },
+      { label: 'December solstice (2026-12-21)', date: '2026-12-21T14:50Z', focus: 'earth', rate: 60, note: 'The northern hemisphere is tilted farthest from the Sun: watch the terminator.' },
+      { label: 'March equinox (2027-03-20)', date: '2027-03-20T20:25Z', focus: 'earth', rate: 60, note: 'Day and night are equal everywhere.' },
+      { label: 'Longest eclipse this century (2027-08-02)', date: '2027-08-02T09:30Z', focus: 'moon', rate: 60, note: 'Totality lasts over 6 minutes near 10:07 UTC. Satellite dots are hidden for dates this far from today.' },
+    ],
+    enter() { if (Math.abs(sim.jd - nowJD()) > 45) { sim.jd = nowJD() } }, // come back to the present when the clock was left far away
     intro: 'Loading catalogue…', introRows: [],
     center: v => v.set(0, 0, 0),
     layers: [],
@@ -171,6 +190,7 @@ function earth() {
     },
     update() {
       const jd = sim.jd; if (mat) mat.uniforms.uDays.value = jd - J2000;
+      if (points) points.visible = Math.abs(jd - nowJD()) < 30;
       earthMesh.rotation.y = gmst(jd); clouds.rotation.y = gmst(jd) * 1.003;
       planetEcl('earth', jd, ecl); const l = Math.hypot(ecl[0], ecl[1], ecl[2]); eclToEqThree(-ecl[0] / l, -ecl[1] / l, -ecl[2] / l, sunDir); sunLight.position.copy(sunDir).multiplyScalar(100);
       const d = jd - J2000, Lm = (218.316 + 13.176396 * d) * D2R, Mm = (134.963 + 13.064993 * d) * D2R, F = (93.272 + 13.22935 * d) * D2R, lon = Lm + 6.289 * D2R * Math.sin(Mm), lat = 5.128 * D2R * Math.sin(F), dist = (385001 - 20905 * Math.cos(Mm)) / RE_KM;
@@ -182,7 +202,7 @@ function earth() {
     onSelect(b) { clearOrbit(); if (b && b.idx != null) { buildTrack(b.idx); const pts = [], per = TAU / e2[b.idx * 4 + 1] / 1440, o = [0, 0, 0], d0 = sim.jd - J2000; for (let i = 0; i <= 220; i++) { satPos(b.idx, d0 + per * i / 220, o); pts.push(new THREE.Vector3(o[0], o[1], o[2])) }
       orbitLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .6 })); group.add(orbitLine) } },
     pickCustom(mx, my) {
-      if (!points) return null; const now = performance.now(), o = [0, 0, 0];
+      if (!points || !points.visible) return null; const now = performance.now(), o = [0, 0, 0];
       if (now - cpuT > 300) { cpuT = now; const d = sim.jd - J2000; for (let i = 0; i < N; i++) { satPos(i, d, o); cpu[i * 3] = o[0]; cpu[i * 3 + 1] = o[1]; cpu[i * 3 + 2] = o[2] } }
       camera.updateMatrixWorld(); const e = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).elements, cp = camera.position, W = App.W, H = App.H;
       let best = -1, bd = 13;

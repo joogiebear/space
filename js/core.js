@@ -171,6 +171,21 @@ $('#pause').onclick = togglePause;
 function togglePause() { sim.paused = !sim.paused; $('#pause').textContent = sim.paused ? 'Play' : 'Pause' }
 $('#live').onclick = () => { sim.jd = nowJD(); sim.live = true; sim.paused = false; $('#pause').textContent = 'Pause'; setRate(1) };
 
+/* time-travel presets: a scene lists {label, date (UTC ISO), rate?, focus? (body id) | query? (search text), note?} */
+const jump = $('#jump');
+function buildJump() {
+  const ps = App.scene.presets || []; jump.innerHTML = ''; jump.style.display = ps.length ? 'block' : 'none';
+  const o0 = document.createElement('option'); o0.value = ''; o0.textContent = 'Jump to a moment in time…'; jump.append(o0);
+  ps.forEach((p, i) => { const o = document.createElement('option'); o.value = i; o.textContent = p.label; jump.append(o) });
+}
+jump.onchange = () => {
+  const p = (App.scene.presets || [])[+jump.value]; jump.value = ''; jump.blur(); if (!p) return;
+  sim.jd = Date.parse(p.date) / 864e5 + 2440587.5; sim.live = false; sim.paused = false; $('#pause').textContent = 'Pause'; setRate(p.rate ?? App.scene.rate ?? 1);
+  const b = p.focus ? (App.scene.bodies || []).find(x => x.id === p.focus) : p.query ? App.scene.search?.(p.query)?.[0]?.make() : null;
+  if (b) select(b);
+  toast(p.label, p.note || fmtDate(sim.jd), 7000);
+};
+
 /* ---------------- scene manager ---------------- */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let busy = false;
@@ -193,7 +208,7 @@ export async function goScene(id, { deeper = true, instant = false } = {}) {
   skyPts.visible = sc.sky !== false;
   if (sc.rate != null) { setRate(sc.rate); sim.live = !!sc.live; if (sc.live) sim.jd = nowJD() }
   $('#dateLbl').textContent = sc.timeLabel || 'Date';
-  buildNav(); buildList(); buildLayers(); showInfo(null); qEl.value = ''; resEl.classList.remove('open');
+  buildNav(); buildList(); buildLayers(); buildJump(); showInfo(null); qEl.value = ''; resEl.classList.remove('open');
   try { history.replaceState(null, '', '#' + id) } catch (e) { }
   f.style.opacity = 0; busy = false;
 }
