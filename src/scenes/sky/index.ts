@@ -18,6 +18,7 @@ import {
   starSizePx,
   sunEq,
   twilightName,
+  milkyWayVisibility,
   altAzOf,
   type Vec3,
 } from '@/lib';
@@ -26,7 +27,7 @@ import { askLocation, loadLocation, saveLocation, type Loc } from '../earth/loca
 import type { Body, EmitLabel, Info, InfoRows, Layer, Scene, SearchResult } from '@/types';
 import { PLANETS } from './planets';
 import { createSkySatellites } from './satellites';
-import { DOME_FS, DOME_VS, GROUND_FS, MOON_FS, MOON_VS, STAR_FS, STAR_VS } from './shaders';
+import { MW_FS, MW_VS, DOME_FS, DOME_VS, GROUND_FS, MOON_FS, MOON_VS, STAR_FS, STAR_VS } from './shaders';
 
 /** Radius of the celestial sphere in scene units. The camera sits at its centre (within about a unit of it). */
 const R = 300;
@@ -51,7 +52,7 @@ function sky(): Scene {
   let loc: Loc = loadLocation() ?? GREENWICH,
     located = loadLocation() !== null;
   let stars: StarSky | null = null;
-  const layers = { con: true, conNames: true, starNames: true, horizon: true, grid: false, sats: true };
+  const layers = { con: true, conNames: true, starNames: true, horizon: true, grid: false, sats: true, milky: true };
   /** 0 in daylight, 1 in full darkness: star labels follow the stars. */
   let starVis = 1;
 
@@ -191,6 +192,23 @@ function sky(): Scene {
     depthTest: false,
     blending: THREE.AdditiveBlending,
   });
+  // the Milky Way: a glow on a sphere in the rotating frame, drawn after the sky and before the stars
+  const mwUniforms = { uVis: { value: 1 } };
+  const milkyWay = new THREE.Mesh(
+    new THREE.SphereGeometry(R * 0.985, 64, 32),
+    new THREE.ShaderMaterial({
+      uniforms: mwUniforms,
+      vertexShader: MW_VS,
+      fragmentShader: MW_FS,
+      side: THREE.BackSide,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthTest: false,
+      depthWrite: false,
+    }),
+  );
+  milkyWay.renderOrder = -5;
+  celestial.add(milkyWay);
   const conMat = new THREE.LineBasicMaterial({
     color: 0x6f95e8,
     transparent: true,
@@ -600,6 +618,7 @@ function sky(): Scene {
       { id: 'conNames', label: 'Constellation names', on: true, apply: on => (layers.conNames = on) },
       { id: 'starNames', label: 'Star names', on: true, apply: on => (layers.starNames = on) },
       { id: 'sats', label: 'Satellites', color: '#ffeb8c', on: true, apply: on => (layers.sats = on) },
+      { id: 'milky', label: 'Milky Way', color: '#bcd0ff', on: true, apply: on => (layers.milky = on) },
       { id: 'horizon', label: 'Horizon and compass', on: true, apply: on => (layers.horizon = on) },
       { id: 'grid', label: 'Altitude and azimuth grid', color: '#5a78d8', on: false, apply: on => (layers.grid = on) },
     ] as Layer[],
@@ -652,6 +671,14 @@ function sky(): Scene {
       uGround.value.setRGB(0.012 + 0.16 * dayness, 0.014 + 0.19 * dayness, 0.024 + 0.15 * dayness);
       uGlow.value = clamp(1 - Math.abs(sunAlt + 3) / 12, 0, 1) * 0.9;
       starMat.uniforms.uVis.value = starVis = look.starVisibility;
+      // the Moon, if it is up, washes the Milky Way out: how much depends on its phase and height
+      const cosElong = clamp(
+        e.sun.dir[0] * e.moon.dir[0] + e.sun.dir[1] * e.moon.dir[1] + e.sun.dir[2] * e.moon.dir[2],
+        -1,
+        1,
+      );
+      mwUniforms.uVis.value = milkyWayVisibility(sunAlt, altAzNow(e.moon.dir).alt, (1 - cosElong) / 2);
+      milkyWay.visible = layers.milky && mwUniforms.uVis.value > 0.01; // not drawn when it cannot be seen: it is the costliest shader here
       conMat.opacity = 0.3 * look.starVisibility;
       if (conLines) conLines.visible = layers.con;
       horizonMarks.visible = layers.horizon;

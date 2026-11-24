@@ -277,3 +277,55 @@ export function skyAppearance(sunAlt: number) {
 
 /** Marker size in pixels for a star of apparent magnitude `m`: brighter is bigger, the faintest visible are specks. */
 export const starSizePx = (m: number) => Math.max(0, Math.min(15, 1.7 + (6.6 - m) * 1.55));
+
+/* ---- the Milky Way ---- */
+
+/** J2000 equatorial -> galactic (the standard Hipparcos matrix): rows give the x (toward the centre), y and pole axes. */
+const GAL: number[][] = [
+  [-0.0548755604, -0.8734370902, -0.4838350155],
+  [0.4941094279, -0.44482963, 0.7469822445],
+  [-0.867666149, -0.1980763734, 0.4559837762],
+];
+/** Galactic longitude and latitude, in degrees, of a J2000 equatorial direction. */
+export function galacticOf(eq: ArrayLike<number>) {
+  const x = GAL[0][0] * eq[0] + GAL[0][1] * eq[1] + GAL[0][2] * eq[2],
+    y = GAL[1][0] * eq[0] + GAL[1][1] * eq[1] + GAL[1][2] * eq[2],
+    z = GAL[2][0] * eq[0] + GAL[2][1] * eq[1] + GAL[2][2] * eq[2],
+    n = Math.hypot(x, y, z);
+  return { l: (((Math.atan2(y, x) * R2D) % 360) + 360) % 360, b: Math.asin(Math.max(-1, Math.min(1, z / n))) * R2D };
+}
+
+/**
+ * The smooth shape of the Milky Way's glow, before dust lanes and grain are added: a thin bright disc and a wider faint
+ * one, both stronger toward the galactic centre (l = 0), plus the central bulge. The shader uses the same numbers.
+ */
+export const MW = {
+  discScale: 6, // degrees of galactic latitude over which the thin disc fades
+  thickScale: 15,
+  thickWeight: 0.4,
+  longitudeFloor: 0.5, // brightness far from the centre, relative to toward it
+  longitudeSpan: 50,
+  bulgeL: 14,
+  bulgeB: 9,
+  bulgeWeight: 1.1,
+};
+export function milkyWayProfile(l: number, b: number) {
+  const wl = ((((l + 180) % 360) + 360) % 360) - 180,
+    lw = MW.longitudeFloor + (1 - MW.longitudeFloor) * Math.exp(-((wl / MW.longitudeSpan) ** 2)),
+    ab = Math.abs(b);
+  return (
+    Math.exp(-ab / MW.discScale) * lw +
+    MW.thickWeight * Math.exp(-ab / MW.thickScale) * lw +
+    MW.bulgeWeight * Math.exp(-((wl / MW.bulgeL) ** 2) - (b / MW.bulgeB) ** 2)
+  );
+}
+
+/**
+ * How much of the Milky Way can be seen, 0 to 1: it needs a properly dark sky (gone by nautical twilight), and a Moon
+ * above the horizon drowns it in proportion to how much of it is lit and how high it stands.
+ */
+export function milkyWayVisibility(sunAlt: number, moonAlt: number, moonFraction: number) {
+  const dark = smooth(-9, -17, sunAlt),
+    moon = moonAlt > 0 ? moonFraction * Math.min(1, moonAlt / 25) : 0;
+  return dark * (1 - 0.85 * moon);
+}

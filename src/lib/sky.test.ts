@@ -6,6 +6,9 @@ import {
   apparentMag,
   compass16,
   eqVec,
+  galacticOf,
+  milkyWayProfile,
+  milkyWayVisibility,
   findRiseSet,
   horizonMatrix,
   moonEclipticOfDate,
@@ -241,5 +244,45 @@ describe('rise and set search', () => {
     const s = findRiseSet(south, jd0);
     expect(s.never).toBe(true);
     expect(s.rise).toBeNull();
+  });
+});
+
+describe('the Milky Way', () => {
+  const eq = (ra: number, dec: number) => eqVec(ra * D2R, dec * D2R);
+  it('galactic coordinates: the centre, the north pole, and two famous stars', () => {
+    const gc = galacticOf(eq(266.405, -28.936));
+    expect(Math.min(gc.l, 360 - gc.l)).toBeLessThan(0.05);
+    expect(Math.abs(gc.b)).toBeLessThan(0.05);
+    expect(galacticOf(eq(192.859, 27.128)).b).toBeCloseTo(90, 1);
+    const deneb = galacticOf(eq(310.358, 45.28));
+    expect(deneb.l).toBeCloseTo(84.3, 0);
+    expect(deneb.b).toBeCloseTo(2.0, 0);
+    const sirius = galacticOf(eq(101.287, -16.716));
+    expect(sirius.l).toBeCloseTo(227.2, 0);
+    expect(sirius.b).toBeCloseTo(-8.9, 0);
+  });
+
+  it('the glow is brightest along the plane, symmetric about it, and fades away from it', () => {
+    for (const l of [0, 90, 200]) {
+      expect(milkyWayProfile(l, 0)).toBeGreaterThan(milkyWayProfile(l, 10));
+      expect(milkyWayProfile(l, 10)).toBeGreaterThan(milkyWayProfile(l, 40));
+      expect(milkyWayProfile(l, 12)).toBeCloseTo(milkyWayProfile(l, -12), 9);
+    }
+    expect(milkyWayProfile(0, 90)).toBeLessThan(0.1);
+  });
+
+  it('it is brighter toward the galactic centre than away from it, with a bulge', () => {
+    expect(milkyWayProfile(0, 0)).toBeGreaterThan(milkyWayProfile(180, 0) * 1.5);
+    expect(milkyWayProfile(0, 0)).toBeGreaterThan(milkyWayProfile(40, 0));
+    expect(milkyWayProfile(359, 0)).toBeCloseTo(milkyWayProfile(1, 0), 1); // continuous across l = 0
+  });
+
+  it('is visible only in a properly dark sky, and a bright Moon drowns it', () => {
+    expect(milkyWayVisibility(10, -30, 0)).toBe(0); // daytime
+    expect(milkyWayVisibility(-10, -30, 0)).toBeLessThan(0.5); // twilight: fading
+    expect(milkyWayVisibility(-30, -30, 0)).toBe(1); // a dark, moonless night
+    expect(milkyWayVisibility(-30, 50, 1)).toBeLessThan(0.2); // a full Moon high up
+    expect(milkyWayVisibility(-30, -10, 1)).toBe(1); // a full Moon below the horizon does not matter
+    expect(milkyWayVisibility(-30, 50, 0.05)).toBeGreaterThan(0.9); // a thin crescent barely matters
   });
 });

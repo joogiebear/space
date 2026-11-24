@@ -70,6 +70,10 @@ The **Sky Tonight** tab shows the sky as it looks from your location at the simu
 12,000 stars with constellation lines, the Sun, the Moon with its true phase, and the planets. Select anything for its
 altitude, compass direction, rise and set times, and brightness. The Time panel makes the sky turn.
 
+The Milky Way is drawn as a glow in galactic coordinates (a thin bright disc, a wider faint one, a brighter bulge toward
+Sagittarius, and dust lanes), not from a photograph. It fades through twilight and is washed out by a bright Moon above
+the horizon, as the real one is. It has a layer toggle.
+
 The space stations are drawn as they cross your sky (bright when sunlit against a dark sky, dim in Earth's shadow), and
 any satellite can be found with search. Select one to see its next pass over you drawn as a line from where it rises to
 where it sets, with its peak height. The summary shows when the ISS next passes. Orbit data only covers weeks around today,

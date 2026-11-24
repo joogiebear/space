@@ -1,3 +1,5 @@
+import { MW } from '@/lib/sky';
+
 /** Shaders for Sky Tonight. World axes are x = east, y = up, z = south. */
 
 /** Stars: constant pixel size, hidden below the horizon, dimmed near it (the atmosphere) and by daylight. */
@@ -26,3 +28,37 @@ gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
 export const MOON_FS = `uniform sampler2D uMap;uniform vec3 uSun;varying vec2 vUv;varying vec3 vN;
 void main(){float lit=max(dot(normalize(vN),normalize(uSun)),0.);vec3 t=texture2D(uMap,vUv).rgb;
 gl_FragColor=vec4(t*(.025+1.15*lit),1.);}`;
+
+/**
+ * The Milky Way: a glow painted on the celestial sphere in galactic coordinates. The smooth profile uses the same
+ * constants as lib/sky.ts (tested); noise adds the dark dust lanes (the Great Rift) and the grain of unresolved stars.
+ */
+export const MW_VS = `varying vec3 vD;varying float vH;void main(){vD=normalize(position);
+vec4 wp=modelMatrix*vec4(position,1.);vH=wp.y/length(wp.xyz);gl_Position=projectionMatrix*viewMatrix*wp;}`;
+const f = (n: number) => n.toFixed(4);
+export const MW_FS = `uniform float uVis;varying vec3 vD;varying float vH;
+float hash(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+float vnoise(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);
+return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
+float fbm(vec3 p){float a=.5,s=0.;for(int i=0;i<5;i++){s+=a*vnoise(p);p=p*2.03+vec3(1.7,9.2,3.1);a*=.5;}return s;}
+void main(){
+vec3 d=normalize(vD);
+float gx=-0.0548755604*d.x-0.8734370902*d.y-0.4838350155*d.z;
+float gy=0.4941094279*d.x-0.4448296300*d.y+0.7469822445*d.z;
+float gz=-0.8676661490*d.x-0.1980763734*d.y+0.4559837762*d.z;
+float l=degrees(atan(gy,gx)),b=degrees(asin(clamp(gz,-1.,1.)));
+float ab=abs(b);
+float lw=${f(MW.longitudeFloor)}+${f(1 - MW.longitudeFloor)}*exp(-pow(l/${f(MW.longitudeSpan)},2.));
+float prof=exp(-ab/${f(MW.discScale)})*lw+${f(MW.thickWeight)}*exp(-ab/${f(MW.thickScale)})*lw
++${f(MW.bulgeWeight)}*exp(-pow(l/${f(MW.bulgeL)},2.)-pow(b/${f(MW.bulgeB)},2.));
+float lane=fbm(d*7.+vec3(3.));
+float rift=smoothstep(.5,.72,lane)*exp(-ab/5.);
+float riftBoost=1.+.5*smoothstep(0.,70.,l)*(1.-smoothstep(70.,95.,l));
+float cloud=.55+.9*fbm(d*18.);
+float grain=.75+.5*vnoise(d*140.);
+float I=prof*(1.-.7*rift*riftBoost)*cloud*grain;
+float bulge=exp(-pow(l/${f(MW.bulgeL * 1.6)},2.)-pow(b/${f(MW.bulgeB * 1.6)},2.));
+vec3 col=mix(vec3(.62,.74,1.),vec3(1.,.86,.62),clamp(bulge*1.3,0.,1.));
+float fade=smoothstep(0.,.14,vH);
+gl_FragColor=vec4(col,clamp(I*.085*uVis*fade,0.,1.));}`;

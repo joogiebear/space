@@ -378,3 +378,21 @@ test.describe('Sky Tonight tour', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test.describe('Milky Way', () => {
+  test.skip(({ isMobile }) => isMobile, 'covered on desktop');
+
+  test('has a layer toggle, and the shader compiles and draws on a dark night without errors', async ({ page }) => {
+    const errors = await boot(page);
+    await page.goto('./#sky?t=2026-07-15T08:00:00.000Z&r=1&pz=1');
+    const box = page.getByLabel('Milky Way');
+    await expect(box).toBeChecked({ timeout: 20_000 });
+    await page.waitForTimeout(1500); // a few frames drawn with the Milky Way on
+    await box.uncheck();
+    await expect(box).not.toBeChecked();
+    await page.waitForTimeout(500);
+    await box.check();
+    await page.waitForTimeout(500);
+    expect(errors).toEqual([]);
+  });
+});
