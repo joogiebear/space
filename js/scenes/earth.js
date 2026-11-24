@@ -78,7 +78,7 @@ function earth() {
     layers: [],
     async load(status) {
       status('downloading orbital elements from CelesTrak…');
-      const d = await fetch('/api/sats').then(r => r.json()); sats = d.sats; cats = d.cats; fetched = d.fetched; N = sats.length;
+      const d = await fetch('/api/sats').then(r => { if (!r.ok) throw new Error('Satellite data is not available yet (CelesTrak limits downloads to one per group every 2 hours). Try again in a few minutes.'); return r.json() }); sats = d.sats; cats = d.cats; fetched = d.fetched; N = sats.length;
       e1 = new Float32Array(N * 4); e2 = new Float32Array(N * 4); const col = new Float32Array(N * 3), sz = new Float32Array(N); lower = new Array(N); cnt = new Array(cats.length).fill(0);
       let ok = 0;
       for (let i = 0; i < N; i++) {

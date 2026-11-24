@@ -21,6 +21,7 @@ HOUR = 3600
 locks = {}
 status = {}
 fail_at = {}
+short_lived = set()  # cache files holding partial data: re-check after 5 minutes
 
 
 def log(*a):
@@ -55,6 +56,9 @@ def cached(name, ttl, builder):
             raise
         with open(path, 'wb') as f:
             f.write(data)
+        if name in short_lived:
+            t = time.time() - ttl + 300
+            os.utime(path, (t, t))
         status[name] = 'ready'
         log('built', name, len(data), 'bytes')
         return data
@@ -128,11 +132,16 @@ def build_sats():
             added += 1
         log('celestrak', g, added)
         time.sleep(1.0)
-    if 'active' in missing:
-        raise RuntimeError('active satellite group unavailable; not caching a partial catalogue')
+    if not out:
+        raise RuntimeError('no satellite data available yet (CelesTrak rate limit)')
+    note = ''
     if missing:
         log('celestrak missing groups', missing)
-    return json.dumps({'cats': CATS, 'fetched': time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime()), 'sats': out},
+        note = ' (partial: %s unavailable, retrying every 5 min)' % ', '.join(missing)
+        short_lived.add('sats.json')
+    else:
+        short_lived.discard('sats.json')
+    return json.dumps({'cats': CATS, 'fetched': time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime()) + note, 'sats': out},
                       separators=(',', ':')).encode()
 
 
