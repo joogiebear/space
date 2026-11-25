@@ -111,7 +111,14 @@ function cosmos(): Scene {
         sub: g.sub,
         text: g.text,
         ...(photo
-          ? { rows: [[photo.illustration ? 'Illustration' : 'Photograph', photo.credit]] as [string, string][] }
+          ? {
+              rows: [
+                [photo.illustration ? 'Illustration' : 'Photograph', photo.credit],
+                ...(photo.inclination && !photo.illustration
+                  ? [['Tilt to us', `about ${photo.inclination}° from face-on`]]
+                  : []),
+              ] as [string, string][],
+            }
           : {}),
       },
     });
