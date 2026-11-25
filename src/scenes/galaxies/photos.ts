@@ -13,28 +13,40 @@ export interface GalaxyPhoto {
   crop?: [number, number, number, number];
   /** The credit shown in the galaxy's info */
   credit: string;
+  /** How tilted the galaxy really is in the picture, degrees: 0 face-on, 90 edge-on. Used to turn it face-on. */
+  inclination?: number;
+  /** Angle of the galaxy's long axis on the page, degrees counter-clockwise from the right; 0 when it is round. */
+  angle?: number;
   /** An artist's impression rather than a photograph; the info panel says so. */
   illustration?: boolean;
 }
 
 export const PHOTOS: Record<string, GalaxyPhoto> = {
   milkyway: {
+    inclination: 0,
+    angle: 0,
     file: 'milkyway.jpg',
     size: 2.4,
     illustration: true,
     credit: "Artist's concept based on Spitzer data, NASA/JPL-Caltech/R. Hurt (SSC) (public domain)",
   },
   andromeda: {
+    inclination: 77,
+    angle: -52,
     file: 'andromeda.jpg',
     size: 2.4,
     credit: 'GALEX ultraviolet, NASA/JPL-Caltech (public domain)',
   },
   triangulum: {
+    inclination: 56,
+    angle: -63,
     file: 'triangulum.jpg',
     size: 3.3,
     credit: 'VLT Survey Telescope, ESO (CC BY 4.0)',
   },
   lmc: {
+    inclination: 35,
+    angle: 0,
     file: 'lmc.jpg',
     size: 2.2,
     // the Spitzer picture comes with a frame and a caption: show only the picture
@@ -42,36 +54,50 @@ export const PHOTOS: Record<string, GalaxyPhoto> = {
     credit: 'Spitzer infrared, NASA/JPL-Caltech/M. Meixner (STScI) and the SAGE Legacy Team (public domain)',
   },
   smc: {
+    inclination: 0,
+    angle: 0,
     file: 'smc.jpg',
     size: 2.6,
     credit: 'CTIO/NOIRLab/NSF/AURA/SMASH/D. Nidever; processing T. Rector et al. (CC BY 4.0)',
   },
   whirlpool: {
+    inclination: 20,
+    angle: 0,
     file: 'whirlpool.jpg',
     size: 2.4,
     credit: 'Hubble, NASA and ESA (public domain)',
   },
   sombrero: {
+    inclination: 84,
+    angle: 0,
     file: 'sombrero.jpg',
     size: 2.0,
     credit: 'Hubble, NASA/ESA and the Hubble Heritage Team (STScI/AURA) (public domain)',
   },
   pinwheel: {
+    inclination: 18,
+    angle: 0,
     file: 'pinwheel.jpg',
     size: 2.2,
     credit: 'Hubble and ground-based images, ESA and NASA (CC BY 4.0)',
   },
   centaurusa: {
+    inclination: 0,
+    angle: 0,
     file: 'centaurusa.jpg',
     size: 2.2,
     credit: 'Hubble, NASA (public domain): a close-up of the dust lane',
   },
   m87: {
+    inclination: 0,
+    angle: 0,
     file: 'm87.jpg',
     size: 2.8,
     credit: 'Hubble, ESA (CC BY 4.0)',
   },
   bodes: {
+    inclination: 59,
+    angle: 0,
     file: 'bodes.jpg',
     size: 2.6,
     credit: 'Hubble, NASA, ESA and the Hubble Heritage Team (STScI/AURA) (public domain)',

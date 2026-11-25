@@ -96,8 +96,9 @@ your browser (set it from **Your location** in the Objects list); until then the
 
 In the Local Universe view each galaxy is a real photograph (a layer toggle turns them off) that gives way to the generated
 stars as you fly toward it, so you see the photograph from afar and the model up close. The Milky Way, which nobody can photograph from outside, shows NASA's artist's concept of it and is labelled an
-illustration; the Cartwheel has no picture (no clean public image). Positions, sizes and orientation stay schematic;
-the picture always faces you.
+illustration; the Cartwheel has no picture (no clean public image). Each picture lies in its galaxy's own plane, turned
+face-on using the galaxy's real inclination (stretched up to three times across the short axis) and tilted with the model,
+so orbiting the view shows the discs at their different angles. Positions and sizes stay schematic.
 
 ## Astronomy calendar
 
