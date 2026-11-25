@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { App, Markers, U, camera, glowSprite, register } from '@/engine';
+import { openScene } from '@/engine/sceneManager';
 import { TAU, mixc, rng } from '@/lib';
 import type { Body, Info, Layer, Scene } from '@/types';
 import { GALAXIES, type GalaxyDef } from './data';
@@ -223,10 +224,18 @@ function galaxy(g: GalaxyDef): Scene {
       ),
     );
     bodies.push(
-      mkb('sgra', 'Sagittarius A*', 0, 0, [1, 0.65, 0.4], {
-        sub: 'Supermassive black hole',
-        text: 'A black hole of about 4 million solar masses sits at the very centre of the Milky Way, ringed by a dense cluster of ancient stars.',
-      }),
+      mkb(
+        'sgra',
+        'Sagittarius A*',
+        0,
+        0,
+        [1, 0.65, 0.4],
+        {
+          sub: 'Supermassive black hole',
+          text: 'A black hole of about 4 million solar masses sits at the very centre of the Milky Way, ringed by a dense cluster of ancient stars.',
+        },
+        { action: { label: 'See it among the black holes', run: () => openScene('blackholes') } },
+      ),
     );
   }
   const tmp = new THREE.Vector3();

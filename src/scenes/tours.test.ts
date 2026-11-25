@@ -5,7 +5,7 @@ import { TOURS } from './tours';
 
 /** A tour built for the viewer is built here as it would be when started. */
 const stepsOf = (t: Tour) => (t.build ? t.build() : t.steps);
-const SCENES = /^(cosmos|starmap|solar|earth|sky|gal:[a-z0-9]+)$/;
+const SCENES = /^(cosmos|blackholes|starmap|solar|earth|sky|gal:[a-z0-9]+)$/;
 
 describe('tour content', () => {
   it('has unique ids and a title and blurb for the menu', () => {

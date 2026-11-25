@@ -17,6 +17,7 @@ satellites and debris orbiting Earth. Real data, drawn on the GPU.
 | View | What it shows | Data |
 | --- | --- | --- |
 | Local Universe / Galaxies | Famous galaxies, shown as real photographs from afar; fly inside the Milky Way | Procedural stars, schematic positions; photographs from NASA, ESA, ESO and NOIRLab |
+| Black holes | A pulsar, stellar and supermassive black holes and a merger, side by side, each drawn as a glowing disc with its shadow and photon ring; real mass, horizon radius and distance in the info panel | Published values (Gaia, Event Horizon Telescope, LIGO); the pictures are drawn by a shader, not photographs |
 | Star map | ~109k real stars, 88 constellation figures, optional exoplanet host layer | HYG v4.0, Stellarium, NASA Exoplanet Archive |
 | Solar system | Planets at their real positions, moons, ~96k asteroids, comets, spacecraft | JPL elements, SBDB, Horizons |
 | Earth orbit | ~20k tracked satellites, stations, debris, rocket bodies; ISS follow, ground track and next-pass prediction for any selected satellite | CelesTrak (SGP4 / Kepler + J2 on the GPU) |
@@ -100,6 +101,17 @@ illustration; the Cartwheel is Webb's picture of it. Each picture lies in its ga
 face-on using the galaxy's real inclination (stretched up to three times across the short axis) and tilted with the model,
 so orbiting the view shows the discs at their different angles. Four small Local Group dwarfs sit around the Milky Way and Andromeda: Messier 32, Fornax and Barnard's
 Galaxy have photographs, and the Sagittarius Dwarf (hidden behind the Milky Way, so never photographed whole) has a labelled illustration. Positions and sizes stay schematic.
+
+### Black holes
+
+The Black Holes tab (also reached from Sagittarius A* in the Milky Way) lines up the Crab Pulsar, Gaia BH1, Cygnus X-1, the
+merger GW150914, Sagittarius A*, Messier 87* and TON 618 from small to huge. Each picture is an illustration made by a
+fragment shader in `src/scenes/blackholes/shaders.ts`: a tilted disc that is hotter toward the inside and brighter on the
+side moving toward you, the far side of the disc bent over the top and under the bottom, a dark shadow about 2.6 horizon
+radii across, and a thin photon ring. It is a drawing in the spirit of the real thing, not a ray-traced render. Sizes are
+schematic (the real ones span ten orders of magnitude); the info panel gives the real mass, the horizon radius
+(2GM/c², about 2.95 km per sun of mass) and the distance. The two black holes of GW150914 spiral together and start again,
+and the pulsar's two beams sweep round. A guided tour walks through them. Nothing is downloaded: there are no image files.
 
 ## Astronomy calendar
 

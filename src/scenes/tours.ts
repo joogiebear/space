@@ -102,6 +102,43 @@ export const TOURS: Tour[] = [
     ],
   },
   {
+    id: 'blackholes',
+    title: 'Black holes, from small to huge',
+    blurb: 'A pulsar, stellar and supermassive black holes, and two that merged',
+    steps: [
+      {
+        view: { scene: 'blackholes', sel: 'crab' },
+        title: 'Not quite a black hole',
+        text: 'A neutron star is what a heavy star leaves behind when it stops short of becoming a black hole: about 20 km across, with more mass than the Sun. This one flashes 30 times a second.',
+      },
+      {
+        view: { scene: 'blackholes', sel: 'gaiabh1' },
+        title: 'The nearest known',
+        text: 'Gaia BH1 is only 1,560 light years away and about 10 times the Sun’s mass, yet its horizon is just 28 km across. It was found by the wobble of the star orbiting it.',
+      },
+      {
+        view: { scene: 'blackholes', sel: 'gw150914' },
+        title: 'Two become one',
+        text: 'In 2015 two black holes merged and sent out ripples in space itself, the first gravitational waves ever detected. For a moment they outshone all the stars in the universe, in waves rather than light.',
+      },
+      {
+        view: { scene: 'blackholes', sel: 'sgra' },
+        title: 'At the heart of the Milky Way',
+        text: 'Sagittarius A* weighs 4.3 million suns and sits 26,700 light years away. Its horizon is about 25 million km across, comfortably inside Mercury’s orbit.',
+      },
+      {
+        view: { scene: 'blackholes', sel: 'm87' },
+        title: 'The first picture',
+        text: 'In 2019 astronomers combined radio dishes across the world to photograph this one: a glowing ring around a dark shadow. Its horizon is about 128 times the Earth–Sun distance across.',
+      },
+      {
+        view: { scene: 'blackholes', sel: 'ton618' },
+        title: 'The heavyweight',
+        text: 'TON 618 is thought to weigh tens of billions of suns. Its horizon is roughly 1,300 times the Earth–Sun distance across, far wider than our whole solar system.',
+      },
+    ],
+  },
+  {
     id: 'timetravel',
     title: 'Earth and Moon through time',
     blurb: 'Apollo 11, a total eclipse, the solstice, and back to now',

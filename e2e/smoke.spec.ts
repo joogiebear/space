@@ -461,3 +461,16 @@ test('the Local Universe shows galaxy photographs, with a layer toggle', async (
   }
   expect(errors).toEqual([]);
 });
+
+test('the Black Holes view draws the black holes and opens one by name', async ({ page }) => {
+  const errors = await boot(page);
+  await page.goto('./?x=bh#blackholes');
+  await page.reload();
+  await page.waitForTimeout(1500);
+  await expect(page.getByText('Messier 87*').first()).toBeVisible();
+  await page.goto('./?x=bh#blackholes?sel=m87');
+  await page.reload();
+  await page.waitForTimeout(1200);
+  await expect(page.getByText('128 AU')).toBeVisible();
+  expect(errors).toEqual([]);
+});

@@ -29,7 +29,7 @@ export const sceneTitle = (id: string) => REG[id].title;
 const PARENT = (id: string): string | null =>
   id === 'cosmos'
     ? null
-    : id.startsWith('gal:')
+    : id.startsWith('gal:') || id === 'blackholes'
       ? 'cosmos'
       : id === 'starmap'
         ? 'gal:milkyway'
@@ -51,6 +51,7 @@ export const chain = (id: string) => {
 export const TABS: [string, string][] = [
   ['cosmos', 'Galaxies'],
   ['gal:milkyway', 'Milky Way'],
+  ['blackholes', 'Black Holes'],
   ['starmap', 'Star Map'],
   ['solar', 'Solar System'],
   ['earth', 'Earth Orbit'],
