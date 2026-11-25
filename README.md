@@ -76,6 +76,12 @@ the horizon, as the real one is. It has a layer toggle. Phones, tablets and mode
 (fewer noise layers, no grain: a third of the work per pixel), and any device steps down to it, once, if frames average
 under about 30 per second while the Milky Way is on screen.
 
+While a meteor shower is on (within a few days of its peak, from the Sun's position), a ring marks its radiant, the point the
+meteors seem to fan out from, labelled and selectable like any object. It shows its rise and set and how far from the
+peak it is, and the calendar's meteor-shower entries open with it selected, at the hour it stands highest. Radiant
+positions are the International Meteor Organization's values near the peak; the point drifts about a degree a day. There is
+a layer toggle.
+
 The space stations are drawn as they cross your sky (bright when sunlit against a dark sky, dim in Earth's shadow), and
 any satellite can be found with search. Select one to see its next pass over you drawn as a line from where it rises to
 where it sets, with its peak height. The summary shows when the ISS next passes. Orbit data only covers weeks around today,

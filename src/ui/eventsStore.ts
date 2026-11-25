@@ -117,7 +117,7 @@ export async function showEvent(ev: AstroEvent) {
   let view = ev.view;
   if (ev.sky) {
     const loc = loadLocation() ?? GREENWICH,
-      jd = bestViewingMoment(ev.jd, loc.lat, loc.lon, ev.focus);
+      jd = bestViewingMoment(ev.jd, loc.lat, loc.lon, ev.focus ?? ev.focusDir);
     view = { ...view, t: new Date((jd - 2440587.5) * 864e5).toISOString() };
   }
   closeEvents();

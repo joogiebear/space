@@ -67,6 +67,10 @@ body {
   color: rgba(170, 185, 230, 0.7);
   font-size: 11.5px;
 }
+.lb.radiant {
+  color: #ffb877;
+  font-size: 11.5px;
+}
 .panel {
   position: fixed;
   background: var(--panel);

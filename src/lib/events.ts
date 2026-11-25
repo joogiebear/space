@@ -16,6 +16,7 @@ import {
   moonPhase,
   planetMagnitude,
   planetSky,
+  eqVec,
   precessionRad,
   separationDeg,
   skyPosition,
@@ -40,6 +41,8 @@ export interface AstroEvent {
   sky?: boolean;
   /** Body to keep high in the sky when choosing that moment ('moon' or a planet id); none means the darkest hour */
   focus?: string;
+  /** The same, for a fixed point in the sky (J2000 equatorial unit vector), such as a meteor radiant */
+  focusDir?: Vec3;
 }
 
 export const KIND_LABEL: Record<EventKind, string> = {
@@ -193,22 +196,50 @@ function seasons(jd0: number, jd1: number): AstroEvent[] {
   return out;
 }
 
-/** Annual meteor showers: peak at this solar longitude (J2000, degrees), zenith hourly rate at best, radiant. */
-export const SHOWERS: { name: string; lon: number; zhr: number; radiant: string }[] = [
-  { name: 'Quadrantids', lon: 283.15, zhr: 80, radiant: 'Boötes' },
-  { name: 'Lyrids', lon: 32.32, zhr: 18, radiant: 'Lyra' },
-  { name: 'Eta Aquariids', lon: 45.5, zhr: 50, radiant: 'Aquarius' },
-  { name: 'Southern Delta Aquariids', lon: 125, zhr: 25, radiant: 'Aquarius' },
-  { name: 'Perseids', lon: 140, zhr: 100, radiant: 'Perseus' },
-  { name: 'Draconids', lon: 195.4, zhr: 10, radiant: 'Draco' },
-  { name: 'Orionids', lon: 208, zhr: 20, radiant: 'Orion' },
-  { name: 'Alpha Capricornids', lon: 127, zhr: 5, radiant: 'Capricornus' },
-  { name: 'Southern Taurids', lon: 223, zhr: 5, radiant: 'Taurus' },
-  { name: 'Northern Taurids', lon: 230, zhr: 5, radiant: 'Taurus' },
-  { name: 'Leonids', lon: 236, zhr: 15, radiant: 'Leo' },
-  { name: 'Geminids', lon: 262.2, zhr: 150, radiant: 'Gemini' },
-  { name: 'Ursids', lon: 270.7, zhr: 10, radiant: 'Ursa Minor' },
+/**
+ * Annual meteor showers: peak at this solar longitude (J2000, degrees), zenith hourly rate at best, the constellation
+ * the meteors seem to come from, and that radiant's J2000 position (IMO values near the peak; radiants drift a degree
+ * a day, which is below what the eye can place). `span` is how many degrees of solar longitude, about as many days, the
+ * shower is worth watching either side of its peak.
+ */
+export interface Shower {
+  name: string;
+  lon: number;
+  zhr: number;
+  radiant: string;
+  ra: number;
+  dec: number;
+  span: number;
+}
+export const SHOWERS: Shower[] = [
+  { name: 'Quadrantids', lon: 283.15, zhr: 80, radiant: 'Boötes', ra: 230, dec: 49, span: 2 },
+  { name: 'Lyrids', lon: 32.32, zhr: 18, radiant: 'Lyra', ra: 271, dec: 34, span: 4 },
+  { name: 'Eta Aquariids', lon: 45.5, zhr: 50, radiant: 'Aquarius', ra: 338, dec: -1, span: 8 },
+  { name: 'Southern Delta Aquariids', lon: 125, zhr: 25, radiant: 'Aquarius', ra: 340, dec: -16, span: 10 },
+  { name: 'Alpha Capricornids', lon: 127, zhr: 5, radiant: 'Capricornus', ra: 307, dec: -10, span: 10 },
+  { name: 'Perseids', lon: 140, zhr: 100, radiant: 'Perseus', ra: 48, dec: 58, span: 8 },
+  { name: 'Draconids', lon: 195.4, zhr: 10, radiant: 'Draco', ra: 262, dec: 54, span: 2 },
+  { name: 'Orionids', lon: 208, zhr: 20, radiant: 'Orion', ra: 95, dec: 16, span: 8 },
+  { name: 'Southern Taurids', lon: 223, zhr: 5, radiant: 'Taurus', ra: 52, dec: 13, span: 12 },
+  { name: 'Northern Taurids', lon: 230, zhr: 5, radiant: 'Taurus', ra: 58, dec: 22, span: 12 },
+  { name: 'Leonids', lon: 236, zhr: 15, radiant: 'Leo', ra: 152, dec: 22, span: 4 },
+  { name: 'Geminids', lon: 262.2, zhr: 150, radiant: 'Gemini', ra: 112, dec: 33, span: 6 },
+  { name: 'Ursids', lon: 270.7, zhr: 10, radiant: 'Ursa Minor', ra: 217, dec: 76, span: 3 },
 ];
+
+/** Degrees of solar longitude from a shower's peak (negative before it), wrapped to -180..180. */
+export const showerOffset = (s: Shower, jd: number) =>
+  (wrap(sunLongitudeJ2000(jd) - (s.lon * Math.PI) / 180) * 180) / Math.PI;
+
+/** Showers worth looking for at this moment, with how close to the peak they are (1 at the peak, 0 at the edge of the span). */
+export function activeShowers(jd: number): { shower: Shower; offset: number; strength: number }[] {
+  const out = [];
+  for (const shower of SHOWERS) {
+    const offset = showerOffset(shower, jd);
+    if (Math.abs(offset) <= shower.span) out.push({ shower, offset, strength: 1 - Math.abs(offset) / shower.span });
+  }
+  return out;
+}
 
 /** How much moonlight spoils a shower: under a quarter lit is good, over about 60% is poor. */
 export const moonlightVerdict = (fraction: number) =>
@@ -224,9 +255,11 @@ function meteorShowers(jd0: number, jd1: number): AstroEvent[] {
         kind: 'meteor',
         jd,
         title: `${s.name} peak`,
-        detail: `Up to about ${s.zhr} meteors an hour, from ${s.radiant}. Moon ${(moon * 100).toFixed(0)}% lit: ${moonlightVerdict(moon)}.`,
-        view: { scene: 'sky', t: iso(jd) },
+        detail: `Up to about ${s.zhr} meteors an hour, from ${s.radiant}. Moon ${(moon * 100).toFixed(0)}% lit: ${moonlightVerdict(moon)}. Opens with the radiant marked.`,
+        // the radiant is a marker in Sky Tonight; find it by its name, and pick the hour it stands highest
+        view: { scene: 'sky', t: iso(jd), q: `${s.name} radiant` },
         sky: true,
+        focusDir: eqVec((s.ra * Math.PI) / 180, (s.dec * Math.PI) / 180),
       });
     }
   return out;
@@ -448,7 +481,7 @@ export function computeEvents(jd0: number, jd1: number, kinds?: Set<EventKind>):
  * while the Sun is well below the horizon; with none, the darkest hour. Falls back to the darkest hour when the body
  * never clears the horizon in the dark (a planet in the glare near the Sun).
  */
-export function bestViewingMoment(jd: number, latDeg: number, lonDeg: number, focus?: string): number {
+export function bestViewingMoment(jd: number, latDeg: number, lonDeg: number, focus?: string | Vec3): number {
   const lat = (latDeg * Math.PI) / 180,
     lon = (lonDeg * Math.PI) / 180,
     step = 15 / 1440;
@@ -463,7 +496,7 @@ export function bestViewingMoment(jd: number, latDeg: number, lonDeg: number, fo
       darkest = t;
     }
     if (focus && sunAlt < -4) {
-      const dir = focus === 'moon' ? moonEq(t).dir : planetSky(focus, t).dir,
+      const dir = typeof focus !== 'string' ? focus : focus === 'moon' ? moonEq(t).dir : planetSky(focus, t).dir,
         alt = skyPosition(dir, t, lat, lon).alt;
       if (alt > bestAlt) {
         bestAlt = alt;

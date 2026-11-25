@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { LUNAR_ECLIPSES, SOLAR_ECLIPSES, eclipseUt } from '@/data/eclipses';
 import {
   KIND_LABEL,
+  activeShowers,
+  showerOffset,
   SHOWERS,
   bestViewingMoment,
   cometEvents,
@@ -291,5 +293,58 @@ describe('comets', () => {
   it('has a label and is not part of a normal calendar run unless asked for', () => {
     expect(KIND_LABEL.comet).toBe('Comets');
     expect(run('2026-01-01', '2026-12-31', ['comet'])).toHaveLength(0); // comets come from the network
+  });
+});
+
+describe('meteor radiants', () => {
+  it('every shower has a radiant on the sky sphere and a sensible window', () => {
+    for (const s of SHOWERS) {
+      expect(s.ra).toBeGreaterThanOrEqual(0);
+      expect(s.ra).toBeLessThan(360);
+      expect(Math.abs(s.dec)).toBeLessThanOrEqual(90);
+      expect(s.span).toBeGreaterThan(0);
+    }
+  });
+  it('the radiants sit in the constellations they are named for', () => {
+    const at = (n: string) => SHOWERS.find(s => s.name === n)!;
+    expect(at('Perseids').dec).toBeGreaterThan(50); // Perseus is far north
+    expect(at('Geminids').ra).toBeGreaterThan(105); // near Castor, about 7h 28m
+    expect(at('Geminids').ra).toBeLessThan(120);
+    expect(at('Southern Delta Aquariids').dec).toBeLessThan(0);
+    expect(at('Ursids').dec).toBeGreaterThan(70);
+  });
+  it('is at its peak on the peak night, and fades toward the edge of the window', () => {
+    const peak = run('2026-08-01', '2026-08-31', ['meteor'])[0].jd;
+    expect(
+      Math.abs(
+        showerOffset(
+          SHOWERS.find(s => s.name === 'Perseids')!,
+          peak,
+        ),
+      ),
+    ).toBeLessThan(0.05);
+    const on = (jd: number) => activeShowers(jd).find(a => a.shower.name === 'Perseids');
+    expect(on(peak)!.strength).toBeGreaterThan(0.99);
+    expect(on(peak - 5)!.strength).toBeLessThan(on(peak - 2)!.strength);
+    expect(on(peak - 20)).toBeUndefined();
+    expect(on(peak + 20)).toBeUndefined();
+  });
+  it('knows which are on in mid-August and mid-December, and that nothing odd is on in a quiet week', () => {
+    const names = (iso: string) => activeShowers(isoToJD(iso)).map(a => a.shower.name);
+    expect(names('2026-08-12T12:00:00Z')).toContain('Perseids');
+    expect(names('2026-12-13T12:00:00Z')).toContain('Geminids');
+    expect(names('2026-08-12T12:00:00Z')).not.toContain('Geminids');
+    expect(names('2026-03-05T12:00:00Z')).toEqual([]);
+  });
+  it('a shower event opens the radiant by name and picks the hour it stands highest', () => {
+    const e = run('2026-08-01', '2026-08-31', ['meteor'])[0];
+    expect(e.view?.q).toBe('Perseids radiant');
+    expect(e.focusDir).toBeDefined();
+    // from 52N on that night the Perseid radiant is highest before dawn, in the dark
+    const t = bestViewingMoment(e.jd, 52, 0, e.focusDir);
+    expect(Math.abs(t - e.jd)).toBeLessThanOrEqual(0.5);
+    const d = e.focusDir!,
+      alt = (jd: number) => skyPosition(d, jd, (52 * Math.PI) / 180, 0).alt;
+    expect(alt(t)).toBeGreaterThan(alt(e.jd - 0.5) - 0.01);
   });
 });

@@ -22,6 +22,8 @@ import {
   altAzOf,
   type Vec3,
 } from '@/lib';
+import { SHOWERS, activeShowers, showerOffset } from '@/lib/events';
+import { eqVec } from '@/lib/sky';
 import { loadStarSky, type StarSky } from '@/data/stars';
 import { askLocation, loadLocation, saveLocation, type Loc } from '../earth/location';
 import type { Body, EmitLabel, Info, InfoRows, Layer, Scene, SearchResult } from '@/types';
@@ -53,7 +55,16 @@ function sky(): Scene {
   let loc: Loc = loadLocation() ?? GREENWICH,
     located = loadLocation() !== null;
   let stars: StarSky | null = null;
-  const layers = { con: true, conNames: true, starNames: true, horizon: true, grid: false, sats: true, milky: true };
+  const layers = {
+    con: true,
+    conNames: true,
+    starNames: true,
+    horizon: true,
+    grid: false,
+    sats: true,
+    milky: true,
+    radiants: true,
+  };
   /** 0 in daylight, 1 in full darkness: star labels follow the stars. */
   let starVis = 1;
 
@@ -237,6 +248,9 @@ function sky(): Scene {
   );
   moonMesh.renderOrder = 4;
   celestial.add(moonMesh);
+  // where each meteor shower's meteors seem to come from: a ring that shows while the shower is active
+  const radMk = new Markers(SHOWERS.length, true);
+  celestial.add(radMk.points);
   const selMk = new Markers(1, true);
   group.add(selMk.points);
   selMk.hide(0);
@@ -310,7 +324,7 @@ function sky(): Scene {
   function directionAt(b: SkyBody, jd: number): Vec3 {
     if (b.id === 'sun') return sunEq(jd).dir;
     if (b.id === 'moon') return moonEq(jd).dir;
-    if (b.starIdx !== undefined) return b.eq();
+    if (b.starIdx !== undefined || b.radiant) return b.eq();
     return planetSky(b.id, jd).dir;
   }
 
@@ -388,6 +402,40 @@ function sky(): Scene {
     } as Omit<SkyBody, 'getPos'>),
   );
   const self = (id: string) => planetBodies.find(b => b.id === id)!;
+
+  const showerDate = (offset: number) =>
+    jdToDate(sim.jd - offset / 0.9856).toLocaleDateString([], { month: 'long', day: 'numeric' });
+  const radiantBodies: SkyBody[] = SHOWERS.map(sh => {
+    const dir = eqVec(sh.ra * D2R, sh.dec * D2R);
+    return make({
+      id: 'radiant:' + sh.name,
+      label: `${sh.name} radiant`,
+      riseAlt: 0,
+      live: true,
+      radiant: true,
+      shower: sh,
+      eq: () => dir,
+      getInfo(): Info {
+        const off = showerOffset(sh, sim.jd);
+        return {
+          sub: `Meteor shower radiant · in ${sh.radiant}`,
+          text: `The ${sh.name} meteors seem to fan out from this point. Do not stare at it: look 40 to 60 degrees away, high in a dark sky, since the meteors there have the longest trails. Up to about ${sh.zhr} an hour at the peak.`,
+          rows: [
+            ...posRows(self2(sh.name)),
+            ...riseSetRows(self2(sh.name)),
+            ['Peak', `${showerDate(off)}${Math.abs(off) <= sh.span ? '' : ' (not active now)'}`],
+            [
+              'Now',
+              Math.abs(off) < 0.5
+                ? 'at the peak'
+                : `${Math.abs(off).toFixed(0)} days ${off < 0 ? 'before' : 'after'} the peak`,
+            ],
+          ],
+        };
+      },
+    } as Omit<SkyBody, 'getPos'>);
+  });
+  const self2 = (name: string) => radiantBodies.find(b => b.shower.name === name)!;
 
   const you: Body = {
     id: 'you',
@@ -489,6 +537,13 @@ function sky(): Scene {
     ['NW', 315],
   ];
   function extraLabels(emit: EmitLabel) {
+    if (layers.radiants && skyAppearance(altAzNow(ephemeris().sun.dir).alt).starVisibility > 0.25)
+      for (const { shower: sh } of activeShowers(sim.jd)) {
+        const h = applyMat(mat(), eqVec(sh.ra * D2R, sh.dec * D2R));
+        if (h[1] < 0.02) continue;
+        tmp.set(h[0] * R, h[1] * R, h[2] * R);
+        emit(`${sh.name} radiant`, tmp, 'radiant', 20);
+      }
     if (layers.horizon)
       for (const [name, az] of CARDINALS) {
         const a = az * D2R,
@@ -619,6 +674,13 @@ function sky(): Scene {
       { id: 'conNames', label: 'Constellation names', on: true, apply: on => (layers.conNames = on) },
       { id: 'starNames', label: 'Star names', on: true, apply: on => (layers.starNames = on) },
       { id: 'sats', label: 'Satellites', color: '#ffeb8c', on: true, apply: on => (layers.sats = on) },
+      {
+        id: 'radiants',
+        label: 'Meteor shower radiants',
+        color: '#ffa65c',
+        on: true,
+        apply: on => (layers.radiants = on),
+      },
       { id: 'milky', label: 'Milky Way', color: '#bcd0ff', on: true, apply: on => (layers.milky = on) },
       { id: 'horizon', label: 'Horizon and compass', on: true, apply: on => (layers.horizon = on) },
       { id: 'grid', label: 'Altitude and azimuth grid', color: '#5a78d8', on: false, apply: on => (layers.grid = on) },
@@ -711,6 +773,15 @@ function sky(): Scene {
       moonMesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
       moonSun.value.set(sunH[0], sunH[1], sunH[2]);
 
+      // meteor radiants: a ring while the shower is on, brighter near its peak; not in daylight
+      const active = new Map(activeShowers(sim.jd).map(a => [a.shower, a.strength]));
+      SHOWERS.forEach((sh, i) => {
+        const k = active.get(sh);
+        if (k === undefined || !layers.radiants || dayness > 0.6) return radMk.hide(i);
+        const d = eqVec(sh.ra * D2R, sh.dec * D2R);
+        radMk.set(i, d[0] * R, d[1] * R, d[2] * R, [1, 0.65, 0.36], 22 + 10 * k);
+      });
+
       // zoom is the field of view: the camera stays at the centre
       setFov(clamp(cam.dist * 75, 6, 95));
 
@@ -732,6 +803,19 @@ function sky(): Scene {
       sats.extraLabels(emit);
     },
     pickCustom(mx, my) {
+      if (layers.radiants) {
+        const v = new THREE.Vector3(),
+          m = mat();
+        for (const { shower: sh } of activeShowers(sim.jd)) {
+          const hz = applyMat(m, eqVec(sh.ra * D2R, sh.dec * D2R));
+          if (hz[1] < 0.02) continue;
+          v.set(hz[0] * R, hz[1] * R, hz[2] * R).project(camera);
+          if (v.z > 1 || v.z < -1) continue;
+          const dx = (v.x * 0.5 + 0.5) * App.W - mx,
+            dy = (-v.y * 0.5 + 0.5) * App.H - my;
+          if (dx * dx + dy * dy < 18 * 18) return self2(sh.name);
+        }
+      }
       if (!stars) return null;
       const s = stars,
         m = mat(),
@@ -760,6 +844,8 @@ function sky(): Scene {
       const out: SearchResult[] = [];
       for (const b of [sun, moon, ...planetBodies])
         if (b.label.toLowerCase().includes(q)) out.push({ label: b.label, sub: 'Solar system', make: () => b });
+      for (const b of radiantBodies)
+        if (b.label.toLowerCase().includes(q)) out.push({ label: b.label, sub: 'Meteor shower', make: () => b });
       if (stars) {
         const hipQ = /^hip\s*(\d+)$/.exec(q);
         stars.named.forEach((n, k) => {

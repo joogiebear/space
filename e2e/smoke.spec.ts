@@ -426,3 +426,19 @@ test('hovering an object names it, says what it is, and keeps the tip on screen'
   expect(r.y + r.height).toBeLessThanOrEqual(box.height);
   expect(errors).toEqual([]);
 });
+
+test.describe('meteor radiants', () => {
+  test.skip(({ isMobile }) => isMobile, 'covered on desktop');
+
+  test('a shower in season has a radiant you can open by name, with a layer toggle', async ({ page }) => {
+    const errors = await boot(page);
+    await page.goto('./#sky?q=Perseids+radiant&t=2027-08-13T01:00:00.000Z&r=1&pz=1');
+    await expect(page.getByLabel('Meteor shower radiants')).toBeChecked({ timeout: 20_000 });
+    await expect(page.locator('#info')).toContainText('Perseids radiant', { timeout: 20_000 });
+    await expect(page.locator('#info')).toContainText('at the peak');
+    await page.getByLabel('Meteor shower radiants').uncheck();
+    await page.waitForTimeout(300);
+    await page.getByLabel('Meteor shower radiants').check();
+    expect(errors).toEqual([]);
+  });
+});
