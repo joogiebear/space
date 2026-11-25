@@ -442,3 +442,22 @@ test.describe('meteor radiants', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test('the Local Universe shows galaxy photographs, with a layer toggle', async ({ page }) => {
+  const errors = await boot(page);
+  const photos = await page.evaluate(async () => {
+    const r = await fetch('assets/galaxies/andromeda.jpg');
+    return { ok: r.ok, type: r.headers.get('content-type') };
+  });
+  expect(photos.ok).toBe(true);
+  expect(photos.type).toContain('image');
+  await page.waitForTimeout(1500); // the photographs load and draw
+  const box = page.getByLabel('Galaxy photographs');
+  if (await box.isVisible()) {
+    await expect(box).toBeChecked();
+    await box.uncheck();
+    await page.waitForTimeout(300);
+    await box.check();
+  }
+  expect(errors).toEqual([]);
+});

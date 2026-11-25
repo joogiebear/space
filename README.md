@@ -16,7 +16,7 @@ satellites and debris orbiting Earth. Real data, drawn on the GPU.
 
 | View | What it shows | Data |
 | --- | --- | --- |
-| Local Universe / Galaxies | Famous galaxies; fly inside the Milky Way | Procedural, schematic |
+| Local Universe / Galaxies | Famous galaxies, shown as real photographs from afar; fly inside the Milky Way | Procedural stars, schematic positions; photographs from NASA, ESA, ESO and NOIRLab |
 | Star map | ~109k real stars, 88 constellation figures, optional exoplanet host layer | HYG v4.0, Stellarium, NASA Exoplanet Archive |
 | Solar system | Planets at their real positions, moons, ~96k asteroids, comets, spacecraft | JPL elements, SBDB, Horizons |
 | Earth orbit | ~20k tracked satellites, stations, debris, rocket bodies; ISS follow, ground track and next-pass prediction for any selected satellite | CelesTrak (SGP4 / Kepler + J2 on the GPU) |
@@ -93,6 +93,11 @@ Everything is computed in the browser (`src/lib/sky.ts`, with tests against alma
 precession, the Sun and planets from the JPL elements the solar system already uses, and an abridged lunar theory good to
 about 0.3 degrees. Planet brightness is approximate (distance only, no phase terms). Your location is stored only in
 your browser (set it from **Your location** in the Objects list); until then the sky is shown from Greenwich.
+
+In the Local Universe view each galaxy is a real photograph (a layer toggle turns them off) that gives way to the generated
+stars as you fly toward it, so you see the photograph from afar and the model up close. The Milky Way has no photograph
+(we are inside it) and neither has the Cartwheel (no clean public image). Positions, sizes and orientation stay schematic;
+the picture always faces you.
 
 ## Astronomy calendar
 
@@ -242,6 +247,8 @@ server at run time and cached locally.
 - Rocket launch schedule: [The Space Devs, Launch Library 2](https://thespacedevs.com/llapi) (free tier)
 - Constellation figures: Stellarium's "modern" sky culture
 - Satellite propagation: [satellite.js](https://github.com/shashwatak/satellite-js); rendering: [three.js](https://threejs.org)
+- Galaxy photographs (`public/assets/galaxies/`): NASA and ESA Hubble, Spitzer, GALEX, ESO and NOIRLab images, public domain or
+  Creative Commons BY 4.0, credited per file in [`CREDITS.md`](public/assets/galaxies/CREDITS.md) and in each galaxy's info panel.
 - Earth and Moon textures (`public/assets/tex/`) are processed NASA imagery: Blue Marble Next Generation and Black Marble
   from NASA Visible Earth / Earth Observatory, an Earth cloud layer from NASA's Scientific Visualization Studio (item 3615),
   and the LRO colour map from the SVS CGI Moon Kit (item 4720). NASA says texture maps made from its imagery are generally not
