@@ -18,5 +18,8 @@ app, in each galaxy's info panel). This project is not affiliated with or endors
 | `cartwheel.jpg` | Cartwheel Galaxy | `Cartwheel Galaxy (NIRCam and MIRI Composite Image) (weic2211a).jpeg` | NASA, ESA, CSA, STScI (James Webb Space Telescope), [weic2211a](https://esawebb.org/images/weic2211a/) | Public domain |
 | `m87.jpg` | Messier 87 | `Hubble's view of M87 galaxy ESA501596.jpg` | European Space Agency (Hubble) | CC BY 4.0 |
 | `bodes.jpg` | Bode's Galaxy (M81) | `Messier 81 HST.jpg` | NASA, ESA and the Hubble Heritage Team (STScI/AURA), [heic0710a](https://esahubble.org/images/heic0710a/) | Public domain |
+| `m32.jpg` | Messier 32 | `Messier 32 from Hubble.jpg` | NASA and ESA (Hubble) | Public domain |
+| `fornax.jpg` | Fornax Dwarf | `Fornax dwarf galaxy.jpg` | ESO and the Digitized Sky Survey 2 | CC BY 4.0 |
+| `ngc6822.jpg` | Barnard's Galaxy | `NGC 6822 (Barnard’s Galaxy).jpg` | ESO (MPG/ESO 2.2-metre telescope) | CC BY 4.0 |
 
 Nobody can photograph the Milky Way from outside, so its picture is an artist's concept of what we think it looks like.

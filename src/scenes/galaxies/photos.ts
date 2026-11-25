@@ -110,6 +110,31 @@ export const PHOTOS: Record<string, GalaxyPhoto> = {
     size: 2.6,
     credit: 'Hubble, NASA, ESA and the Hubble Heritage Team (STScI/AURA) (public domain)',
   },
+  m32: {
+    inclination: 0,
+    angle: 0,
+    file: 'm32.jpg',
+    size: 2.6,
+    // a Hubble close-up with the core in the lower right: frame the core
+    crop: [0.58, 0.47, 0.42, 0.432],
+    credit: 'Hubble, NASA and ESA (public domain): a close-up of the core',
+  },
+  fornax: {
+    inclination: 0,
+    angle: 0,
+    file: 'fornax.jpg',
+    size: 2.8,
+    crop: [0.12, 0.12, 0.76, 0.76],
+    credit: 'ESO and the Digitized Sky Survey 2 (CC BY 4.0)',
+  },
+  ngc6822: {
+    inclination: 0,
+    angle: 0,
+    file: 'ngc6822.jpg',
+    size: 2.8,
+    crop: [0.1, 0.1, 0.8, 0.88],
+    credit: 'ESO, MPG/ESO 2.2-metre telescope (CC BY 4.0)',
+  },
 };
 
 /** Opacity of the photograph for a camera this many galaxy radii away: gone when you are close, full from afar. */
