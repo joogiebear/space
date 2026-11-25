@@ -405,3 +405,24 @@ test.describe('Milky Way', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test('hovering an object names it, says what it is, and keeps the tip on screen', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'a touch screen has no hover');
+  const errors = await boot(page);
+  const tip = page.locator('#tip');
+  const box = (await page.locator('#gl canvas').boundingBox())!;
+  // the home galaxy sits at the middle of the first view
+  await expect(async () => {
+    await page.mouse.move(box.x + box.width / 2 - 3, box.y + box.height / 2 - 3);
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 4 });
+    await expect(tip).toBeVisible({ timeout: 500 });
+  }).toPass({ timeout: 20_000 });
+  await expect(tip.locator('.n')).toHaveText('Milky Way');
+  await expect(tip.locator('.k')).toContainText('spiral'); // and what kind of thing it is
+  const r = (await tip.boundingBox())!;
+  expect(r.x).toBeGreaterThanOrEqual(0);
+  expect(r.y).toBeGreaterThanOrEqual(0);
+  expect(r.x + r.width).toBeLessThanOrEqual(box.width);
+  expect(r.y + r.height).toBeLessThanOrEqual(box.height);
+  expect(errors).toEqual([]);
+});

@@ -30,7 +30,7 @@ export const ui = reactive({
   sliderPos: 30,
   paused: false,
   dateText: '',
-  tip: { visible: false, text: '', x: 0, y: 0 },
+  tip: { visible: false, text: '', sub: '', x: 0, y: 0 },
   toast: { visible: false, msg: '', sub: '' },
   /** The running guided tour, if any. */
   tour: { active: false, id: '', tourTitle: '', index: 0, count: 0, title: '', text: '', auto: true },

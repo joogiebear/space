@@ -26,6 +26,10 @@
   #top b {
     display: none;
   }
+  /* the view tabs already say where you are and reach every view, so the breadcrumb row only costs the map its height */
+  #top > div.r {
+    display: none;
+  }
   #top #tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -121,12 +125,5 @@
   .modal .box {
     max-height: calc(100dvh - 32px);
     overflow: auto;
-  }
-}
-
-/* a phone held sideways: the view tabs already say where you are, so drop the breadcrumb row to give the map the height */
-@media (max-height: 520px) {
-  #top > div.r {
-    display: none;
   }
 }

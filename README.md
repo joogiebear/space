@@ -174,7 +174,10 @@ moment in time" menu (solar system and Earth views) jumps to historic events.
 ## Phones, accessibility and older browsers
 
 - **Phones:** below 820 px wide (or 520 px tall) the panels become sheets above a bottom bar (Info, Layers, Time, Search),
-  one open at a time.
+  one open at a time. The breadcrumb row is dropped there (the view tabs reach every view) and the tab strip scrolls to
+  keep the current view in sight.
+- **Hover tip:** pointing at an object names it and says what it is; it flips to the other side of the pointer rather than
+  run off the screen. Touch screens have no hover, so they tap for the info sheet instead.
 - **Keyboard and screen readers:** the map is a focusable region, every control is reachable and labelled, view changes and
   messages are announced, the location dialog traps focus and returns it, and `axe-core` reports no violations. Text
   contrast meets WCAG AA. `prefers-reduced-motion` turns off auto-orbit and the dive transition.

@@ -204,9 +204,27 @@ describe('time controls state', () => {
 describe('hover tooltip', () => {
   it('shows the label offset from the pointer, and hides when nothing is hovered', () => {
     hoverChanged.emit(makeBody('a'), 100, 200);
-    expect(ui.tip).toEqual({ visible: true, text: 'A', x: 114, y: 212 });
+    expect(ui.tip).toEqual({ visible: true, text: 'A', sub: 'sub a', x: 114, y: 212 });
     hoverChanged.emit(null, 0, 0);
     expect(ui.tip.visible).toBe(false);
+  });
+
+  it('says what kind of thing it is, when the object knows', () => {
+    hoverChanged.emit(makeBody('k', { info: { sub: 'Near-Earth asteroid' } }), 1, 1);
+    expect(ui.tip.sub).toBe('Near-Earth asteroid');
+    hoverChanged.emit(makeBody('g', { info: undefined, getInfo: () => ({ sub: 'Comet' }) }), 1, 1);
+    expect(ui.tip.sub).toBe('Comet');
+    hoverChanged.emit(
+      makeBody('bad', {
+        info: undefined,
+        getInfo: () => {
+          throw new Error('not ready');
+        },
+      }),
+      1,
+      1,
+    );
+    expect(ui.tip.sub).toBe('');
   });
 
   it('hides while dragging', () => {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { nextTick, watch } from 'vue';
 import { TABS, chain, goScene, sceneTitle } from '@/engine/sceneManager';
 import { startTour } from '@/engine/tour';
 import { TOURS } from '@/scenes/tours';
@@ -16,6 +17,14 @@ function onTour(e: Event) {
   sel.blur();
   if (t) startTour(t);
 }
+// on a phone the tab strip scrolls sideways: keep the current view's tab in sight
+watch(
+  () => ui.sceneId,
+  async () => {
+    await nextTick();
+    document.querySelector<HTMLElement>('#tabs .tab.on')?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
+  },
+);
 const jumpTo = (id: string) => goScene(id, { deeper: chain(id).length > ui.path.length });
 </script>
 

@@ -29,6 +29,20 @@ const refreshDate = () => {
 };
 
 /** Copy engine events into the reactive store. Call once before mounting the app. */
+/** The kind of thing under the pointer ("Near-Earth asteroid"), looked up once per object, not on every pointer move. */
+let tipFor: { id: string; sub: string } | null = null;
+function tipSub(b: Body): string {
+  if (tipFor?.id === b.id) return tipFor.sub;
+  let sub = '';
+  try {
+    sub = (b.info ?? b.getInfo?.())?.sub ?? '';
+  } catch {
+    // a body whose details are not ready yet just shows its name
+  }
+  tipFor = { id: b.id, sub };
+  return sub;
+}
+
 export function initBridge() {
   tourChanged.on(t => {
     if (t) Object.assign(ui.tour, t, { active: true });
@@ -72,6 +86,7 @@ export function initBridge() {
     ui.tip.visible = !!b;
     if (b) {
       ui.tip.text = b.label;
+      ui.tip.sub = tipSub(b);
       ui.tip.x = x + 14;
       ui.tip.y = y + 12;
     }

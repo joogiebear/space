@@ -8,6 +8,13 @@
   padding: 3px 8px;
   font-size: 12px;
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+#tip .k {
+  font-size: 10.5px;
+  color: var(--dim);
 }
 #toast {
   z-index: 60;
