@@ -380,11 +380,20 @@ test.describe('Sky Tonight tour', () => {
 });
 
 test.describe('Milky Way', () => {
-  test.skip(({ isMobile }) => isMobile, 'covered on desktop');
+  // desktop draws the full shader; the phone project (a coarse pointer) draws the light one
 
-  test('has a layer toggle, and the shader compiles and draws on a dark night without errors', async ({ page }) => {
+  test('has a layer toggle, and the shader compiles and draws on a dark night without errors', async ({
+    page,
+    isMobile,
+  }) => {
     const errors = await boot(page);
     await page.goto('./#sky?t=2026-07-15T08:00:00.000Z&r=1&pz=1');
+    if (isMobile) {
+      // the layer list is tucked away on a phone; here it is enough that the light shader draws cleanly
+      await page.waitForTimeout(2500);
+      expect(errors).toEqual([]);
+      return;
+    }
     const box = page.getByLabel('Milky Way');
     await expect(box).toBeChecked({ timeout: 20_000 });
     await page.waitForTimeout(1500); // a few frames drawn with the Milky Way on

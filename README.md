@@ -72,7 +72,9 @@ altitude, compass direction, rise and set times, and brightness. The Time panel 
 
 The Milky Way is drawn as a glow in galactic coordinates (a thin bright disc, a wider faint one, a brighter bulge toward
 Sagittarius, and dust lanes), not from a photograph. It fades through twilight and is washed out by a bright Moon above
-the horizon, as the real one is. It has a layer toggle.
+the horizon, as the real one is. It has a layer toggle. Phones, tablets and modest machines start on a lighter version
+(fewer noise layers, no grain: a third of the work per pixel), and any device steps down to it, once, if frames average
+under about 30 per second while the Milky Way is on screen.
 
 The space stations are drawn as they cross your sky (bright when sunlit against a dark sky, dim in Earth's shadow), and
 any satellite can be found with search. Select one to see its next pass over you drawn as a line from where it rises to

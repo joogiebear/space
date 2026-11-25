@@ -26,8 +26,9 @@ import { loadStarSky, type StarSky } from '@/data/stars';
 import { askLocation, loadLocation, saveLocation, type Loc } from '../earth/location';
 import type { Body, EmitLabel, Info, InfoRows, Layer, Scene, SearchResult } from '@/types';
 import { PLANETS } from './planets';
+import { createFrameGovernor, deviceHints, wantsLightMilkyWay } from './quality';
 import { createSkySatellites } from './satellites';
-import { MW_FS, MW_VS, DOME_FS, DOME_VS, GROUND_FS, MOON_FS, MOON_VS, STAR_FS, STAR_VS } from './shaders';
+import { MW_FS, MW_FS_LIGHT, MW_VS, DOME_FS, DOME_VS, GROUND_FS, MOON_FS, MOON_VS, STAR_FS, STAR_VS } from './shaders';
 
 /** Radius of the celestial sphere in scene units. The camera sits at its centre (within about a unit of it). */
 const R = 300;
@@ -194,19 +195,19 @@ function sky(): Scene {
   });
   // the Milky Way: a glow on a sphere in the rotating frame, drawn after the sky and before the stars
   const mwUniforms = { uVis: { value: 1 } };
-  const milkyWay = new THREE.Mesh(
-    new THREE.SphereGeometry(R * 0.985, 64, 32),
-    new THREE.ShaderMaterial({
+  const mwMat = new THREE.ShaderMaterial({
       uniforms: mwUniforms,
       vertexShader: MW_VS,
-      fragmentShader: MW_FS,
+      // phones and modest machines start on the light version; any device steps down if frames come slowly
+      fragmentShader: wantsLightMilkyWay(deviceHints()) ? MW_FS_LIGHT : MW_FS,
       side: THREE.BackSide,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthTest: false,
       depthWrite: false,
     }),
-  );
+    mwGovernor = createFrameGovernor(0.034, 90),
+    milkyWay = new THREE.Mesh(new THREE.SphereGeometry(R * 0.985, 64, 32), mwMat);
   milkyWay.renderOrder = -5;
   celestial.add(milkyWay);
   const conMat = new THREE.LineBasicMaterial({
@@ -679,6 +680,10 @@ function sky(): Scene {
       );
       mwUniforms.uVis.value = milkyWayVisibility(sunAlt, altAzNow(e.moon.dir).alt, (1 - cosElong) / 2);
       milkyWay.visible = layers.milky && mwUniforms.uVis.value > 0.01; // not drawn when it cannot be seen: it is the costliest shader here
+      if (mwGovernor(dt, milkyWay.visible) && mwMat.fragmentShader !== MW_FS_LIGHT) {
+        mwMat.fragmentShader = MW_FS_LIGHT;
+        mwMat.needsUpdate = true;
+      }
       conMat.opacity = 0.3 * look.starVisibility;
       if (conLines) conLines.visible = layers.con;
       horizonMarks.visible = layers.horizon;
