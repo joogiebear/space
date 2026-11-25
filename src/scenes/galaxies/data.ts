@@ -170,7 +170,7 @@ export const GALAXIES: GalaxyDef[] = [
     type: 'ring',
     core: [255, 235, 210],
     arm: [130, 175, 255],
-    tilt: [0.7, 0.2],
+    tilt: [0.52, 0.2],
     sub: 'Ring galaxy · ~500 million ly away',
     text: 'A smaller galaxy punched straight through this one, sending a ring of star formation rippling outward like a stone in a pond.',
   },

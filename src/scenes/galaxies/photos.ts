@@ -1,8 +1,7 @@
 /**
  * Real photographs of the galaxies, shown in the Local Universe view from a distance and handed over to the generated
  * stars as you fly in. Credits are in public/assets/galaxies/CREDITS.md. Nobody has photographed the Milky Way from
- * outside, so it shows NASA's artist's concept of what we think it looks like, labelled as an illustration. The
- * Cartwheel (no clean public image was found) has none.
+ * outside, so it shows NASA's artist's concept of what we think it looks like, labelled as an illustration.
  */
 export interface GalaxyPhoto {
   /** File in assets/galaxies */
@@ -87,6 +86,15 @@ export const PHOTOS: Record<string, GalaxyPhoto> = {
     file: 'centaurusa.jpg',
     size: 2.2,
     credit: 'Hubble, NASA (public domain): a close-up of the dust lane',
+  },
+  cartwheel: {
+    inclination: 30,
+    angle: 80,
+    file: 'cartwheel.jpg',
+    size: 2.6,
+    // the Webb picture has the ring off to one side, among its neighbours: frame the ring
+    crop: [0.344, 0.201, 0.583, 0.633],
+    credit: 'James Webb Space Telescope, NIRCam and MIRI, NASA, ESA, CSA and STScI (public domain)',
   },
   m87: {
     inclination: 0,

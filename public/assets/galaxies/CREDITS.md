@@ -15,7 +15,8 @@ app, in each galaxy's info panel). This project is not affiliated with or endors
 | `sombrero.jpg` | Sombrero (M104) | `M104 ngc4594 sombrero galaxy hi-res.jpg` | NASA/ESA and The Hubble Heritage Team (STScI/AURA) | Public domain |
 | `pinwheel.jpg` | Pinwheel (M101) | `M101 hires STScI-PRC2006-10a.jpg` | European Space Agency and NASA, with the Hubble data investigators named at [heic0602](https://esahubble.org/news/heic0602/) | CC BY 4.0 |
 | `centaurusa.jpg` | Centaurus A | `Firestorm of Star Birth in Galaxy Centaurus A.jpg` | NASA (Hubble) | Public domain |
+| `cartwheel.jpg` | Cartwheel Galaxy | `Cartwheel Galaxy (NIRCam and MIRI Composite Image) (weic2211a).jpeg` | NASA, ESA, CSA, STScI (James Webb Space Telescope), [weic2211a](https://esawebb.org/images/weic2211a/) | Public domain |
 | `m87.jpg` | Messier 87 | `Hubble's view of M87 galaxy ESA501596.jpg` | European Space Agency (Hubble) | CC BY 4.0 |
 | `bodes.jpg` | Bode's Galaxy (M81) | `Messier 81 HST.jpg` | NASA, ESA and the Hubble Heritage Team (STScI/AURA), [heic0710a](https://esahubble.org/images/heic0710a/) | Public domain |
 
-The Cartwheel Galaxy has no picture here. Nobody can photograph the Milky Way from outside, so its picture is an artist's concept of what we think it looks like.
+Nobody can photograph the Milky Way from outside, so its picture is an artist's concept of what we think it looks like.
