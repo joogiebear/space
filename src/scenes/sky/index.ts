@@ -30,7 +30,19 @@ import type { Body, EmitLabel, Info, InfoRows, Layer, Scene, SearchResult } from
 import { PLANETS } from './planets';
 import { createFrameGovernor, deviceHints, wantsLightMilkyWay } from './quality';
 import { createSkySatellites } from './satellites';
-import { MW_FS, MW_FS_LIGHT, MW_VS, DOME_FS, DOME_VS, GROUND_FS, MOON_FS, MOON_VS, STAR_FS, STAR_VS } from './shaders';
+import {
+  MW_FS,
+  MW_FS_LIGHT,
+  MW_FS_PHOTO,
+  MW_VS,
+  DOME_FS,
+  DOME_VS,
+  GROUND_FS,
+  MOON_FS,
+  MOON_VS,
+  STAR_FS,
+  STAR_VS,
+} from './shaders';
 
 /** Radius of the celestial sphere in scene units. The camera sits at its centre (within about a unit of it). */
 const R = 300;
@@ -205,7 +217,12 @@ function sky(): Scene {
     blending: THREE.AdditiveBlending,
   });
   // the Milky Way: a glow on a sphere in the rotating frame, drawn after the sky and before the stars
-  const mwUniforms = { uVis: { value: 1 } };
+  const mwUniforms = {
+    uVis: { value: 1 },
+    uMap: { value: null as THREE.Texture | null },
+    uGain: { value: 0.32 },
+    uBlur: { value: 3 },
+  };
   const mwMat = new THREE.ShaderMaterial({
       uniforms: mwUniforms,
       vertexShader: MW_VS,
@@ -220,6 +237,19 @@ function sky(): Scene {
     mwGovernor = createFrameGovernor(0.034, 90),
     milkyWay = new THREE.Mesh(new THREE.SphereGeometry(R * 0.985, 64, 32), mwMat);
   milkyWay.renderOrder = -5;
+  // the photographic map replaces the generated glow once it has loaded; if it cannot load, the glow stays
+  new THREE.TextureLoader().load(
+    TEX + 'milkyway_4k.jpg',
+    tex => {
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.anisotropy = 4;
+      mwUniforms.uMap.value = tex;
+      mwMat.fragmentShader = MW_FS_PHOTO;
+      mwMat.needsUpdate = true;
+    },
+    undefined,
+    () => undefined,
+  );
   celestial.add(milkyWay);
   const conMat = new THREE.LineBasicMaterial({
     color: 0x6f95e8,
@@ -742,7 +772,7 @@ function sky(): Scene {
       );
       mwUniforms.uVis.value = milkyWayVisibility(sunAlt, altAzNow(e.moon.dir).alt, (1 - cosElong) / 2);
       milkyWay.visible = layers.milky && mwUniforms.uVis.value > 0.01; // not drawn when it cannot be seen: it is the costliest shader here
-      if (mwGovernor(dt, milkyWay.visible) && mwMat.fragmentShader !== MW_FS_LIGHT) {
+      if (mwGovernor(dt, milkyWay.visible) && mwMat.fragmentShader === MW_FS) {
         mwMat.fragmentShader = MW_FS_LIGHT;
         mwMat.needsUpdate = true;
       }

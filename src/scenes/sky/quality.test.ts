@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createFrameGovernor, wantsLightMilkyWay } from './quality';
-import { MW_FS, MW_FS_LIGHT } from './shaders';
+import { MW_FS, MW_FS_LIGHT, MW_FS_PHOTO } from './shaders';
 
 describe('which Milky Way to start with', () => {
   it('a touch screen or a modest machine gets the light one', () => {
@@ -43,5 +43,18 @@ describe('the two Milky Way shaders', () => {
     expect(noise(MW_FS_LIGHT)).toBe('i<3,i<2');
     expect(MW_FS).toContain('vnoise(d*140.)');
     expect(MW_FS_LIGHT).not.toContain('vnoise(d*140.)');
+  });
+});
+
+describe('the photographic Milky Way shader', () => {
+  const galactic = (s: string) => s.match(/float g[xyz]=[^;]+;/g);
+  it('uses the same galactic coordinate transform as the generated glow, so the two agree on where the band is', () => {
+    expect(galactic(MW_FS_PHOTO)).toEqual(galactic(MW_FS));
+    expect(galactic(MW_FS_PHOTO)).toHaveLength(3);
+  });
+  it('reads the map with a blur and with the seam handled', () => {
+    expect(MW_FS_PHOTO).toContain('textureGrad');
+    expect(MW_FS_PHOTO).toContain('fract(u+.5)');
+    expect(MW_FS_PHOTO).toContain('uBlur');
   });
 });

@@ -65,4 +65,23 @@ vec3 col=mix(vec3(.62,.74,1.),vec3(1.,.86,.62),clamp(bulge*1.3,0.,1.));
 float fade=smoothstep(0.,.14,vH);
 gl_FragColor=vec4(col,clamp(I*.085*uVis*fade,0.,1.));}`;
 export const MW_FS = mwFragment(false);
+
+/**
+ * The Milky Way from a photographic star map (NASA SVS "Deep Star Maps 2020", built from ESA Gaia data): an equirectangular
+ * image in galactic coordinates, centred on longitude 0 with longitude increasing to the left. It is sampled at a blurred
+ * detail level so the baked-in stars (the sky already has its own, at their true brightness) melt into a glow and only
+ * the band and its dust lanes remain. The longitude seam would give the hardware a huge texture gradient across one row of
+ * pixels, so the gradient is taken from whichever of two seams is far away.
+ */
+export const MW_FS_PHOTO = `uniform sampler2D uMap;uniform float uVis,uGain,uBlur;varying vec3 vD;varying float vH;
+void main(){
+vec3 d=normalize(vD);
+float gx=-0.0548755604*d.x-0.8734370902*d.y-0.4838350155*d.z;
+float gy=0.4941094279*d.x-0.4448296300*d.y+0.7469822445*d.z;
+float gz=-0.8676661490*d.x-0.1980763734*d.y+0.4559837762*d.z;
+float u=.5-atan(gy,gx)/6.2831853,v=.5+asin(clamp(gz,-1.,1.))/3.14159265;
+float du=min(fwidth(u),fwidth(fract(u+.5)))*uBlur,dv=fwidth(v)*uBlur;
+vec3 c=textureGrad(uMap,vec2(u,v),vec2(du,0.),vec2(0.,dv)).rgb;
+float fade=smoothstep(0.,.14,vH);
+gl_FragColor=vec4(c*uGain,clamp(uVis*fade,0.,1.));}`;
 export const MW_FS_LIGHT = mwFragment(true);

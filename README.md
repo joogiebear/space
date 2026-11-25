@@ -70,11 +70,13 @@ The **Sky Tonight** tab shows the sky as it looks from your location at the simu
 12,000 stars with constellation lines, the Sun, the Moon with its true phase, and the planets. Select anything for its
 altitude, compass direction, rise and set times, and brightness. The Time panel makes the sky turn.
 
-The Milky Way is drawn as a glow in galactic coordinates (a thin bright disc, a wider faint one, a brighter bulge toward
-Sagittarius, and dust lanes), not from a photograph. It fades through twilight and is washed out by a bright Moon above
-the horizon, as the real one is. It has a layer toggle. Phones, tablets and modest machines start on a lighter version
-(fewer noise layers, no grain: a third of the work per pixel), and any device steps down to it, once, if frames average
-under about 30 per second while the Milky Way is on screen.
+The Milky Way is a photographic map: NASA's Deep Star Maps 2020 (built from ESA's Gaia star catalogue), converted to a
+1.7 MB JPEG and drawn in galactic coordinates, blurred so its baked-in stars melt into a glow and the sky's own stars
+stay sharp. It shows the Great Rift, the bright Sagittarius bulge and the dust lanes. If the image cannot load, a generated
+glow in galactic coordinates (a thin bright disc, a wider faint one, a brighter bulge toward Sagittarius, and noise for
+dust lanes) is drawn instead. It fades through twilight and is washed out by a bright Moon above
+the horizon, as the real one is. It has a layer toggle. The photograph is cheap to draw. The generated fallback has a lighter
+version for phones and slow frames (fewer noise layers, no grain: a third of the work per pixel).
 
 While a meteor shower is on (within a few days of its peak, from the Sun's position), a ring marks its radiant, the point the
 meteors seem to fan out from, labelled and selectable like any object. It shows its rise and set and how far from the
@@ -236,6 +238,7 @@ server at run time and cached locally.
 - Planet positions: JPL approximate Keplerian elements (1800-2050)
 - Eclipse dates and times 2025 to 2034: [NASA GSFC Eclipse Web Site](https://eclipse.gsfc.nasa.gov) (Fred Espenak)
 - Comet orbits and magnitudes: [JPL Small-Body Database](https://ssd-api.jpl.nasa.gov/doc/sbdb_query.html)
+- Milky Way map: [NASA SVS Deep Star Maps 2020](https://svs.gsfc.nasa.gov/4851/) (NASA/Goddard Space Flight Center Scientific Visualization Studio; data from ESA/Gaia/DPAC)
 - Rocket launch schedule: [The Space Devs, Launch Library 2](https://thespacedevs.com/llapi) (free tier)
 - Constellation figures: Stellarium's "modern" sky culture
 - Satellite propagation: [satellite.js](https://github.com/shashwatak/satellite-js); rendering: [three.js](https://threejs.org)
