@@ -29,10 +29,13 @@ describe('galaxy photographs', () => {
       expect(y + h).toBeLessThanOrEqual(1);
     }
   });
-  it('the Milky Way, which nobody has photographed from outside, is an illustration and says so', () => {
+  it('only the two galaxies that cannot be photographed whole are illustrations, and say so', () => {
     expect(PHOTOS.milkyway.illustration).toBe(true);
     expect(PHOTOS.milkyway.credit).toMatch(/artist/i);
-    for (const [key, p] of Object.entries(PHOTOS)) if (key !== 'milkyway') expect(p.illustration, key).toBeFalsy();
+    expect(PHOTOS.sagdwarf.illustration).toBe(true);
+    expect(PHOTOS.sagdwarf.credit).toMatch(/illustration/i);
+    for (const [key, p] of Object.entries(PHOTOS))
+      if (key !== 'milkyway' && key !== 'sagdwarf') expect(p.illustration, key).toBeFalsy();
   });
 });
 

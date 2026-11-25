@@ -21,5 +21,6 @@ app, in each galaxy's info panel). This project is not affiliated with or endors
 | `m32.jpg` | Messier 32 | `Messier 32 from Hubble.jpg` | NASA and ESA (Hubble) | Public domain |
 | `fornax.jpg` | Fornax Dwarf | `Fornax dwarf galaxy.jpg` | ESO and the Digitized Sky Survey 2 | CC BY 4.0 |
 | `ngc6822.jpg` | Barnard's Galaxy | `NGC 6822 (Barnard’s Galaxy).jpg` | ESO (MPG/ESO 2.2-metre telescope) | CC BY 4.0 |
+| `sagdwarf.jpg` | Sagittarius Dwarf | `Illustration of the Sagittarius Dwarf Galaxy.png` | Dontuseurrealname (digital illustration based on X-ray imaging); background darkened and the picture converted to JPEG for this atlas | CC BY-SA 4.0 |
 
 Nobody can photograph the Milky Way from outside, so its picture is an artist's concept of what we think it looks like.

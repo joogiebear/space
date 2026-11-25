@@ -135,6 +135,16 @@ export const PHOTOS: Record<string, GalaxyPhoto> = {
     crop: [0.1, 0.1, 0.8, 0.88],
     credit: 'ESO, MPG/ESO 2.2-metre telescope (CC BY 4.0)',
   },
+  sagdwarf: {
+    inclination: 0,
+    angle: 0,
+    file: 'sagdwarf.jpg',
+    size: 2.8,
+    illustration: true,
+    // the drawing is tall: frame the middle of the dwarf
+    crop: [0.1, 0.3, 0.78, 0.44],
+    credit: 'Digital illustration by Dontuseurrealname, based on X-ray imaging (CC BY-SA 4.0); background darkened',
+  },
 };
 
 /** Opacity of the photograph for a camera this many galaxy radii away: gone when you are close, full from afar. */

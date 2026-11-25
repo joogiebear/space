@@ -99,7 +99,7 @@ stars as you fly toward it, so you see the photograph from afar and the model up
 illustration; the Cartwheel is Webb's picture of it. Each picture lies in its galaxy's own plane, turned
 face-on using the galaxy's real inclination (stretched up to three times across the short axis) and tilted with the model,
 so orbiting the view shows the discs at their different angles. Four small Local Group dwarfs sit around the Milky Way and Andromeda: Messier 32, Fornax and Barnard's
-Galaxy have pictures, and the Sagittarius Dwarf (hidden behind the Milky Way, no suitable photograph) is generated stars. Positions and sizes stay schematic.
+Galaxy have photographs, and the Sagittarius Dwarf (hidden behind the Milky Way, so never photographed whole) has a labelled illustration. Positions and sizes stay schematic.
 
 ## Astronomy calendar
 
