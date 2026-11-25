@@ -89,3 +89,16 @@ export function pulsarMat(color: number[]) {
     blending: THREE.AdditiveBlending,
   });
 }
+
+/** A real picture on a quad, faded to nothing at the round edge so no square shows against the sky. */
+export const EHT_FS = `uniform sampler2D uMap;varying vec2 vUv;
+void main(){float a=smoothstep(1.,.78,length(vUv));vec3 c=texture2D(uMap,vUv*.5+.5).rgb;gl_FragColor=vec4(c*a,a);}`;
+
+export function ehtMat() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uMap: { value: null } },
+    vertexShader: VS,
+    fragmentShader: EHT_FS,
+    ...over,
+  });
+}

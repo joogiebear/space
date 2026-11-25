@@ -23,6 +23,25 @@ export interface CompactObject {
   facts: [string, string][];
   sub: string;
   text: string;
+  /** Galactic longitude and latitude in degrees, for objects inside the Milky Way (measured from the Sun) */
+  galactic?: { l: number; b: number };
+  /** Where it sits in the atlas: the view to open and the object in it */
+  home?: { scene: string; sel: string; label: string };
+}
+
+/** The Milky Way view puts the Sun 30 units from the centre, which is about 26,000 light years. */
+export const LY_PER_UNIT = 26000 / 30;
+
+/**
+ * Where a thing seen at galactic longitude `l`, latitude `b` and distance `ly` from the Sun lies, as steps along three
+ * directions in the Milky Way view: toward the galactic centre, along the Sun's direction of travel (longitude 90°), and
+ * toward the north galactic pole (up). In scene units.
+ */
+export function sunOffset(l: number, b: number, ly: number): { toCentre: number; ahead: number; up: number } {
+  const L = (l * Math.PI) / 180,
+    B = (b * Math.PI) / 180,
+    d = ly / LY_PER_UNIT;
+  return { toCentre: d * Math.cos(B) * Math.cos(L), ahead: d * Math.cos(B) * Math.sin(L), up: d * Math.sin(B) };
 }
 
 /** Radius of the event horizon of a non-spinning black hole, in km: 2GM/c². About 2.95 km for each sun of mass. */
@@ -69,6 +88,8 @@ export const OBJECTS: CompactObject[] = [
     tilt: 0,
     sub: 'Neutron star · 6,500 light years away',
     text: 'Not a black hole but the next thing down: the crushed core of a star seen to explode in 1054. It is about 20 km across, spins 30 times a second, and sweeps two beams of radiation past us like a lighthouse.',
+    galactic: { l: 184.56, b: -5.78 },
+    home: { scene: 'gal:milkyway', sel: 'crab', label: 'Find it in the Milky Way' },
     facts: [
       ['Size', 'about 20 km across'],
       ['Spin', '30 times a second'],
@@ -89,6 +110,8 @@ export const OBJECTS: CompactObject[] = [
     tilt: 78,
     sub: 'Stellar black hole · 1,560 light years away',
     text: 'The closest black hole known, found in 2022 from the wobble it causes in a Sun-like star circling it at about the distance of Earth from the Sun. It is quiet: it is not feeding, so it gives off no light of its own.',
+    galactic: { l: 22.63, b: 18.05 },
+    home: { scene: 'gal:milkyway', sel: 'gaiabh1', label: 'Find it in the Milky Way' },
     facts: [['Found', '2022, from Gaia satellite data']],
   },
   {
@@ -105,6 +128,8 @@ export const OBJECTS: CompactObject[] = [
     tilt: 72,
     sub: 'Stellar black hole · 7,200 light years away',
     text: 'The first object widely accepted as a black hole. It pulls gas off a blue supergiant companion into a hot disc that glows in X-rays, and it spins close to the fastest rate possible.',
+    galactic: { l: 71.33, b: 3.07 },
+    home: { scene: 'gal:milkyway', sel: 'cygx1', label: 'Find it in the Milky Way' },
     facts: [
       ['Discovered', 'X-ray source found in 1964'],
       ['Companion', 'a blue supergiant about 40 times the Sun’s mass'],
@@ -143,6 +168,7 @@ export const OBJECTS: CompactObject[] = [
     tilt: 68,
     sub: 'Supermassive black hole · 26,700 light years away',
     text: 'The black hole at the centre of the Milky Way. Stars race around it at thousands of kilometres a second. It is quiet now, living on a trickle of gas. The Event Horizon Telescope imaged its shadow in 2022.',
+    home: { scene: 'gal:milkyway', sel: 'sgra', label: 'Find it in the Milky Way' },
     facts: [['First image', 'Event Horizon Telescope, 2022']],
   },
   {
@@ -159,6 +185,7 @@ export const OBJECTS: CompactObject[] = [
     tilt: 70,
     sub: 'Supermassive black hole · 53 million light years away',
     text: 'The black hole in the giant galaxy M87, the first ever imaged: in 2019 the Event Horizon Telescope showed a ring of hot gas around a dark shadow. It also fires a jet of particles that stretches about 5,000 light years.',
+    home: { scene: 'gal:m87', sel: 'm87bh', label: 'Find it in its galaxy' },
     facts: [
       ['First image', 'Event Horizon Telescope, 2019'],
       ['Jet', 'about 5,000 light years long'],
@@ -199,3 +226,40 @@ export function layoutX(halves: number[], gap: number): number[] {
   const mid = (out[0] + out[out.length - 1]) / 2;
   return out.map(v => v - mid);
 }
+
+/** The two real pictures of a black hole's shadow, shown beneath the drawing of the same object. */
+export interface EhtImage {
+  id: string;
+  /** The object it is a picture of */
+  of: string;
+  name: string;
+  file: string;
+  /** How wide the bright ring is across, as a fraction of the picture: used to draw the ring at the same size as the drawing's */
+  ringFrac: number;
+  sub: string;
+  text: string;
+  credit: string;
+}
+
+export const EHT_IMAGES: EhtImage[] = [
+  {
+    id: 'm87eht',
+    of: 'm87',
+    name: 'M87* · EHT image',
+    file: 'm87.jpg',
+    ringFrac: 0.375,
+    sub: 'Radio image · released 10 April 2019',
+    text: 'The first image of a black hole. Eight radio telescopes on Earth worked together as one dish the size of the planet. The bright crescent is hot gas swirling toward the hole, brighter on the side moving toward us; the dark middle is the shadow. The colours are false: this is radio light.',
+    credit: 'EHT Collaboration (CC BY 4.0)',
+  },
+  {
+    id: 'sgraeht',
+    of: 'sgra',
+    name: 'Sagittarius A* · EHT image',
+    file: 'sgra.jpg',
+    ringFrac: 0.62,
+    sub: 'Radio image · released 12 May 2022',
+    text: 'The black hole at the heart of our own galaxy, about 1,500 times lighter than M87*. Its gas circles in minutes, so the picture is an average of many observations. It has the same ring and shadow that Einstein’s theory predicts. The colours are false: this is radio light.',
+    credit: 'EHT Collaboration (CC BY 4.0)',
+  },
+];

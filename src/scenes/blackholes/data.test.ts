@@ -1,5 +1,17 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { OBJECTS, fmtDistance, fmtLength, fmtMass, layoutX, reach, schwarzschildKm } from './data';
+import {
+  EHT_IMAGES,
+  LY_PER_UNIT,
+  OBJECTS,
+  fmtDistance,
+  fmtLength,
+  fmtMass,
+  layoutX,
+  reach,
+  schwarzschildKm,
+  sunOffset,
+} from './data';
 
 describe('horizon radius', () => {
   it('is about 2.95 km per sun of mass', () => {
@@ -52,5 +64,47 @@ describe('layout', () => {
       xs = layoutX(halves, 10);
     for (let i = 1; i < xs.length; i++) expect(xs[i] - xs[i - 1] - halves[i - 1] - halves[i]).toBeCloseTo(10, 6);
     expect(xs[0] + xs[xs.length - 1]).toBeCloseTo(0, 6);
+  });
+});
+
+describe('where things are in the Milky Way', () => {
+  it('puts the galactic centre 30 units from the Sun, straight ahead of longitude 0', () => {
+    const o = sunOffset(0, 0, 26000);
+    expect(o.toCentre).toBeCloseTo(30, 6);
+    expect(o.ahead).toBeCloseTo(0, 6);
+    expect(o.up).toBeCloseTo(0, 6);
+    expect(LY_PER_UNIT).toBeCloseTo(866.67, 1);
+  });
+  it('puts longitude 90 along the direction the Sun travels and the pole straight up', () => {
+    expect(sunOffset(90, 0, 1000).ahead).toBeCloseTo(1000 / LY_PER_UNIT, 6);
+    expect(sunOffset(0, 90, 1000).up).toBeCloseTo(1000 / LY_PER_UNIT, 6);
+  });
+  it('keeps the real distance from the Sun', () => {
+    for (const o of OBJECTS) {
+      if (!o.galactic) continue;
+      const v = sunOffset(o.galactic.l, o.galactic.b, o.distanceLy);
+      expect(Math.hypot(v.toCentre, v.ahead, v.up) * LY_PER_UNIT).toBeCloseTo(o.distanceLy, 3);
+    }
+  });
+  it('knows which objects live in the Milky Way, and every home names an object', () => {
+    expect(OBJECTS.filter(o => o.galactic).map(o => o.id)).toEqual(['crab', 'gaiabh1', 'cygx1']);
+    for (const o of OBJECTS.filter(o => o.home)) expect(o.home!.sel.length).toBeGreaterThan(2);
+  });
+});
+
+describe('the real Event Horizon Telescope images', () => {
+  const credits = readFileSync('public/assets/blackholes/CREDITS.md', 'utf8');
+  it('belong to an object, exist as files, and are credited', () => {
+    for (const e of EHT_IMAGES) {
+      expect(
+        OBJECTS.some(o => o.id === e.of),
+        e.id,
+      ).toBe(true);
+      expect(() => readFileSync('public/assets/blackholes/' + e.file), e.file).not.toThrow();
+      expect(credits, e.file).toContain('`' + e.file + '`');
+      expect(e.credit).toMatch(/EHT/);
+      expect(e.ringFrac).toBeGreaterThan(0.1);
+      expect(e.ringFrac).toBeLessThan(1);
+    }
   });
 });

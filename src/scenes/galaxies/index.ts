@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import { App, Markers, U, camera, glowSprite, register } from '@/engine';
-import { openScene } from '@/engine/sceneManager';
+import { showView } from '@/engine/navigate';
 import { TAU, mixc, rng } from '@/lib';
 import type { Body, Info, Layer, Scene } from '@/types';
 import { GALAXIES, type GalaxyDef } from './data';
 import { makeGalaxyGeo } from './generator';
 import { photoPlane } from './photoPlane';
 import { PHOTOS, photoFade } from './photos';
+import { OBJECTS, sunOffset } from '../blackholes/data';
 import { galaxyMat, rgb01, spinTime } from './shaders';
 
 const ASSETS = 'assets/galaxies/';
@@ -181,7 +182,7 @@ function galaxy(g: GalaxyDef): Scene {
   core.material.opacity = 0.5;
   group.add(core);
   const bodies: Body[] = [],
-    mk = new Markers(2, true);
+    mk = new Markers(8, true);
   group.add(mk.points);
   if (g.key === 'milkyway') {
     const mkb = (
@@ -234,9 +235,60 @@ function galaxy(g: GalaxyDef): Scene {
           sub: 'Supermassive black hole',
           text: 'A black hole of about 4 million solar masses sits at the very centre of the Milky Way, ringed by a dense cluster of ancient stars.',
         },
-        { action: { label: 'See it among the black holes', run: () => openScene('blackholes') } },
+        {
+          action: { label: 'See it among the black holes', run: () => showView({ scene: 'blackholes', sel: 'sgra' }) },
+        },
       ),
     );
+    // the black holes and the neutron star that are in our own galaxy, at the places they really are
+    const sun = bodies[0],
+      sunPos = new THREE.Vector3();
+    for (const o of OBJECTS.filter(o => o.galactic)) {
+      const here = o.galactic!,
+        off = sunOffset(here.l, here.b, o.distanceLy);
+      bodies.push({
+        id: o.id,
+        label: o.name,
+        col: [0.75, 0.85, 1],
+        info: { sub: o.sub, text: o.text },
+        small: true,
+        radNow: 0.6,
+        focusD: 8,
+        minD: 1.2,
+        labelCls: '',
+        getPos(v: THREE.Vector3) {
+          // the Sun's place, then the offset in the frame that turns with it around the galaxy
+          sun.getPos(sunPos);
+          const a = Math.atan2(sunPos.z, sunPos.x);
+          return v.set(
+            sunPos.x + off.toCentre * -Math.cos(a) + off.ahead * -Math.sin(a),
+            off.up,
+            sunPos.z + off.toCentre * -Math.sin(a) + off.ahead * Math.cos(a),
+          );
+        },
+        action: {
+          label: 'See it among the black holes',
+          run: () => showView({ scene: 'blackholes', sel: o.id }),
+        },
+      });
+    }
+  }
+  if (g.key === 'm87') {
+    const o = OBJECTS.find(x => x.id === 'm87')!;
+    bodies.push({
+      id: 'm87bh',
+      label: 'Messier 87*',
+      col: [1, 0.6, 0.3],
+      info: { sub: o.sub, text: o.text },
+      radNow: 0.8,
+      focusD: 10,
+      minD: 1.5,
+      labelCls: '',
+      getPos(v: THREE.Vector3) {
+        return v.set(0, 0, 0);
+      },
+      action: { label: 'See it among the black holes', run: () => showView({ scene: 'blackholes', sel: 'm87' }) },
+    });
   }
   const tmp = new THREE.Vector3();
   return {
@@ -258,7 +310,7 @@ function galaxy(g: GalaxyDef): Scene {
       mat.uniforms.uTime.value = spinTime();
       bodies.forEach((b, i) => {
         b.getPos(tmp);
-        mk.set(i, tmp.x, tmp.y, tmp.z, b.col, App.sel === b ? 46 : 30);
+        mk.set(i, tmp.x, tmp.y, tmp.z, b.col, App.sel === b ? (b.small ? 34 : 46) : b.small ? 16 : 30);
       });
     },
     search(q) {

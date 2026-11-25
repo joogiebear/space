@@ -17,7 +17,7 @@ satellites and debris orbiting Earth. Real data, drawn on the GPU.
 | View | What it shows | Data |
 | --- | --- | --- |
 | Local Universe / Galaxies | Famous galaxies, shown as real photographs from afar; fly inside the Milky Way | Procedural stars, schematic positions; photographs from NASA, ESA, ESO and NOIRLab |
-| Black holes | A pulsar, stellar and supermassive black holes and a merger, side by side, each drawn as a glowing disc with its shadow and photon ring; real mass, horizon radius and distance in the info panel | Published values (Gaia, Event Horizon Telescope, LIGO); the pictures are drawn by a shader, not photographs |
+| Black holes | A pulsar, stellar and supermassive black holes and a merger, side by side, each drawn as a glowing disc with its shadow and photon ring; real mass, horizon radius and distance in the info panel | Published values (Gaia, Event Horizon Telescope, LIGO); drawn by a shader, plus the two real EHT images |
 | Star map | ~109k real stars, 88 constellation figures, optional exoplanet host layer | HYG v4.0, Stellarium, NASA Exoplanet Archive |
 | Solar system | Planets at their real positions, moons, ~96k asteroids, comets, spacecraft | JPL elements, SBDB, Horizons |
 | Earth orbit | ~20k tracked satellites, stations, debris, rocket bodies; ISS follow, ground track and next-pass prediction for any selected satellite | CelesTrak (SGP4 / Kepler + J2 on the GPU) |
@@ -111,7 +111,14 @@ side moving toward you, the far side of the disc bent over the top and under the
 radii across, and a thin photon ring. It is a drawing in the spirit of the real thing, not a ray-traced render. Sizes are
 schematic (the real ones span ten orders of magnitude); the info panel gives the real mass, the horizon radius
 (2GM/c², about 2.95 km per sun of mass) and the distance. The two black holes of GW150914 spiral together and start again,
-and the pulsar's two beams sweep round. A guided tour walks through them. Nothing is downloaded: there are no image files.
+and the pulsar's two beams sweep round. A guided tour walks through them.
+
+Under the drawings of Messier 87* and Sagittarius A* hang the real Event Horizon Telescope images of the same black holes, scaled so the
+rings match (a layer toggle hides them); they are credited in
+[`public/assets/blackholes/CREDITS.md`](public/assets/blackholes/CREDITS.md). Each object that lives in a galaxy is also placed where it
+really is: Sagittarius A* at the centre of the Milky Way, the Crab Pulsar, Cygnus X-1 and Gaia BH1 at their real distances and
+directions from the Sun (from their galactic longitude and latitude, about 866 light years to a scene unit), and Messier 87* at the
+centre of its galaxy. Each links to the other view. GW150914 and TON 618 are too far away to be on the map.
 
 ## Astronomy calendar
 

@@ -474,3 +474,23 @@ test('the Black Holes view draws the black holes and opens one by name', async (
   await expect(page.getByText('128 AU')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('black holes sit where they are: in the Milky Way, and with their real images', async ({ page }) => {
+  const errors = await boot(page);
+  const img = await page.evaluate(async () => (await fetch('assets/blackholes/m87.jpg')).ok);
+  expect(img).toBe(true);
+  await page.goto('./?x=mw#gal:milkyway?sel=cygx1');
+  await page.reload();
+  await page.waitForTimeout(1500);
+  await expect(page.getByText('7,200 light years away').first()).toBeVisible();
+  await page.goto('./?x=bh2#blackholes');
+  await page.reload();
+  await page.waitForTimeout(1500);
+  const box = page.getByLabel('Real Event Horizon Telescope images');
+  if (await box.isVisible()) {
+    await expect(box).toBeChecked();
+    await box.uncheck();
+    await box.check();
+  }
+  expect(errors).toEqual([]);
+});
