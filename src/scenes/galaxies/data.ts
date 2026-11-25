@@ -1,4 +1,4 @@
-/** The twelve galaxies in the Local Universe view. Positions and distances are schematic. */
+/** The sixteen galaxies in the Local Universe view. Positions and distances are schematic. */
 export interface GalaxyDef {
   key: string;
   name: string;
@@ -189,5 +189,53 @@ export const GALAXIES: GalaxyDef[] = [
     arm: [160, 190, 255],
     sub: 'Spiral · 12 million ly away',
     text: 'A bright grand-design spiral in Ursa Major, locked in a gravitational dance with its neighbour M82.',
+  },
+  {
+    key: 'm32',
+    name: 'Messier 32',
+    pos: [28, 4, -12],
+    R: 1.1,
+    type: 'ell',
+    flat: 1,
+    core: [255, 225, 175],
+    arm: [255, 205, 150],
+    tilt: [0, 0],
+    sub: 'Compact elliptical · 2.5 million ly away',
+    text: 'A small, dense satellite of Andromeda. It is probably the stripped-down core of a larger galaxy that Andromeda tore apart.',
+  },
+  {
+    key: 'sagdwarf',
+    name: 'Sagittarius Dwarf',
+    pos: [6, -3, -10],
+    R: 1.6,
+    type: 'ell',
+    flat: 0.5,
+    core: [255, 225, 180],
+    arm: [255, 210, 160],
+    tilt: [0.9, 0.5],
+    sub: 'Dwarf elliptical · ~70,000 ly away',
+    text: 'A small galaxy being pulled apart by the Milky Way. Its stars are stretched into streams that wrap all the way around us.',
+  },
+  {
+    key: 'fornax',
+    name: 'Fornax Dwarf',
+    pos: [-8, 9, 13],
+    R: 1.5,
+    type: 'irr',
+    core: [255, 230, 200],
+    arm: [200, 210, 255],
+    sub: 'Dwarf spheroidal · 460,000 ly away',
+    text: 'A faint, old satellite of the Milky Way that carries its own six globular clusters.',
+  },
+  {
+    key: 'ngc6822',
+    name: "Barnard's Galaxy",
+    pos: [-24, -4, -28],
+    R: 1.8,
+    type: 'irr',
+    core: [255, 235, 215],
+    arm: [170, 200, 255],
+    sub: 'Irregular dwarf · 1.6 million ly away',
+    text: 'An isolated dwarf in Sagittarius, found in 1884 by E. E. Barnard, and one of the first galaxies shown to lie outside the Milky Way.',
   },
 ];

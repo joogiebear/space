@@ -98,7 +98,8 @@ In the Local Universe view each galaxy is a real photograph (a layer toggle turn
 stars as you fly toward it, so you see the photograph from afar and the model up close. The Milky Way, which nobody can photograph from outside, shows NASA's artist's concept of it and is labelled an
 illustration; the Cartwheel is Webb's picture of it. Each picture lies in its galaxy's own plane, turned
 face-on using the galaxy's real inclination (stretched up to three times across the short axis) and tilted with the model,
-so orbiting the view shows the discs at their different angles. Positions and sizes stay schematic.
+so orbiting the view shows the discs at their different angles. Four small Local Group dwarfs (Messier 32, the
+Sagittarius, Fornax and Barnard's dwarfs) have no picture and are drawn as generated stars. Positions and sizes stay schematic.
 
 ## Astronomy calendar
 
