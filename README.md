@@ -158,6 +158,15 @@ npm run e2e                       # builds the static site, serves it, runs desk
 screen and follows window changes, the keyboard works, and real two-finger pinch and one-finger drag gestures
 neither select anything nor open a panel. CI runs it on every push.
 
+### On a real phone
+
+```
+npm run phone    # builds the static site and serves it to your Wi-Fi, printing the address to open
+```
+
+Add `?diag` to any address to see frame rate, GPU and device facts on screen. The checklist is in
+[`docs/PHONE_TESTING.md`](docs/PHONE_TESTING.md).
+
 ## Code style
 
 ```

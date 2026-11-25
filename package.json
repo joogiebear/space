@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "api": "python -m server 8080",
     "build:static": "cross-env VITE_STATIC_DATA=1 vite build",
+    "phone": "node tools/phone.mjs",
     "e2e": "playwright test"
   },
   "dependencies": {
