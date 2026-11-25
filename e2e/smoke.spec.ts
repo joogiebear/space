@@ -452,7 +452,7 @@ test('the Local Universe shows galaxy photographs, with a layer toggle', async (
   expect(photos.ok).toBe(true);
   expect(photos.type).toContain('image');
   await page.waitForTimeout(1500); // the photographs load and draw
-  const box = page.getByLabel('Galaxy photographs');
+  const box = page.getByLabel('Galaxy photographs and art');
   if (await box.isVisible()) {
     await expect(box).toBeChecked();
     await box.uncheck();

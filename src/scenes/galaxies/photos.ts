@@ -1,7 +1,8 @@
 /**
  * Real photographs of the galaxies, shown in the Local Universe view from a distance and handed over to the generated
- * stars as you fly in. Credits are in public/assets/galaxies/CREDITS.md. The Milky Way (we are inside it) and the
- * Cartwheel (no clean public image was found) have none.
+ * stars as you fly in. Credits are in public/assets/galaxies/CREDITS.md. Nobody has photographed the Milky Way from
+ * outside, so it shows NASA's artist's concept of what we think it looks like, labelled as an illustration. The
+ * Cartwheel (no clean public image was found) has none.
  */
 export interface GalaxyPhoto {
   /** File in assets/galaxies */
@@ -12,9 +13,17 @@ export interface GalaxyPhoto {
   crop?: [number, number, number, number];
   /** The credit shown in the galaxy's info */
   credit: string;
+  /** An artist's impression rather than a photograph; the info panel says so. */
+  illustration?: boolean;
 }
 
 export const PHOTOS: Record<string, GalaxyPhoto> = {
+  milkyway: {
+    file: 'milkyway.jpg',
+    size: 2.4,
+    illustration: true,
+    credit: "Artist's concept based on Spitzer data, NASA/JPL-Caltech/R. Hurt (SSC) (public domain)",
+  },
   andromeda: {
     file: 'andromeda.jpg',
     size: 2.4,

@@ -6,6 +6,7 @@ app, in each galaxy's info panel). This project is not affiliated with or endors
 
 | File | Galaxy | Commons file | Credit | Licence |
 | --- | --- | --- | --- | --- |
+| `milkyway.jpg` | Milky Way (an illustration, not a photograph) | `Milky Way 2005.jpg` | NASA/JPL-Caltech/R. Hurt (SSC), artist's concept based on Spitzer Space Telescope survey data, [Spitzer release 2008-06-03](https://www.nasa.gov/mission_pages/spitzer/multimedia/20080603a.html) | Public domain |
 | `andromeda.jpg` | Andromeda (M31) | `Andromeda Galaxy (PIA04921).jpg` | NASA/JPL-Caltech (GALEX ultraviolet) | Public domain |
 | `triangulum.jpg` | Triangulum (M33) | `VST snaps a very detailed view of the Triangulum Galaxy.jpg` | ESO, [eso1424a](https://www.eso.org/public/images/eso1424a/) | CC BY 4.0 |
 | `lmc.jpg` | Large Magellanic Cloud | `Ssc2006-17a.jpg` | NASA/JPL-Caltech/M. Meixner (STScI) and the SAGE Legacy Team (Spitzer infrared) | Public domain |
@@ -17,4 +18,4 @@ app, in each galaxy's info panel). This project is not affiliated with or endors
 | `m87.jpg` | Messier 87 | `Hubble's view of M87 galaxy ESA501596.jpg` | European Space Agency (Hubble) | CC BY 4.0 |
 | `bodes.jpg` | Bode's Galaxy (M81) | `Messier 81 HST.jpg` | NASA, ESA and the Hubble Heritage Team (STScI/AURA), [heic0710a](https://esahubble.org/images/heic0710a/) | Public domain |
 
-The Cartwheel Galaxy and the Milky Way have no photograph here.
+The Cartwheel Galaxy has no picture here. Nobody can photograph the Milky Way from outside, so its picture is an artist's concept of what we think it looks like.

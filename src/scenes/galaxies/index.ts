@@ -143,7 +143,9 @@ function cosmos(): Scene {
       info: {
         sub: g.sub,
         text: g.text,
-        ...(photo ? { rows: [['Photograph', photo.credit]] as [string, string][] } : {}),
+        ...(photo
+          ? { rows: [[photo.illustration ? 'Illustration' : 'Photograph', photo.credit]] as [string, string][] }
+          : {}),
       },
     });
   }
@@ -165,7 +167,7 @@ function cosmos(): Scene {
     layers: [
       {
         id: 'photos',
-        label: 'Galaxy photographs',
+        label: 'Galaxy photographs and art',
         color: '#ffd6a0',
         on: true,
         apply: on => (photosOn = on),

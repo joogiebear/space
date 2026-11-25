@@ -29,8 +29,10 @@ describe('galaxy photographs', () => {
       expect(y + h).toBeLessThanOrEqual(1);
     }
   });
-  it('the Milky Way, which we are inside, has none', () => {
-    expect(PHOTOS.milkyway).toBeUndefined();
+  it('the Milky Way, which nobody has photographed from outside, is an illustration and says so', () => {
+    expect(PHOTOS.milkyway.illustration).toBe(true);
+    expect(PHOTOS.milkyway.credit).toMatch(/artist/i);
+    for (const [key, p] of Object.entries(PHOTOS)) if (key !== 'milkyway') expect(p.illustration, key).toBeFalsy();
   });
 });
 

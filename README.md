@@ -95,8 +95,8 @@ about 0.3 degrees. Planet brightness is approximate (distance only, no phase ter
 your browser (set it from **Your location** in the Objects list); until then the sky is shown from Greenwich.
 
 In the Local Universe view each galaxy is a real photograph (a layer toggle turns them off) that gives way to the generated
-stars as you fly toward it, so you see the photograph from afar and the model up close. The Milky Way has no photograph
-(we are inside it) and neither has the Cartwheel (no clean public image). Positions, sizes and orientation stay schematic;
+stars as you fly toward it, so you see the photograph from afar and the model up close. The Milky Way, which nobody can photograph from outside, shows NASA's artist's concept of it and is labelled an
+illustration; the Cartwheel has no picture (no clean public image). Positions, sizes and orientation stay schematic;
 the picture always faces you.
 
 ## Astronomy calendar
