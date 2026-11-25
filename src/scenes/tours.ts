@@ -102,6 +102,53 @@ export const TOURS: Tour[] = [
     ],
   },
   {
+    id: 'address',
+    title: 'Our cosmic address',
+    blurb: 'From your planet out to the edge of the observable universe, one step at a time',
+    steps: [
+      {
+        view: { scene: 'earth', sel: 'earth' },
+        title: 'Planet Earth',
+        text: 'Your address starts here: a rocky planet about 12,700 km across, the third from its star. Light can circle it about seven and a half times in a second.',
+      },
+      {
+        view: { scene: 'solar', sel: 'sun' },
+        title: 'The Solar System',
+        text: 'Earth is one of eight planets circling the Sun. Out to Neptune it is about 60 AU across, and light takes around four hours to get from the Sun to Neptune.',
+      },
+      {
+        view: { scene: 'starmap', sel: 'sol' },
+        title: 'The neighbourhood',
+        text: 'The nearest other star, Proxima Centauri, is 4.2 light years away. Even the stars you can see by eye are almost all within a few thousand light years: a tiny patch of our galaxy.',
+      },
+      {
+        view: { scene: 'gal:milkyway', sel: 'sun' },
+        title: 'The Milky Way',
+        text: 'The Sun sits about 26,000 light years from the centre of a galaxy roughly 100,000 light years across, in a minor arm called the Orion Spur. We orbit the centre once every 225 million years.',
+      },
+      {
+        view: { scene: 'cosmos', sel: 'andromeda' },
+        title: 'The Local Group',
+        text: 'Our galaxy has dozens of neighbours in a region about 10 million light years across. The biggest are the Milky Way and Andromeda, 2.5 million light years away and heading our way.',
+      },
+      {
+        view: { scene: 'universe', sel: 'virgo' },
+        title: 'The Virgo Cluster',
+        text: 'The nearest big cluster of galaxies is about 54 million light years away, home to well over a thousand galaxies and the giant black hole of Messier 87.',
+      },
+      {
+        view: { scene: 'universe', sel: 'laniakea' },
+        title: 'Laniakea',
+        text: 'The Virgo Cluster and our Local Group are both part of Laniakea, a supercluster about 520 million light years across holding some 100,000 galaxies. This is the biggest thing we are known to belong to.',
+      },
+      {
+        view: { scene: 'universe', sel: 'cmb' },
+        title: 'The edge of what we can see',
+        text: 'The oldest light, from 380,000 years after the Big Bang, has travelled 13.8 billion years to reach us. The matter that sent it is now about 46 billion light years away. Beyond lies more universe we cannot see.',
+      },
+    ],
+  },
+  {
     id: 'blackholes',
     title: 'Black holes, from small to huge',
     blurb: 'A pulsar, stellar and supermassive black holes, and two that merged',

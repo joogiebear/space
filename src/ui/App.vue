@@ -4,6 +4,7 @@ import HoverTip from './components/HoverTip.vue';
 import InfoPanel from './components/InfoPanel.vue';
 import LocationDialog from './components/LocationDialog.vue';
 import MobileBar from './components/MobileBar.vue';
+import ScalePanel from './components/ScalePanel.vue';
 import SearchBox from './components/SearchBox.vue';
 import SidePanel from './components/SidePanel.vue';
 import TimePanel from './components/TimePanel.vue';
@@ -22,6 +23,7 @@ import { ui } from './store';
   <MobileBar />
   <HoverTip />
   <EventsPanel />
+  <ScalePanel />
   <TourPanel />
   <ToastMessage />
   <LocationDialog />

@@ -5,6 +5,7 @@ import { deselect } from '@/engine/selection';
 import { stopTour, tourActive } from '@/engine/tour';
 import { App } from '@/engine/state';
 import { closeEvents, eventsUi } from './eventsStore';
+import { closeScale, scaleUi } from './scaleStore';
 import { focusSearch } from './searchFocus';
 import { toast } from './toast';
 
@@ -26,6 +27,7 @@ export function handleKey(e: KeyboardEvent): boolean {
 
   if (e.key === 'Escape') {
     if (eventsUi.open) closeEvents();
+    else if (scaleUi.open) closeScale();
     else if (tourActive()) stopTour();
     else if (App.sel) deselect();
     else goUp();

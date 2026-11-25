@@ -494,3 +494,29 @@ test('black holes sit where they are: in the Milky Way, and with their real imag
   }
   expect(errors).toEqual([]);
 });
+
+test('the Scale panel slides from a proton to the universe and Escape closes it', async ({ page }) => {
+  const errors = await boot(page);
+  await page.getByRole('button', { name: 'Scale', exact: true }).click();
+  const panel = page.getByRole('dialog', { name: 'Scale of the universe' });
+  await expect(panel).toBeVisible();
+  await expect(panel.locator('.near b')).toHaveText('A person');
+  const slider = panel.getByLabel('Size, as a power of ten of a metre');
+  await slider.fill('26.9');
+  await expect(panel.locator('.size')).toHaveText('84 billion light years');
+  await expect(panel.locator('.near b')).toHaveText('The observable universe');
+  await slider.fill('-14.8');
+  await expect(panel.locator('.near b')).toHaveText('A proton');
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('the Observable Universe is a view of its own, above the Local Universe', async ({ page }) => {
+  const errors = await boot(page);
+  await page.goto('./?x=uni#universe?sel=laniakea');
+  await page.reload();
+  await page.waitForTimeout(1500);
+  await expect(page.getByText('520 million light years').first()).toBeVisible();
+  expect(errors).toEqual([]);
+});

@@ -136,7 +136,7 @@ function cosmos(): Scene {
     rate: 1,
     extent: 1000,
     intro:
-      'A map of famous galaxies near the Milky Way. Positions are schematic and distances heavily compressed. Select a galaxy to focus it, or just keep zooming in on one to fly inside.',
+      'A map of famous galaxies near the Milky Way. Positions are schematic and distances heavily compressed. Select a galaxy to focus it, or just keep zooming in on one to fly inside. Zoom out far enough and you reach the whole observable universe.',
     center(v: THREE.Vector3) {
       return v.set(0, 0, 0);
     },

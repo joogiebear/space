@@ -27,19 +27,21 @@ export const sceneTitle = (id: string) => REG[id].title;
 
 /** Navigation tree: each scene's parent, so "up" and the breadcrumb work. */
 const PARENT = (id: string): string | null =>
-  id === 'cosmos'
+  id === 'universe'
     ? null
-    : id.startsWith('gal:') || id === 'blackholes'
-      ? 'cosmos'
-      : id === 'starmap'
-        ? 'gal:milkyway'
-        : id === 'solar'
-          ? 'starmap'
-          : id === 'earth'
-            ? 'solar'
-            : id === 'sky'
-              ? 'earth'
-              : null;
+    : id === 'cosmos'
+      ? 'universe'
+      : id.startsWith('gal:') || id === 'blackholes'
+        ? 'cosmos'
+        : id === 'starmap'
+          ? 'gal:milkyway'
+          : id === 'solar'
+            ? 'starmap'
+            : id === 'earth'
+              ? 'solar'
+              : id === 'sky'
+                ? 'earth'
+                : null;
 export const parentOf = PARENT;
 export const chain = (id: string) => {
   const c: string[] = [];
@@ -49,6 +51,7 @@ export const chain = (id: string) => {
 
 /** Direct-jump tabs along the top. */
 export const TABS: [string, string][] = [
+  ['universe', 'Universe'],
   ['cosmos', 'Galaxies'],
   ['gal:milkyway', 'Milky Way'],
   ['blackholes', 'Black Holes'],

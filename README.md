@@ -16,6 +16,7 @@ satellites and debris orbiting Earth. Real data, drawn on the GPU.
 
 | View | What it shows | Data |
 | --- | --- | --- |
+| Observable Universe | A schematic cosmic web out to the oldest light we can see, with real structures (Virgo, Laniakea, Sloan Great Wall, TON 618, JADES-GS-z14-0, the cosmic microwave background) at their real light-travel distances on a logarithmic scale | Published distances; the web itself is generated, not a map of real galaxies |
 | Local Universe / Galaxies | Famous galaxies, shown as real photographs from afar; fly inside the Milky Way | Procedural stars, schematic positions; photographs from NASA, ESA, ESO and NOIRLab |
 | Black holes | A pulsar, stellar and supermassive black holes and a merger, side by side, each drawn as a glowing disc with its shadow and photon ring; real mass, horizon radius and distance in the info panel | Published values (Gaia, Event Horizon Telescope, LIGO); drawn by a shader, plus the two real EHT images |
 | Star map | ~109k real stars, 88 constellation figures, optional exoplanet host layer | HYG v4.0, Stellarium, NASA Exoplanet Archive |
@@ -101,6 +102,22 @@ illustration; the Cartwheel is Webb's picture of it. Each picture lies in its ga
 face-on using the galaxy's real inclination (stretched up to three times across the short axis) and tilted with the model,
 so orbiting the view shows the discs at their different angles. Four small Local Group dwarfs sit around the Milky Way and Andromeda: Messier 32, Fornax and Barnard's
 Galaxy have photographs, and the Sagittarius Dwarf (hidden behind the Milky Way, so never photographed whole) has a labelled illustration. Positions and sizes stay schematic.
+
+### The scale of the universe
+
+Two things for getting a feel for how big everything is:
+
+- **Scale** (button in the top bar): one slider from a proton (10⁻¹⁵ m) to the whole observable universe (10²⁷ m),
+  forty-two powers of ten. At any size it says what that is in plain units, how many times bigger or smaller than a person,
+  which landmarks lie either side, and how long it would take to cross at walking pace, in a passenger jet, at Voyager 1's
+  speed and at the speed of light (for sizes beyond the age of the universe, it says how many ages of the universe). Landmarks
+  with a view in the atlas have a "Show it in the atlas" button. The maths and the landmark list are in
+  [`src/lib/scale.ts`](src/lib/scale.ts), with tests.
+- **Observable Universe** (the first tab; also what you reach by zooming out of the Local Universe): the web of filaments and
+  voids out to the cosmic microwave background, with rings at 100 million, 1 billion and 10 billion light years. Distances are
+  light-travel distances, which is what is actually observed (looking far is looking back in time), on a logarithmic radial
+  scale so the nearby universe is not a dot. Directions and the web are schematic; the info panel of the oldest light says the
+  matter that sent it is now about 46 billion light years away. The guided tour *Our cosmic address* walks from Earth out to it.
 
 ### Black holes
 

@@ -3,7 +3,8 @@ import { nextTick, watch } from 'vue';
 import { TABS, chain, goScene, sceneTitle } from '@/engine/sceneManager';
 import { startTour } from '@/engine/tour';
 import { TOURS } from '@/scenes/tours';
-import { eventsUi, toggleEvents } from '../eventsStore';
+import { closeEvents, eventsUi, toggleEvents } from '../eventsStore';
+import { closeScale, scaleUi, toggleScale } from '../scaleStore';
 import { ui } from '../store';
 
 /** Breadcrumb trail (click to go up) and the direct-jump tab bar. */
@@ -25,6 +26,14 @@ watch(
     document.querySelector<HTMLElement>('#tabs .tab.on')?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
   },
 );
+const onEvents = () => {
+  closeScale();
+  toggleEvents();
+};
+const onScale = () => {
+  closeEvents();
+  toggleScale();
+};
 const jumpTo = (id: string) => goScene(id, { deeper: chain(id).length > ui.path.length });
 </script>
 
@@ -64,9 +73,19 @@ const jumpTo = (id: string) => goScene(id, { deeper: chain(id).length > ui.path.
         aria-haspopup="dialog"
         :aria-expanded="eventsUi.open"
         title="Eclipses, meteor showers, moon phases, planets and launches"
-        @click="toggleEvents"
+        @click="onEvents"
       >
         Events
+      </button>
+      <button
+        id="scale-btn"
+        class="tab"
+        aria-haspopup="dialog"
+        :aria-expanded="scaleUi.open"
+        title="How big things are, from a proton to the whole universe"
+        @click="onScale"
+      >
+        Scale
       </button>
       <select id="tours" aria-label="Guided tours" @change="onTour">
         <option value="">Guided tours…</option>
